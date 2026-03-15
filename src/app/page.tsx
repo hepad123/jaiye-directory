@@ -314,7 +314,7 @@ export default function Home() {
         </h1>
         <div style={{ width: 36, height: 1.5, background: '#E8C87A', margin: '12px auto', opacity: 0.8 }} />
         <p style={{ color: 'rgba(255,240,225,0.75)', fontSize: 'clamp(12px, 2.5vw, 15px)', margin: 0, letterSpacing: 0.3 }}>
-          Your guide to the best Nigerian wedding vendors
+          Your guide to the best Nigerian wedding and event vendors
         </p>
       </div>
 
@@ -417,7 +417,14 @@ export default function Home() {
                 </button>
               </div>
             )
-            : filtered.map(v => <VendorCard key={v.id} v={v} />)
+            : (() => {
+            const sorted = [...filtered].sort((a, b) => {
+              const aFeat = FEATURED_VENDORS.includes(a.name) ? 0 : 1
+              const bFeat = FEATURED_VENDORS.includes(b.name) ? 0 : 1
+              return aFeat - bFeat
+            })
+            return sorted.map(v => <VendorCard key={v.id} v={v} />)
+          })()
         }
       </div>
 

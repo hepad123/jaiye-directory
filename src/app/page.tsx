@@ -1,637 +1,411 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
 
-interface Vendor {
-  id: number
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+type Vendor = {
+  id: string
   category: string
   name: string
-  services: string | null
-  location: string | null
-  contact_name: string | null
-  phone: string | null
-  email: string | null
-  instagram: string | null
-  website: string | null
-  discount_code: string | null
-  price_from: string | null
-  rating: number | null
-  notes: string | null
+  services: string
+  location: string
+  contact_name: string
+  phone: string
+  email: string
+  instagram: string
+  website: string
+  discount_code: string
+  price_from: string
+  rating: string
+  notes: string
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
+type Review = {
+  id: string
+  vendor_id: string
+  reviewer_name: string
+  rating: number
+  comment: string
+  created_at: string
+}
+
+const CATEGORY_COLOURS: Record<string, string> = {
   'Event Planning': '#7B4EA6',
   'Styling': '#B5294E',
-  'Fashion & Wedding Dress': '#C4922A',
+  'Fashion': '#C4922A',
   'Makeup': '#E8639A',
   'Hair & Gele': '#3B82A0',
   'Photography': '#2D6A4F',
   'Videography & Content': '#1C3A5E',
   'Decor & Venue': '#8B5E3C',
-  'Catering-Cake-Food': '#C25B2A',
+  'Catering': '#C25B2A',
   'Entertainment': '#4B3F72',
-  'Furniture & Rentals': '#6B7280',
-  'Accessories': '#9D4E6E',
-  'Flowers': '#4A7C59',
+  'Fashion & Wedding Dress': '#C4922A',
+  'Catering-Cake-Food': '#C25B2A',
+  'Furniture & Rentals': '#8B5E3C',
+  'Accessories': '#C4922A',
+  'Flowers': '#8B5E3C',
 }
 
-function getCategoryColor(category: string): string {
-  return CATEGORY_COLORS[category] ?? '#B5294E'
+const CATEGORY_EMOJIS: Record<string, string> = {
+  'Event Planning': '📋',
+  'Styling': '✨',
+  'Fashion': '👗',
+  'Makeup': '💄',
+  'Hair & Gele': '💇🏾',
+  'Photography': '📸',
+  'Videography & Content': '🎥',
+  'Decor & Venue': '🏛️',
+  'Catering': '🍽️',
+  'Entertainment': '🎤',
+  'Fashion & Wedding Dress': '👗',
+  'Catering-Cake-Food': '🍽️',
+  'Furniture & Rentals': '🏛️',
+  'Accessories': '👗',
+  'Flowers': '🏛️',
 }
 
-function getInstagramHandle(instagram: string | null): string | null {
-  if (!instagram) return null
-  return instagram.replace(/^@/, '').trim()
+const InstagramIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+)
+
+function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 1 }}>
+      {[1,2,3,4,5].map(s => (
+        <span key={s} onClick={() => onRate?.(s)}
+          style={{ cursor: onRate ? 'pointer' : 'default', color: s <= rating ? '#D4A853' : '#ddd', fontSize: 12 }}>★</span>
+      ))}
+    </div>
+  )
 }
 
-function VendorCard({ vendor }: { vendor: Vendor }) {
-  const color = getCategoryColor(vendor.category)
-  const igHandle = getInstagramHandle(vendor.instagram)
+function ReviewSection({ vendor }: { vendor: Vendor }) {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [name, setName] = useState('')
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+
+  useEffect(() => {
+    supabase.from('reviews').select('*').eq('vendor_id', vendor.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { if (data) setReviews(data) })
+  }, [vendor.id])
+
+  async function submitReview() {
+    if (!name.trim() || rating === 0) return
+    setSubmitting(true)
+    const { data } = await supabase.from('reviews')
+      .insert({ vendor_id: vendor.id, reviewer_name: name, rating, comment })
+      .select()
+    if (data) {
+      setReviews(prev => [data[0], ...prev])
+      setName(''); setRating(0); setComment(''); setShowForm(false)
+    }
+    setSubmitting(false)
+  }
 
   return (
-    <div
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
-        border: '1px solid rgba(0,0,0,0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-      }}
-      onMouseEnter={e => {
-        ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)'
-      }}
-      onMouseLeave={e => {
-        ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.07)'
-      }}
-    >
-      {/* Top accent stripe */}
-      <div style={{ height: '4px', backgroundColor: color }} />
-
-      <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-        {/* Category badge */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
-          <span
-            style={{
-              backgroundColor: color + '18',
-              color: color,
-              border: `1px solid ${color}30`,
-              borderRadius: '20px',
-              padding: '3px 10px',
-              fontSize: '11px',
-              fontWeight: 600,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {vendor.category}
-          </span>
-          {vendor.rating && (
-            <span style={{ color: '#D4A853', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-              ★ {vendor.rating}
-            </span>
-          )}
-        </div>
-
-        {/* Name */}
-        <h3
-          style={{
-            fontFamily: 'var(--font-cormorant), Georgia, serif',
-            fontSize: '22px',
-            fontWeight: 700,
-            color: '#1a1a1a',
-            lineHeight: 1.2,
-            margin: 0,
-          }}
-        >
-          {vendor.name}
-        </h3>
-
-        {/* Services */}
-        {vendor.services && (
-          <p
-            className="line-clamp-2"
-            style={{
-              fontSize: '13px',
-              color: '#555',
-              lineHeight: 1.5,
-              margin: 0,
-            }}
-          >
-            {vendor.services}
-          </p>
-        )}
-
-        {/* Location */}
-        {vendor.location && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span style={{ fontSize: '14px' }}>📍</span>
-            <span style={{ fontSize: '13px', color: '#666', fontWeight: 500 }}>{vendor.location}</span>
-          </div>
-        )}
-
-        {/* Divider */}
-        <div style={{ borderTop: '1px solid #f0ebe4', margin: '2px 0' }} />
-
-        {/* Contact info */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {vendor.phone && (
-            <a
-              href={`tel:${vendor.phone}`}
-              style={{ fontSize: '13px', color: '#444', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}
-            >
-              <span>📞</span>
-              <span>{vendor.phone}</span>
-            </a>
-          )}
-          {vendor.email && (
-            <a
-              href={`mailto:${vendor.email}`}
-              style={{ fontSize: '13px', color: '#B5294E', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}
-            >
-              <span>✉️</span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vendor.email}</span>
-            </a>
-          )}
-          {vendor.website && (
-            <a
-              href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: '13px', color: '#B5294E', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}
-            >
-              <span>🌐</span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {vendor.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-              </span>
-            </a>
-          )}
-          {igHandle && (
-            <a
-              href={`https://instagram.com/${igHandle}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: '13px', color: '#C2185B', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}
-            >
-              <span>📸</span>
-              <span>@{igHandle}</span>
-            </a>
-          )}
-        </div>
-
-        {/* Discount code */}
-        {vendor.discount_code && vendor.discount_code.trim() !== '' && (
-          <div
-            style={{
-              backgroundColor: '#FDF6EE',
-              border: '1px dashed #D4A853',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <span style={{ fontSize: '14px' }}>🏷️</span>
-            <div>
-              <div style={{ fontSize: '10px', color: '#9a7832', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Discount Code
-              </div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#D4A853', letterSpacing: '0.05em' }}>
-                {vendor.discount_code}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Notes */}
-        {vendor.notes && vendor.notes.trim() !== '' && (
-          <p style={{ fontSize: '12px', color: '#888', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
-            {vendor.notes}
-          </p>
-        )}
-
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
-
-        {/* View on Instagram button */}
-        {igHandle && (
-          <a
-            href={`https://instagram.com/${igHandle}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'block',
-              textAlign: 'center',
-              backgroundColor: '#B5294E',
-              color: '#ffffff',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              fontSize: '13px',
-              fontWeight: 600,
-              textDecoration: 'none',
-              letterSpacing: '0.03em',
-              marginTop: '4px',
-              transition: 'background-color 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              ;(e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#9b1f3f'
-            }}
-            onMouseLeave={e => {
-              ;(e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#B5294E'
-            }}
-          >
-            View on Instagram ↗
-          </a>
-        )}
+    <div style={{ borderTop: '1px solid #f5eeee', marginTop: 8, paddingTop: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1 }}>
+          {reviews.length > 0 ? `${reviews.length} review${reviews.length > 1 ? 's' : ''}` : 'No reviews yet'}
+        </span>
+        <button onClick={() => setShowForm(!showForm)}
+          style={{ fontSize: 10, color: '#B5294E', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+          {showForm ? 'Cancel' : '+ Review'}
+        </button>
       </div>
+
+      {showForm && (
+        <div style={{ background: '#fdf8f5', borderRadius: 6, padding: 8, marginBottom: 8 }}>
+          <input placeholder="Your name *" value={name} onChange={e => setName(e.target.value)}
+            style={{ width: '100%', padding: '5px 8px', border: '1px solid #e8d5d5', borderRadius: 4, fontSize: 11, marginBottom: 5, boxSizing: 'border-box' }} />
+          <div style={{ marginBottom: 5 }}>
+            <StarRating rating={rating} onRate={setRating} />
+          </div>
+          <textarea placeholder="Share your experience..." value={comment} onChange={e => setComment(e.target.value)} rows={2}
+            style={{ width: '100%', padding: '5px 8px', border: '1px solid #e8d5d5', borderRadius: 4, fontSize: 11, marginBottom: 5, boxSizing: 'border-box', resize: 'none' }} />
+          <button onClick={submitReview} disabled={submitting || !name.trim() || rating === 0}
+            style={{ padding: '4px 12px', background: '#B5294E', color: 'white', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer', opacity: (!name.trim() || rating === 0) ? 0.5 : 1 }}>
+            {submitting ? 'Submitting...' : 'Submit'}
+          </button>
+        </div>
+      )}
+
+      {reviews.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {reviews.slice(0, 2).map(r => (
+            <div key={r.id} style={{ background: '#fafafa', borderRadius: 4, padding: '5px 7px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: '#444' }}>{r.reviewer_name}</span>
+                <StarRating rating={r.rating} />
+              </div>
+              {r.comment && <p style={{ fontSize: 10, color: '#777', margin: '2px 0 0' }}>{r.comment}</p>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
 export default function Home() {
   const [vendors, setVendors] = useState<Vendor[]>([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState('All')
+  const [category, setCategory] = useState('All')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchVendors() {
-      const { data, error } = await supabase
-        .from('vendors')
-        .select('*')
-        .order('name')
-
-      if (!error && data) {
-        setVendors(data)
-      }
+    supabase.from('vendors').select('*').then(({ data, error }) => {
+      if (error) console.error(error)
+      else setVendors(data || [])
       setLoading(false)
-    }
-    fetchVendors()
+    })
   }, [])
 
-  const categories = useMemo(() => {
-    const cats = Array.from(new Set(vendors.map(v => v.category))).sort()
-    return ['All', ...cats]
-  }, [vendors])
+  const categories = ['All', ...Array.from(new Set(vendors.map(v => v.category))).sort()]
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim()
-    return vendors.filter(v => {
-      const matchesSearch =
-        !q ||
-        v.name.toLowerCase().includes(q) ||
-        (v.services ?? '').toLowerCase().includes(q) ||
-        (v.instagram ?? '').toLowerCase().includes(q) ||
-        (v.notes ?? '').toLowerCase().includes(q)
+  const getCategoryCount = (cat: string) =>
+    cat === 'All' ? vendors.length : vendors.filter(v => v.category === cat).length
 
-      const matchesCategory = activeCategory === 'All' || v.category === activeCategory
+  const filtered = vendors.filter(v => {
+    const q = search.toLowerCase()
+    const matchSearch = !q ||
+      v.name?.toLowerCase().includes(q) ||
+      v.services?.toLowerCase().includes(q) ||
+      v.instagram?.toLowerCase().includes(q) ||
+      v.notes?.toLowerCase().includes(q)
+    const matchCat = category === 'All' || v.category === category
+    return matchSearch && matchCat
+  })
 
-      return matchesSearch && matchesCategory
-    })
-  }, [vendors, search, activeCategory])
+  const discountsOnly = filtered.filter(v => v.discount_code)
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FDF6EE' }}>
+    <main style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', background: '#FAF6F3', minHeight: '100vh' }}>
+
       {/* Hero */}
-      <header
-        style={{
-          background: 'linear-gradient(135deg, #1a0a10 0%, #3d0f20 50%, #5c1a30 100%)',
-          padding: '64px 24px 56px',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Decorative circles */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '-60px',
-            right: '-60px',
-            width: '280px',
-            height: '280px',
-            borderRadius: '50%',
-            background: 'rgba(212,168,83,0.08)',
-            pointerEvents: 'none',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '-80px',
-            left: '-40px',
-            width: '200px',
-            height: '200px',
-            borderRadius: '50%',
-            background: 'rgba(181,41,78,0.12)',
-            pointerEvents: 'none',
-          }}
-        />
+      <div style={{
+        background: 'linear-gradient(135deg, #2C1810 0%, #5C2D1E 40%, #8B4513 100%)',
+        padding: 'clamp(28px, 5vw, 52px) 16px',
+        textAlign: 'center'
+      }}>
+        <div style={{ fontSize: 16, color: '#D4A853', letterSpacing: 6, marginBottom: 10 }}>✦ ✦ ✦</div>
+        <h1 style={{
+          fontFamily: 'var(--font-cormorant, serif)',
+          fontSize: 'clamp(32px, 7vw, 64px)',
+          color: 'white', margin: '0 0 6px', fontWeight: 400, lineHeight: 1.1
+        }}>
+          Jaiye Directory
+        </h1>
+        <div style={{ width: 40, height: 1.5, background: '#D4A853', margin: '10px auto' }} />
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(13px, 2.5vw, 16px)', margin: 0 }}>
+          Your guide to the best Nigerian wedding vendors
+        </p>
+      </div>
 
-        <div style={{ position: 'relative', maxWidth: '760px', margin: '0 auto' }}>
-          {/* Gold ornament */}
-          <div style={{ color: '#D4A853', fontSize: '20px', letterSpacing: '0.3em', marginBottom: '16px', opacity: 0.8 }}>
-            ✦ ✦ ✦
-          </div>
-
-          <h1
-            style={{
-              fontFamily: 'var(--font-cormorant), Georgia, serif',
-              fontSize: 'clamp(48px, 8vw, 80px)',
-              fontWeight: 600,
-              color: '#ffffff',
-              margin: '0 0 4px',
-              lineHeight: 1,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Jaiye Directory
-          </h1>
-
-          <div
-            style={{
-              width: '80px',
-              height: '2px',
-              backgroundColor: '#D4A853',
-              margin: '20px auto',
-              borderRadius: '2px',
-            }}
-          />
-
-          <p
-            style={{
-              fontFamily: 'var(--font-dm-sans), sans-serif',
-              fontSize: 'clamp(15px, 2.5vw, 19px)',
-              color: 'rgba(255,255,255,0.75)',
-              margin: '0 auto 8px',
-              fontWeight: 300,
-              letterSpacing: '0.04em',
-            }}
-          >
-            Your guide to the best Nigerian wedding vendors
-          </p>
-        </div>
-      </header>
-
-      {/* Sticky filter bar */}
-      <div
-        style={{
-          backgroundColor: '#FDF6EE',
-          borderBottom: '1px solid rgba(0,0,0,0.07)',
-          padding: '20px 24px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-        }}
-      >
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Search */}
-          <div style={{ position: 'relative' }}>
-            <span
-              style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '16px',
-                color: '#aaa',
-                pointerEvents: 'none',
-              }}
-            >
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="Search by name, service, Instagram..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px 12px 44px',
-                borderRadius: '12px',
-                border: '1.5px solid rgba(181,41,78,0.2)',
-                backgroundColor: '#ffffff',
-                fontSize: '15px',
-                fontFamily: 'var(--font-dm-sans), sans-serif',
-                color: '#1a1a1a',
-                outline: 'none',
-                boxSizing: 'border-box',
-                transition: 'border-color 0.2s ease',
-              }}
-              onFocus={e => {
-                ;(e.currentTarget as HTMLInputElement).style.borderColor = '#B5294E'
-              }}
-              onBlur={e => {
-                ;(e.currentTarget as HTMLInputElement).style.borderColor = 'rgba(181,41,78,0.2)'
-              }}
-            />
-          </div>
-
-          {/* Category pills */}
-          <div
-            className="scrollbar-hide"
-            style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}
-          >
+      {/* Category pills */}
+      <div style={{ background: '#FAF6F3', padding: '14px 16px 0', borderBottom: '1px solid #EDE8E3' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 14, scrollbarWidth: 'none' }}>
             {categories.map(cat => {
-              const isActive = cat === activeCategory
-              const color = cat === 'All' ? '#B5294E' : getCategoryColor(cat)
+              const count = getCategoryCount(cat)
+              const emoji = cat === 'All' ? '🌟' : (CATEGORY_EMOJIS[cat] || '✦')
+              const colour = CATEGORY_COLOURS[cat] || '#B5294E'
+              const isActive = category === cat
               return (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  style={{
-                    flexShrink: 0,
-                    padding: '6px 16px',
-                    borderRadius: '20px',
-                    border: `1.5px solid ${isActive ? color : 'rgba(0,0,0,0.12)'}`,
-                    backgroundColor: isActive ? color : '#ffffff',
-                    color: isActive ? '#ffffff' : '#555',
-                    fontSize: '13px',
-                    fontWeight: isActive ? 600 : 400,
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-dm-sans), sans-serif',
-                    transition: 'all 0.15s ease',
-                    letterSpacing: '0.01em',
-                  }}
-                >
-                  {cat}
+                <button key={cat} onClick={() => setCategory(cat)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 24,
+                  border: isActive ? 'none' : '1.5px solid #E8E0D8',
+                  cursor: 'pointer', whiteSpace: 'nowrap',
+                  fontSize: 12, fontWeight: 500,
+                  background: isActive ? colour : 'white',
+                  color: isActive ? 'white' : '#555',
+                  boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
+                  transition: 'all 0.15s'
+                }}>
+                  <span style={{ fontSize: 14 }}>{emoji}</span>
+                  <span>{cat}</span>
+                  <span style={{
+                    background: isActive ? 'rgba(255,255,255,0.25)' : '#F0EAE4',
+                    color: isActive ? 'white' : '#888',
+                    borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700
+                  }}>{count}</span>
                 </button>
               )
             })}
+            {/* Discounts pill */}
+            <button onClick={() => {}} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 24,
+              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+              fontSize: 12, fontWeight: 600,
+              background: '#1C1C1C', color: 'white',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            }}>
+              <span style={{ fontSize: 14 }}>🏷️</span>
+              <span>Discounts</span>
+              <span style={{ background: '#D4A853', color: 'white', borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>
+                {vendors.filter(v => v.discount_code).length}
+              </span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Main content */}
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 64px' }}>
-        {/* Count */}
-        <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p
-            style={{
-              fontFamily: 'var(--font-dm-sans), sans-serif',
-              fontSize: '14px',
-              color: '#888',
-              margin: 0,
-            }}
-          >
-            {loading ? (
-              'Loading vendors...'
-            ) : (
-              <>
-                Showing{' '}
-                <strong style={{ color: '#B5294E' }}>{filtered.length}</strong>
-                {' '}of{' '}
-                <strong style={{ color: '#1a1a1a' }}>{vendors.length}</strong>
-                {' '}vendors
-              </>
-            )}
-          </p>
-          {activeCategory !== 'All' && (
-            <button
-              onClick={() => { setActiveCategory('All'); setSearch('') }}
-              style={{
-                fontSize: '12px',
-                color: '#B5294E',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-dm-sans), sans-serif',
-                textDecoration: 'underline',
-              }}
-            >
-              Clear filters
-            </button>
+      {/* Search */}
+      <div style={{ background: '#FAF6F3', padding: '12px 16px', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid #EDE8E3' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 8, background: 'white', border: '1.5px solid #E8E0D8', borderRadius: 24, padding: '8px 16px' }}>
+          <span style={{ color: '#aaa', fontSize: 14 }}>🔍</span>
+          <input
+            type="text"
+            placeholder="Search vendors..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, background: 'transparent', color: '#333' }}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: 16, padding: 0 }}>×</button>
           )}
         </div>
+      </div>
 
-        {/* Loading skeleton */}
-        {loading && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '24px',
-            }}
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '16px',
-                  height: '320px',
-                  animation: 'pulse 1.5s ease-in-out infinite',
-                  opacity: 0.6,
-                }}
-              />
-            ))}
-          </div>
-        )}
+      {/* Count */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 0' }}>
+        <p style={{ color: '#999', fontSize: 12, margin: 0 }}>
+          {filtered.length} vendor{filtered.length !== 1 ? 's' : ''} {category !== 'All' ? `in ${category}` : ''}
+          {search ? ` matching "${search}"` : ''}
+        </p>
+      </div>
 
-        {/* Empty state */}
-        {!loading && filtered.length === 0 && (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '80px 24px',
-            }}
-          >
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌺</div>
-            <h3
-              style={{
-                fontFamily: 'var(--font-cormorant), Georgia, serif',
-                fontSize: '28px',
-                fontWeight: 600,
-                color: '#1a1a1a',
-                margin: '0 0 8px',
-              }}
-            >
-              No vendors found
-            </h3>
-            <p style={{ fontSize: '15px', color: '#888', margin: '0 0 24px' }}>
-              Try adjusting your search or category filter
-            </p>
-            <button
-              onClick={() => { setSearch(''); setActiveCategory('All') }}
-              style={{
-                backgroundColor: '#B5294E',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '12px 28px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: 'var(--font-dm-sans), sans-serif',
-              }}
-            >
+      {/* Grid */}
+      <div style={{
+        maxWidth: 1200, margin: '0 auto', padding: '12px 16px 48px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
+        gap: 12
+      }}>
+        {loading ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} style={{ background: 'white', borderRadius: 10, height: 140, opacity: 0.4, border: '1px solid #EDE8E3' }} />
+          ))
+        ) : filtered.length === 0 ? (
+          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 16px' }}>
+            <div style={{ fontSize: 36 }}>🌸</div>
+            <p style={{ color: '#888', marginTop: 10, fontSize: 14 }}>No vendors found.</p>
+            <button onClick={() => { setSearch(''); setCategory('All') }}
+              style={{ marginTop: 8, padding: '7px 18px', background: '#B5294E', color: 'white', border: 'none', borderRadius: 16, cursor: 'pointer', fontSize: 12 }}>
               Show all vendors
             </button>
           </div>
-        )}
+        ) : (
+          filtered.map(v => {
+            const colour = CATEGORY_COLOURS[v.category] || '#B5294E'
+            const igHandle = v.instagram?.replace('@', '')
+            return (
+              <div key={v.id} style={{
+                background: 'white', borderRadius: 10,
+                border: '1px solid #EDE8E3',
+                overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                transition: 'box-shadow 0.15s',
+              }}>
+                <div style={{ height: 3, background: colour }} />
+                <div style={{ padding: '10px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {/* Category + name */}
+                  <div>
+                    <span style={{
+                      fontSize: 9, fontWeight: 700, color: colour,
+                      textTransform: 'uppercase', letterSpacing: 1
+                    }}>
+                      {CATEGORY_EMOJIS[v.category] || '✦'} {v.category}
+                    </span>
+                    <h3 style={{
+                      fontFamily: 'var(--font-cormorant, serif)',
+                      fontSize: 17, margin: '2px 0 0', color: '#1C1C1C', fontWeight: 600, lineHeight: 1.2
+                    }}>{v.name}</h3>
+                  </div>
 
-        {/* Vendor grid */}
-        {!loading && filtered.length > 0 && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '24px',
-            }}
-          >
-            {filtered.map(vendor => (
-              <VendorCard key={vendor.id} vendor={vendor} />
-            ))}
-          </div>
+                  {/* Services */}
+                  {v.services && (
+                    <p style={{ fontSize: 11, color: '#666', margin: 0, lineHeight: 1.4,
+                      display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {v.services}
+                    </p>
+                  )}
+
+                  {/* Location */}
+                  {v.location && (
+                    <p style={{ fontSize: 11, color: '#999', margin: 0 }}>📍 {v.location}</p>
+                  )}
+
+                  {/* Contact row */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                    {igHandle && (
+                      <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#B5294E', textDecoration: 'none', fontWeight: 500 }}>
+                        <InstagramIcon /> {v.instagram}
+                      </a>
+                    )}
+                    {v.website && (
+                      <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 11, color: '#3B82A0', textDecoration: 'none' }}>
+                        🌐 {v.website}
+                      </a>
+                    )}
+                  </div>
+
+                  {v.phone && <p style={{ fontSize: 11, color: '#666', margin: 0 }}>📞 {v.phone}</p>}
+                  {v.email && <p style={{ fontSize: 11, color: '#666', margin: 0 }}>✉️ {v.email}</p>}
+
+                  {/* Discount */}
+                  {v.discount_code && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: '#888' }}>
+                        {v.discount_code.includes('%') || v.discount_code.includes('off') ? v.discount_code : `Discount available`}
+                      </span>
+                      <span style={{
+                        padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
+                        background: '#1C1C1C', color: 'white', letterSpacing: 0.5,
+                        display: 'flex', alignItems: 'center', gap: 4
+                      }}>
+                        📋 {v.discount_code}
+                      </span>
+                    </div>
+                  )}
+
+                  {v.notes && <p style={{ fontSize: 10, color: '#bbb', margin: 0, fontStyle: 'italic' }}>{v.notes}</p>}
+
+                  {/* Reviews */}
+                  <ReviewSection vendor={v} />
+                </div>
+              </div>
+            )
+          })
         )}
-      </main>
+      </div>
 
       {/* Footer */}
-      <footer
-        style={{
-          borderTop: '1px solid rgba(0,0,0,0.07)',
-          padding: '32px 24px',
-          textAlign: 'center',
-          backgroundColor: '#FDF6EE',
-        }}
-      >
-        <p
-          style={{
-            fontFamily: 'var(--font-cormorant), Georgia, serif',
-            fontSize: '18px',
-            color: '#B5294E',
-            margin: 0,
-            letterSpacing: '0.02em',
-          }}
-        >
-          Made with ♥ for Nigerian brides
-        </p>
+      <footer style={{
+        textAlign: 'center', padding: '20px',
+        borderTop: '1px solid #EDE8E3',
+        color: '#B5294E',
+        fontFamily: 'var(--font-cormorant, serif)',
+        fontSize: 16
+      }}>
+        Made with ♥ for Nigerian brides
       </footer>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
-        }
-        @media (max-width: 640px) {
-          .vendor-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-        @media (min-width: 641px) and (max-width: 1024px) {
-          .vendor-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
-        }
-      `}</style>
-    </div>
+    </main>
   )
 }

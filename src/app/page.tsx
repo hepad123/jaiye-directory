@@ -181,7 +181,7 @@ function VendorCard({ v }: { v: Vendor }) {
         </div>
 
         {/* Name */}
-        <div style={{ fontFamily: 'var(--font-cormorant, serif)', fontSize: 18, fontWeight: 600, color: '#1A1A1A', lineHeight: 1.2, marginBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 18, fontWeight: 600, color: '#1A1A1A', lineHeight: 1.2, marginBottom: 8 }}>
           {v.name}
         </div>
 
@@ -303,7 +303,7 @@ export default function Home() {
       }}>
         <div style={{ fontSize: 16, color: '#D4A853', letterSpacing: 6, marginBottom: 10 }}>✦ ✦ ✦</div>
         <h1 style={{
-          fontFamily: 'var(--font-cormorant, serif)',
+          fontFamily: 'var(--font-playfair, serif)',
           fontSize: 'clamp(32px, 7vw, 64px)',
           color: 'white', margin: '0 0 6px', fontWeight: 400, lineHeight: 1.1
         }}>
@@ -429,7 +429,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid #EDE8E3', color: '#C4922A', fontFamily: 'var(--font-cormorant, serif)', fontSize: 15 }}>
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid #EDE8E3', color: '#C4922A', fontFamily: 'var(--font-playfair, serif)', fontSize: 15 }}>
         Made with ♥ for Nigerian brides
       </footer>
     </main>

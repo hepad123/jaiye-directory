@@ -34,6 +34,8 @@ type Review = {
   created_at: string
 }
 
+const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
+
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Event Planning':        { emoji: '📋', colour: '#9B7BB8' },
   'Styling':               { emoji: '✨', colour: '#C45C7A' },
@@ -133,44 +135,78 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
 
 function VendorCard({ v }: { v: Vendor }) {
   const [expanded, setExpanded] = useState(false)
-  const colour = getColour(v.category)
-  const igHandle = v.instagram?.replace('@', '').trim()
-  const hasDetails = v.services || v.location || v.phone || v.email || v.notes || v.website
+  const colour    = getColour(v.category)
+  const igHandle  = v.instagram?.replace('@', '').trim()
+  const isFeatured = FEATURED_VENDORS.includes(v.name)
+  const hasDetails = v.services || v.phone || v.email || v.notes || v.website
 
   return (
     <div style={{
       background: 'white',
       borderRadius: 16,
-      border: '1px solid #F0E8E2',
+      border: isFeatured ? `1.5px solid ${colour}55` : '1px solid #F0E8E2',
       overflow: 'hidden',
-      boxShadow: '0 2px 12px rgba(180,130,110,0.07)',
-      transition: 'box-shadow 0.2s',
+      boxShadow: isFeatured
+        ? `0 4px 18px ${colour}22`
+        : '0 2px 12px rgba(180,130,110,0.07)',
+      position: 'relative',
     }}>
-      {/* Soft colour top stripe */}
-      <div style={{ height: 4, background: `linear-gradient(90deg, ${colour}CC, ${colour}66)` }} />
+      {/* Colour top stripe */}
+      <div style={{ height: 4, background: `linear-gradient(90deg, ${colour}CC, ${colour}55)` }} />
+
+      {/* ⭐ Featured badge — top left */}
+      {isFeatured && (
+        <div style={{
+          position: 'absolute', top: 10, right: 10,
+          background: '#FFF8E7',
+          border: '1px solid #E8C87A',
+          borderRadius: 20,
+          padding: '2px 8px',
+          display: 'flex', alignItems: 'center', gap: 3,
+          fontSize: 9, fontWeight: 700, color: '#B8860B',
+          letterSpacing: 0.5,
+        }}>
+          ⭐ Top pick
+        </div>
+      )}
 
       <div style={{ padding: '12px 14px' }}>
+
         {/* Category */}
-        <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, opacity: 0.9 }}>
+        <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3, opacity: 0.9 }}>
           {getEmoji(v.category)} {v.category}
         </div>
 
         {/* Name */}
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#2C1A12', lineHeight: 1.25, marginBottom: 8 }}>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#2C1A12', lineHeight: 1.25, marginBottom: 6 }}>
           {v.name}
         </div>
+
+        {/* Location — always visible */}
+        {v.location && (
+          <div style={{ fontSize: 11, color: '#9A8070', marginBottom: 5 }}>
+            📍 {v.location}
+          </div>
+        )}
+
+        {/* Rating — always visible if present */}
+        {v.rating && (
+          <div style={{ fontSize: 11, color: '#B8860B', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 3 }}>
+            ⭐ {v.rating}
+          </div>
+        )}
 
         {/* Instagram */}
         {igHandle && (
           <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#C45C7A', textDecoration: 'none', fontWeight: 500, marginBottom: v.discount_code ? 7 : 0 }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#C45C7A', textDecoration: 'none', fontWeight: 500, marginBottom: v.discount_code ? 6 : 0 }}>
             <InstagramIcon /> @{igHandle}
           </a>
         )}
 
         {/* Discount */}
         {v.discount_code && (
-          <div style={{ marginTop: igHandle ? 6 : 0 }}>
+          <div style={{ marginTop: igHandle ? 6 : 0, marginBottom: 2 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '4px 11px', borderRadius: 20,
@@ -182,29 +218,10 @@ function VendorCard({ v }: { v: Vendor }) {
           </div>
         )}
 
-        {/* Expand toggle */}
-        {hasDetails && (
-          <button onClick={() => setExpanded(!expanded)} style={{
-            marginTop: 9,
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 10, color: '#B09080', fontWeight: 500, padding: 0
-          }}>
-            <span style={{
-              width: 15, height: 15, borderRadius: '50%',
-              border: '1.5px solid #DDD0C8',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, color: '#B09080', lineHeight: 1
-            }}>{expanded ? '−' : '+'}</span>
-            {expanded ? 'Less' : 'More info'}
-          </button>
-        )}
-
-        {/* Expanded */}
+        {/* Expanded details */}
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {v.services  && <p style={{ fontSize: 11, color: '#6A4A38', margin: 0, lineHeight: 1.55 }}>{v.services}</p>}
-            {v.location  && <p style={{ fontSize: 11, color: '#9A8070', margin: 0 }}>📍 {v.location}</p>}
             {v.phone     && <p style={{ fontSize: 11, color: '#8A7060', margin: 0 }}>📞 {v.phone}</p>}
             {v.email     && <p style={{ fontSize: 11, color: '#8A7060', margin: 0 }}>✉️ {v.email}</p>}
             {v.website   && (
@@ -217,6 +234,29 @@ function VendorCard({ v }: { v: Vendor }) {
             {v.notes && <p style={{ fontSize: 10, color: '#B8A090', margin: 0, fontStyle: 'italic', lineHeight: 1.5 }}>{v.notes}</p>}
             <ReviewSection vendor={v} />
           </div>
+        )}
+
+        {/* More info — always at the bottom */}
+        {hasDetails && (
+          <button onClick={() => setExpanded(!expanded)} style={{
+            marginTop: 10,
+            width: '100%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            background: 'none',
+            border: '1px solid #EDE4DC',
+            borderRadius: 20,
+            cursor: 'pointer',
+            fontSize: 10, color: '#B09080', fontWeight: 500,
+            padding: '5px 0',
+          }}>
+            <span style={{
+              width: 14, height: 14, borderRadius: '50%',
+              border: '1.5px solid #DDD0C8',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, color: '#B09080', lineHeight: 1
+            }}>{expanded ? '−' : '+'}</span>
+            {expanded ? 'Less info' : 'More info'}
+          </button>
         )}
       </div>
     </div>
@@ -237,7 +277,12 @@ export default function Home() {
     })
   }, [])
 
-  const categories = ['All', ...Array.from(new Set(vendors.map(v => v.category))).sort()]
+  // Event Planning first, then the rest alphabetically
+  const otherCats = Array.from(new Set(vendors.map(v => v.category)))
+    .filter(c => c !== 'Event Planning')
+    .sort()
+  const categories = ['All', 'Event Planning', ...otherCats]
+
   const getCategoryCount = (cat: string) =>
     cat === 'All' ? vendors.length : vendors.filter(v => v.category === cat).length
 
@@ -257,17 +302,14 @@ export default function Home() {
   return (
     <main style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', background: '#FDF8F4', minHeight: '100vh' }}>
 
-      {/* Hero — warm blush gradient */}
+      {/* Hero */}
       <div style={{
         background: 'linear-gradient(160deg, #3D1515 0%, #7A2A2A 45%, #B85C3A 100%)',
         padding: 'clamp(32px, 6vw, 60px) 20px',
         textAlign: 'center',
       }}>
         <div style={{ fontSize: 13, color: '#E8C87A', letterSpacing: 8, marginBottom: 12, opacity: 0.9 }}>✦ ✦ ✦</div>
-        <h1 style={{
-          fontSize: 'clamp(30px, 6vw, 58px)',
-          color: '#FFF5EC', margin: '0 0 8px', fontWeight: 700, lineHeight: 1.1, letterSpacing: -0.5
-        }}>
+        <h1 style={{ fontSize: 'clamp(30px, 6vw, 58px)', color: '#FFF5EC', margin: '0 0 8px', fontWeight: 700, lineHeight: 1.1, letterSpacing: -0.5 }}>
           Jaiye Directory
         </h1>
         <div style={{ width: 36, height: 1.5, background: '#E8C87A', margin: '12px auto', opacity: 0.8 }} />
@@ -276,7 +318,7 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Filters — sticky */}
+      {/* Sticky filters */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#FDF8F4', borderBottom: '1px solid #EDE4DC' }}>
 
         {/* Category pills */}
@@ -302,7 +344,7 @@ export default function Home() {
                   <span style={{ fontSize: 13 }}>{emoji}</span>
                   <span>{cat}</span>
                   <span style={{
-                    background: isActive ? 'rgba(255,255,255,0.25)' : '#EDE4DC',
+                    background: isActive ? 'rgba(255,255,255,0.28)' : '#EDE4DC',
                     color: isActive ? 'white' : '#A08070',
                     borderRadius: 10, padding: '1px 6px', fontSize: 9, fontWeight: 700
                   }}>{count}</span>

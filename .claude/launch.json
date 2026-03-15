@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "naija-bridal",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["/Users/hephzibahadeosun/naija-dev.sh"],
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

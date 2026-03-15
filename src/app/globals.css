@@ -1,14 +1,21 @@
-@import "tailwindcss";
+/* Plain CSS — Tailwind import removed so no PostCSS child process is needed */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
 
 :root {
   --background: #FDF6EE;
   --foreground: #1a1a1a;
   --rose: #B5294E;
   --gold: #D4A853;
-}
-
-* {
-  box-sizing: border-box;
 }
 
 body {

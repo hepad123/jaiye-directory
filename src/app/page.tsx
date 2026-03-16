@@ -558,7 +558,7 @@ export default function Home() {
 
         {/* Second row — Discounts + New this week */}
         <div style={{ padding: '0 16px 8px', maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 7 }}>
-          <button onClick={() => setCategory(category === '__discounts__' ? 'All' : '__discounts__'); setWeddingType('All')} style={{
+          <button onClick={() => { setCategory(category === '__discounts__' ? 'All' : '__discounts__'); setWeddingType('All') }} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             padding: '7px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
             fontSize: 11, fontWeight: 700,

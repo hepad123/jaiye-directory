@@ -312,10 +312,15 @@ export default function Home() {
   const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
   const categories = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
 
-  // Extract unique locations from vendor data
-  const locations = ['All', ...Array.from(new Set(
-    vendors.map(v => v.location?.split(',')[0]?.trim()).filter(Boolean)
-  )).sort()]
+  // Fixed location order
+  const LOCATION_ORDER = ['All', '🇳🇬 Nigeria', '🟢 Abuja', '🟢 Lagos', '🏙️ Lekki (Lagos)']
+  const DB_LOCATION_MAP: Record<string, string> = {
+    'Nigeria': '🇳🇬 Nigeria',
+    'Abuja': '🟢 Abuja',
+    'Lagos': '🟢 Lagos',
+    'Lekki (Lagos)': '🏙️ Lekki (Lagos)',
+  }
+  const locations = LOCATION_ORDER
 
   const getCategoryCount = (cat: string) =>
     cat === 'All' ? vendors.length : vendors.filter(v => v.category === cat).length
@@ -330,7 +335,8 @@ export default function Home() {
     const matchCat = category === '__discounts__'
       ? !!v.discount_code
       : category === 'All' || v.category === category
-    const matchLocation = location === 'All' || v.location?.toLowerCase().includes(location.toLowerCase())
+    const dbLoc = Object.entries(DB_LOCATION_MAP).find(([_, label]) => label === location)?.[0]
+    const matchLocation = location === 'All' || v.location === dbLoc
     return matchSearch && matchCat && matchLocation
   })
 
@@ -439,7 +445,7 @@ export default function Home() {
             flexShrink: 0,
           }}>
             {locations.map(loc => (
-              <option key={loc} value={loc}>📍 {loc}</option>
+              <option key={loc} value={loc}>{loc}</option>
             ))}
           </select>
         </div>

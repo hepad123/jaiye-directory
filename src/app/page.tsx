@@ -520,8 +520,8 @@ export default function Home() {
               fontSize: 11, fontWeight: 700,
               background: showNewOnly ? '#276749' : '#F0FFF4',
               color: showNewOnly ? 'white' : '#276749',
-              border: showNewOnly ? 'none' : '1px solid #9AE6B4',
-            } as React.CSSProperties}>
+              outline: showNewOnly ? 'none' : '1px solid #9AE6B4',
+            }}>
               <span>🆕</span><span>New this week</span>
               <span style={{ background: '#9AE6B4', color: '#276749', borderRadius: 10, padding: '1px 7px', fontSize: 9, fontWeight: 700 }}>
                 {newVendors.length}

@@ -47,6 +47,7 @@ const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Decor & Venue':         { emoji: '🏛️', colour: '#9A7A5A' },
   'Catering':              { emoji: '🍽️', colour: '#C4724A' },
   'Entertainment':         { emoji: '🎤', colour: '#7A6A9A' },
+  'Other':                 { emoji: '✦', colour: '#8A8A8A' },
 }
 
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#B5294E'
@@ -76,12 +77,32 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [usedVendor, setUsedVendor] = useState(false)
+  const [usedName, setUsedName] = useState('')
+  const [usedSubmitting, setUsedSubmitting] = useState(false)
+  const [usedCount, setUsedCount] = useState(0)
 
   useEffect(() => {
     supabase.from('reviews').select('*').eq('vendor_id', vendor.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => { if (data) setReviews(data) })
+    // Count "I used this vendor" (rating = 0, comment = '__used__')
+    supabase.from('reviews').select('*', { count: 'exact' })
+      .eq('vendor_id', vendor.id).eq('comment', '__used__')
+      .then(({ count }) => setUsedCount(count ?? 0))
   }, [vendor.id])
+
+  async function submitUsed() {
+    if (!usedName.trim()) return
+    setUsedSubmitting(true)
+    await supabase.from('reviews').insert({
+      vendor_id: vendor.id, reviewer_name: usedName, rating: 5, comment: '__used__'
+    })
+    setUsedCount(c => c + 1)
+    setUsedVendor(false)
+    setUsedName('')
+    setUsedSubmitting(false)
+  }
 
   async function submitReview() {
     if (!name.trim() || rating === 0) return
@@ -96,17 +117,47 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
     setSubmitting(false)
   }
 
+  const realReviews = reviews.filter(r => r.comment !== '__used__')
+
   return (
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4' }}>
+
+      {/* I used this vendor button */}
+      <div style={{ marginBottom: 8 }}>
+        {!usedVendor ? (
+          <button onClick={() => setUsedVendor(true)} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            padding: '5px 12px', borderRadius: 20,
+            border: '1px solid #E8DDD5', background: '#FDF8F4',
+            cursor: 'pointer', fontSize: 11, color: '#9A7060', fontWeight: 500
+          }}>
+            👋 I used this vendor {usedCount > 0 && <span style={{ color: '#C45C7A', fontWeight: 700 }}>· {usedCount}</span>}
+          </button>
+        ) : (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input placeholder="Your name *" value={usedName} onChange={e => setUsedName(e.target.value)}
+              style={{ flex: 1, padding: '5px 8px', border: '1px solid #EDD8CE', borderRadius: 8, fontSize: 11, background: 'white' }} />
+            <button onClick={submitUsed} disabled={usedSubmitting || !usedName.trim()}
+              style={{ padding: '5px 12px', background: '#C45C7A', color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: !usedName.trim() ? 0.5 : 1 }}>
+              ✓
+            </button>
+            <button onClick={() => setUsedVendor(false)}
+              style={{ padding: '5px 8px', background: 'none', border: 'none', fontSize: 13, color: '#bbb', cursor: 'pointer' }}>×</button>
+          </div>
+        )}
+      </div>
+
+      {/* Reviews */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 10, color: '#C4A898', letterSpacing: 0.5 }}>
-          {reviews.length > 0 ? `${reviews.length} review${reviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
+          {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
         </span>
         <button onClick={() => setShowForm(!showForm)}
           style={{ fontSize: 10, color: '#C45C7A', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
           {showForm ? 'Cancel' : '+ Add review'}
         </button>
       </div>
+
       {showForm && (
         <div style={{ background: '#FDF5F0', borderRadius: 10, padding: 10, marginBottom: 8 }}>
           <input placeholder="Your name *" value={name} onChange={e => setName(e.target.value)}
@@ -120,13 +171,14 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
           </button>
         </div>
       )}
-      {reviews.slice(0, 2).map(r => (
+
+      {realReviews.slice(0, 2).map(r => (
         <div key={r.id} style={{ background: '#FBF7F4', borderRadius: 8, padding: '6px 8px', marginBottom: 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 10, fontWeight: 600, color: '#7A5A4A' }}>{r.reviewer_name}</span>
             <StarRating rating={r.rating} />
           </div>
-          {r.comment && <p style={{ fontSize: 10, color: '#9A7A6A', margin: '3px 0 0', lineHeight: 1.4 }}>{r.comment}</p>}
+          {r.comment && r.comment !== '__used__' && <p style={{ fontSize: 10, color: '#9A7A6A', margin: '3px 0 0', lineHeight: 1.4 }}>{r.comment}</p>}
         </div>
       ))}
     </div>
@@ -142,57 +194,42 @@ function VendorCard({ v }: { v: Vendor }) {
 
   return (
     <div style={{
-      background: 'white',
-      borderRadius: 16,
+      background: 'white', borderRadius: 16,
       border: isFeatured ? `1.5px solid ${colour}55` : '1px solid #F0E8E2',
       overflow: 'hidden',
-      boxShadow: isFeatured
-        ? `0 4px 18px ${colour}22`
-        : '0 2px 12px rgba(180,130,110,0.07)',
+      boxShadow: isFeatured ? `0 4px 18px ${colour}22` : '0 2px 12px rgba(180,130,110,0.07)',
       position: 'relative',
     }}>
-      {/* Colour top stripe */}
       <div style={{ height: 4, background: `linear-gradient(90deg, ${colour}CC, ${colour}55)` }} />
 
-      {/* ⭐ Featured badge — top left */}
       {isFeatured && (
         <div style={{
           position: 'absolute', top: 10, right: 10,
-          background: '#FFF8E7',
-          border: '1px solid #E8C87A',
-          borderRadius: 20,
-          padding: '2px 8px',
+          background: '#FFF8E7', border: '1px solid #E8C87A',
+          borderRadius: 20, padding: '2px 8px',
           display: 'flex', alignItems: 'center', gap: 3,
-          fontSize: 9, fontWeight: 700, color: '#B8860B',
-          letterSpacing: 0.5,
-        }}>
-          ⭐ Top pick
-        </div>
+          fontSize: 9, fontWeight: 700, color: '#B8860B', letterSpacing: 0.5,
+        }}>⭐ Top pick</div>
       )}
 
       <div style={{ padding: '12px 14px' }}>
-
-        {/* Category */}
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3, opacity: 0.9 }}>
           {getEmoji(v.category)} {v.category}
         </div>
 
-        {/* Name */}
         <div style={{ fontSize: 16, fontWeight: 600, color: '#2C1A12', lineHeight: 1.25, marginBottom: 6 }}>
           {v.name}
         </div>
 
         {/* Location — always visible */}
         {v.location && (
-          <div style={{ fontSize: 11, color: '#9A8070', marginBottom: 5 }}>
-            📍 {v.location}
-          </div>
+          <div style={{ fontSize: 11, color: '#9A8070', marginBottom: 4 }}>📍 {v.location}</div>
         )}
 
-        {/* Rating — always visible if present */}
-        {v.rating && (
-          <div style={{ fontSize: 11, color: '#B8860B', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 3 }}>
-            ⭐ {v.rating}
+        {/* Price — always visible */}
+        {v.price_from && (
+          <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 4 }}>
+            💰 From ₦{v.price_from}
           </div>
         )}
 
@@ -206,19 +243,17 @@ function VendorCard({ v }: { v: Vendor }) {
 
         {/* Discount */}
         {v.discount_code && (
-          <div style={{ marginTop: igHandle ? 6 : 0, marginBottom: 2 }}>
+          <div style={{ marginTop: igHandle ? 6 : 0 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '4px 11px', borderRadius: 20,
               background: '#2C1A12', color: '#F5E6C8',
               fontSize: 10, fontWeight: 700, letterSpacing: 0.8
-            }}>
-              🏷️ {v.discount_code}
-            </span>
+            }}>🏷️ {v.discount_code}</span>
           </div>
         )}
 
-        {/* Expanded details */}
+        {/* Expanded */}
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {v.services  && <p style={{ fontSize: 11, color: '#6A4A38', margin: 0, lineHeight: 1.55 }}>{v.services}</p>}
@@ -236,22 +271,16 @@ function VendorCard({ v }: { v: Vendor }) {
           </div>
         )}
 
-        {/* More info — always at the bottom */}
+        {/* More info button */}
         {hasDetails && (
           <button onClick={() => setExpanded(!expanded)} style={{
-            marginTop: 10,
-            width: '100%',
+            marginTop: 10, width: '100%',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            background: 'none',
-            border: '1px solid #EDE4DC',
-            borderRadius: 20,
-            cursor: 'pointer',
-            fontSize: 10, color: '#B09080', fontWeight: 500,
-            padding: '5px 0',
+            background: 'none', border: '1px solid #EDE4DC', borderRadius: 20,
+            cursor: 'pointer', fontSize: 10, color: '#B09080', fontWeight: 500, padding: '5px 0',
           }}>
             <span style={{
-              width: 14, height: 14, borderRadius: '50%',
-              border: '1.5px solid #DDD0C8',
+              width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #DDD0C8',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, color: '#B09080', lineHeight: 1
             }}>{expanded ? '−' : '+'}</span>
@@ -264,10 +293,11 @@ function VendorCard({ v }: { v: Vendor }) {
 }
 
 export default function Home() {
-  const [vendors, setVendors]   = useState<Vendor[]>([])
-  const [search, setSearch]     = useState('')
-  const [category, setCategory] = useState('All')
-  const [loading, setLoading]   = useState(true)
+  const [vendors, setVendors]     = useState<Vendor[]>([])
+  const [search, setSearch]       = useState('')
+  const [category, setCategory]   = useState('All')
+  const [location, setLocation]   = useState('All')
+  const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
     supabase.from('vendors').select('*').then(({ data, error }) => {
@@ -277,11 +307,15 @@ export default function Home() {
     })
   }, [])
 
-  // Event Planning first, then the rest alphabetically
-  const otherCats = Array.from(new Set(vendors.map(v => v.category)))
-    .filter(c => c !== 'Event Planning')
-    .sort()
-  const categories = ['All', 'Event Planning', ...otherCats]
+  const CATEGORY_ORDER = ['All', 'Event Planning', 'Fashion', 'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content']
+  const allCats = Array.from(new Set(vendors.map(v => v.category)))
+  const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
+  const categories = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
+
+  // Extract unique locations from vendor data
+  const locations = ['All', ...Array.from(new Set(
+    vendors.map(v => v.location?.split(',')[0]?.trim()).filter(Boolean)
+  )).sort()]
 
   const getCategoryCount = (cat: string) =>
     cat === 'All' ? vendors.length : vendors.filter(v => v.category === cat).length
@@ -296,7 +330,14 @@ export default function Home() {
     const matchCat = category === '__discounts__'
       ? !!v.discount_code
       : category === 'All' || v.category === category
-    return matchSearch && matchCat
+    const matchLocation = location === 'All' || v.location?.toLowerCase().includes(location.toLowerCase())
+    return matchSearch && matchCat && matchLocation
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    const aFeat = FEATURED_VENDORS.includes(a.name) ? 0 : 1
+    const bFeat = FEATURED_VENDORS.includes(b.name) ? 0 : 1
+    return aFeat - bFeat
   })
 
   return (
@@ -305,8 +346,7 @@ export default function Home() {
       {/* Hero */}
       <div style={{
         background: 'linear-gradient(160deg, #3D1515 0%, #7A2A2A 45%, #B85C3A 100%)',
-        padding: 'clamp(32px, 6vw, 60px) 20px',
-        textAlign: 'center',
+        padding: 'clamp(32px, 6vw, 60px) 20px', textAlign: 'center',
       }}>
         <div style={{ fontSize: 13, color: '#E8C87A', letterSpacing: 8, marginBottom: 12, opacity: 0.9 }}>✦ ✦ ✦</div>
         <h1 style={{ fontSize: 'clamp(30px, 6vw, 58px)', color: '#FFF5EC', margin: '0 0 8px', fontWeight: 700, lineHeight: 1.1, letterSpacing: -0.5 }}>
@@ -315,6 +355,9 @@ export default function Home() {
         <div style={{ width: 36, height: 1.5, background: '#E8C87A', margin: '12px auto', opacity: 0.8 }} />
         <p style={{ color: 'rgba(255,240,225,0.75)', fontSize: 'clamp(12px, 2.5vw, 15px)', margin: 0, letterSpacing: 0.3 }}>
           Your guide to the best Nigerian wedding and event vendors
+        </p>
+        <p style={{ color: '#E8C87A', fontSize: 13, margin: '10px 0 0', opacity: 0.8 }}>
+          200+ vendors and counting
         </p>
       </div>
 
@@ -326,9 +369,9 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 11, scrollbarWidth: 'none' }}>
             {categories.map(cat => {
               const isActive = category === cat
-              const colour   = cat === 'All' ? '#9A7060' : getColour(cat)
-              const emoji    = cat === 'All' ? '🌸'      : getEmoji(cat)
-              const count    = getCategoryCount(cat)
+              const colour = cat === 'All' ? '#9A7060' : getColour(cat)
+              const emoji  = cat === 'All' ? '🌸' : getEmoji(cat)
+              const count  = getCategoryCount(cat)
               return (
                 <button key={cat} onClick={() => setCategory(cat)} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -341,8 +384,7 @@ export default function Home() {
                   boxShadow: isActive ? `0 2px 10px ${colour}44` : 'none',
                   transition: 'all 0.15s ease',
                 }}>
-                  <span style={{ fontSize: 13 }}>{emoji}</span>
-                  <span>{cat}</span>
+                  <span>{emoji}</span><span>{cat}</span>
                   <span style={{
                     background: isActive ? 'rgba(255,255,255,0.28)' : '#EDE4DC',
                     color: isActive ? 'white' : '#A08070',
@@ -351,31 +393,32 @@ export default function Home() {
                 </button>
               )
             })}
-
-            {/* Discounts pill */}
-            <button onClick={() => setCategory(category === '__discounts__' ? 'All' : '__discounts__')} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '6px 13px', borderRadius: 20, flexShrink: 0,
-              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-              fontSize: 11, fontWeight: 700,
-              background: category === '__discounts__' ? '#C4922A' : '#2C1A12',
-              color: category === '__discounts__' ? 'white' : '#F5E6C8',
-              boxShadow: '0 2px 10px rgba(44,26,18,0.25)',
-            }}>
-              <span style={{ fontSize: 13 }}>🏷️</span>
-              <span>Discounts</span>
-              <span style={{
-                background: '#C4922A', color: 'white',
-                borderRadius: 10, padding: '1px 6px', fontSize: 9, fontWeight: 700
-              }}>{vendors.filter(v => v.discount_code).length}</span>
-            </button>
           </div>
         </div>
 
-        {/* Search */}
-        <div style={{ padding: '0 16px 10px', maxWidth: 1200, margin: '0 auto' }}>
+        {/* Discounts pill — own row */}
+        <div style={{ padding: '0 16px 8px', maxWidth: 1200, margin: '0 auto' }}>
+          <button onClick={() => setCategory(category === '__discounts__' ? 'All' : '__discounts__')} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '7px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            fontSize: 11, fontWeight: 700,
+            background: category === '__discounts__' ? '#C4922A' : '#2C1A12',
+            color: category === '__discounts__' ? 'white' : '#F5E6C8',
+            boxShadow: '0 2px 10px rgba(44,26,18,0.25)',
+          }}>
+            <span style={{ fontSize: 14 }}>🏷️</span>
+            <span>Discounts</span>
+            <span style={{ background: '#C4922A', color: 'white', borderRadius: 10, padding: '1px 7px', fontSize: 9, fontWeight: 700 }}>
+              {vendors.filter(v => v.discount_code).length}
+            </span>
+          </button>
+        </div>
+
+        {/* Search + Location filter */}
+        <div style={{ padding: '0 16px 10px', maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8 }}>
+          {/* Search */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
+            flex: 1, display: 'flex', alignItems: 'center', gap: 8,
             background: 'white', border: '1px solid #EDE4DC',
             borderRadius: 24, padding: '7px 16px',
             boxShadow: '0 1px 4px rgba(180,130,110,0.08)'
@@ -387,12 +430,24 @@ export default function Home() {
               <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4A898', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
             )}
           </div>
+
+          {/* Location filter */}
+          <select value={location} onChange={e => setLocation(e.target.value)} style={{
+            padding: '7px 12px', borderRadius: 24, border: '1px solid #EDE4DC',
+            background: 'white', fontSize: 11, color: '#8A6A58', cursor: 'pointer',
+            outline: 'none', boxShadow: '0 1px 4px rgba(180,130,110,0.08)',
+            flexShrink: 0,
+          }}>
+            {locations.map(loc => (
+              <option key={loc} value={loc}>📍 {loc}</option>
+            ))}
+          </select>
         </div>
       </div>
 
       {/* Count */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 18px 2px' }}>
-        <p style={{ color: '#C4A898', fontSize: 11, margin: 0 }}>{filtered.length} vendors</p>
+        <p style={{ color: '#C4A898', fontSize: 11, margin: 0 }}>{sorted.length} vendors</p>
       </div>
 
       {/* Grid */}
@@ -406,29 +461,21 @@ export default function Home() {
           ? Array.from({ length: 8 }).map((_, i) => (
               <div key={i} style={{ background: 'white', borderRadius: 16, height: 100, opacity: 0.3, border: '1px solid #EDE4DC' }} />
             ))
-          : filtered.length === 0
+          : sorted.length === 0
             ? (
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
                 <div style={{ fontSize: 36 }}>🌸</div>
                 <p style={{ color: '#C4A898', marginTop: 10, fontSize: 13 }}>No vendors found.</p>
-                <button onClick={() => { setSearch(''); setCategory('All') }}
+                <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All') }}
                   style={{ marginTop: 8, padding: '6px 18px', background: '#C45C7A', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11 }}>
                   Show all
                 </button>
               </div>
             )
-            : (() => {
-            const sorted = [...filtered].sort((a, b) => {
-              const aFeat = FEATURED_VENDORS.includes(a.name) ? 0 : 1
-              const bFeat = FEATURED_VENDORS.includes(b.name) ? 0 : 1
-              return aFeat - bFeat
-            })
-            return sorted.map(v => <VendorCard key={v.id} v={v} />)
-          })()
+            : sorted.map(v => <VendorCard key={v.id} v={v} />)
         }
       </div>
 
-      {/* Footer */}
       <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid #EDE4DC', color: '#C4A898', fontSize: 13 }}>
         Made with ♥ for Nigerian brides
       </footer>

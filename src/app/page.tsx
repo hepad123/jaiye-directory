@@ -25,6 +25,7 @@ type Vendor = {
   notes: string
   created_at?: string
   verified?: boolean
+  wedding_type?: string
 }
 
 type Review = {
@@ -50,7 +51,19 @@ const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Catering':              { emoji: '🍽️', colour: '#C4724A' },
   'Entertainment':         { emoji: '🎤', colour: '#7A6A9A' },
   'Other':                 { emoji: '✦',  colour: '#8A8A8A' },
+  'Fashion (White Wedding)': { emoji: '👰', colour: '#C4922A' },
+  'Fashion (Traditional)':   { emoji: '🪘', colour: '#B5540A' },
 }
+
+// Fashion vendors split by subcategory
+const FASHION_WHITE = [
+  'Mazelle Bridal', 'Airvy Studio', 'Scholtz Ruberto', 'Wealth Atelier',
+  'Ovems', 'House of Vieve', 'Horllard Fashion', 'Style by JC',
+]
+const FASHION_TRAD = [
+  'Ziurry Fashion', 'Clasik Q Diane', 'Somo by Somo', 'Florence by Ester',
+  'Myde Clothing', 'Prudential Atelier',
+]
 
 const LOCATION_ORDER = ['All', '🇳🇬 Nigeria', '🟢 Abuja', '🟢 Lagos', '🏙️ Lekki (Lagos)']
 const DB_LOCATION_MAP: Record<string, string> = {
@@ -202,8 +215,9 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
   )
 }
 
-function VendorCard({ v, isNew }: { v: Vendor; isNew: boolean }) {
+function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKey: number }) {
   const [expanded, setExpanded] = useState(false)
+  useEffect(() => { setExpanded(false) }, [resetKey])
   const [copied, setCopied] = useState(false)
   const [avgRating, setAvgRating] = useState<number | null>(null)
   const [usedCount, setUsedCount] = useState(0)
@@ -399,6 +413,7 @@ export default function Home() {
   const [category, setCategory]   = useState('All')
   const [location, setLocation]   = useState('All')
   const [showNewOnly, setShowNewOnly] = useState(false)
+  const [weddingType, setWeddingType] = useState('All')
   const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
@@ -409,17 +424,37 @@ export default function Home() {
     })
   }, [])
 
-  const CATEGORY_ORDER = ['All', 'Event Planning', 'Fashion', 'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content']
-  const allCats = Array.from(new Set(vendors.map(v => v.category)))
+  // Reset card expansion key when category changes so all cards collapse
+  const [cardResetKey, setCardResetKey] = useState(0)
+  useEffect(() => { setCardResetKey(k => k + 1) }, [category])
+
+  const CATEGORY_ORDER = ['All', 'Event Planning', 'Fashion (White Wedding)', 'Fashion (Traditional)', 'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content']
+  const allCats = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
+  const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
+  const categories = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
+
+  // getCategoryCount moved below vendorsWithSubcats
+
+  // Remap fashion vendors into subcategories for display
+  const vendorsWithSubcats = vendors.map(v => {
+    if (v.category === 'Fashion') {
+      if (FASHION_WHITE.includes(v.name)) return { ...v, category: 'Fashion (White Wedding)' }
+      if (FASHION_TRAD.includes(v.name)) return { ...v, category: 'Fashion (Traditional)' }
+    }
+    return v
+  })
+
+  const CATEGORY_ORDER = ['All', 'Event Planning', 'Fashion (White Wedding)', 'Fashion (Traditional)', 'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content']
+  const allCats = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
   const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
   const categories = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
 
   const getCategoryCount = (cat: string) =>
-    cat === 'All' ? vendors.length : vendors.filter(v => v.category === cat).length
+    cat === 'All' ? vendors.length : vendorsWithSubcats.filter(v => v.category === cat).length
 
-  const newVendors = vendors.filter(isNewVendor)
+  const newVendors = vendorsWithSubcats.filter(isNewVendor)
 
-  const filtered = vendors.filter(v => {
+  const filtered = vendorsWithSubcats.filter(v => {
     const q = search.toLowerCase()
     const matchSearch = !q ||
       v.name?.toLowerCase().includes(q) ||
@@ -432,7 +467,8 @@ export default function Home() {
     const dbLoc = Object.entries(DB_LOCATION_MAP).find(([_, label]) => label === location)?.[0]
     const matchLocation = location === 'All' || v.location === dbLoc
     const matchNew = !showNewOnly || isNewVendor(v)
-    return matchSearch && matchCat && matchLocation && matchNew
+    const matchWeddingType = category !== 'Fashion' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
+    return matchSearch && matchCat && matchLocation && matchNew && matchWeddingType
   })
 
   const sorted = [...filtered].sort((a, b) => {
@@ -474,7 +510,7 @@ export default function Home() {
               const emoji  = cat === 'All' ? '🌸' : getEmoji(cat)
               const count  = getCategoryCount(cat)
               return (
-                <button key={cat} onClick={() => setCategory(cat)} style={{
+                <button key={cat} onClick={() => { setCategory(cat); setWeddingType('All') }} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
                   padding: '6px 13px', borderRadius: 20, flexShrink: 0,
                   border: isActive ? 'none' : '1px solid #E8DDD5',
@@ -497,9 +533,32 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Fashion sub-filter pills */}
+        {category === 'Fashion' && (
+          <div style={{ padding: '0 16px 8px', maxWidth: 1200, margin: '0 auto' }}>
+            <div style={{ display: 'flex', gap: 7 }}>
+              {['All', 'White Wedding', 'Traditional', 'Both'].map(type => (
+                <button key={type} onClick={() => setWeddingType(type)} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '5px 12px', borderRadius: 20, flexShrink: 0,
+                  border: weddingType === type ? 'none' : '1px solid #E8DDD5',
+                  cursor: 'pointer', whiteSpace: 'nowrap',
+                  fontSize: 11, fontWeight: weddingType === type ? 600 : 400,
+                  background: weddingType === type ? '#C4922A' : '#FDFAF7',
+                  color: weddingType === type ? 'white' : '#8A6A58',
+                  boxShadow: weddingType === type ? '0 2px 10px #C4922A44' : 'none',
+                  transition: 'all 0.15s ease',
+                }}>
+                  {type === 'White Wedding' ? '🤍' : type === 'Traditional' ? '👘' : type === 'Both' ? '✨' : '🌸'} {type}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Second row — Discounts + New this week */}
         <div style={{ padding: '0 16px 8px', maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 7 }}>
-          <button onClick={() => setCategory(category === '__discounts__' ? 'All' : '__discounts__')} style={{
+          <button onClick={() => setCategory(category === '__discounts__' ? 'All' : '__discounts__'); setWeddingType('All')} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             padding: '7px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
             fontSize: 11, fontWeight: 700,
@@ -578,13 +637,13 @@ export default function Home() {
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
                 <div style={{ fontSize: 36 }}>🌸</div>
                 <p style={{ color: '#C4A898', marginTop: 10, fontSize: 13 }}>No vendors found.</p>
-                <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setShowNewOnly(false) }}
+                <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setShowNewOnly(false); setWeddingType('All') }}
                   style={{ marginTop: 8, padding: '6px 18px', background: '#C45C7A', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11 }}>
                   Show all
                 </button>
               </div>
             )
-            : sorted.map(v => <VendorCard key={v.id} v={v} isNew={isNewVendor(v)} />)
+            : sorted.map(v => <VendorCard key={v.id} v={v} isNew={isNewVendor(v)} resetKey={cardResetKey} />)
         }
       </div>
 

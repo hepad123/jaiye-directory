@@ -251,10 +251,17 @@ function VendorCard({
   currentUser: CurrentUser | null; savedIds: Set<string>
   onToggleSave: (vendorId: string) => void; onOpenAuth: () => void
 }) {
-  const [expanded, setExpanded]   = useState(false)
-  const [copied, setCopied]       = useState(false)
-  const [avgRating, setAvgRating] = useState<number | null>(null)
-  const [usedCount, setUsedCount] = useState(0)
+  const [expanded, setExpanded]       = useState(false)
+  const [copied, setCopied]           = useState(false)
+  const [avgRating, setAvgRating]     = useState<number | null>(null)
+  const [usedCount, setUsedCount]     = useState(0)
+  const [recCount, setRecCount]       = useState(0)
+  const [hasUsed, setHasUsed]         = useState(false)
+  const [hasRec, setHasRec]           = useState(false)
+  const [usedInput, setUsedInput]     = useState(false)
+  const [usedName, setUsedName]       = useState('')
+  const [usedSubmitting, setUsedSubmitting] = useState(false)
+  const [recSubmitting, setRecSubmitting]   = useState(false)
 
   useEffect(() => { setExpanded(false) }, [resetKey])
 
@@ -273,7 +280,43 @@ function VendorCard({
         setUsedCount(used.length)
         if (real.length > 0) setAvgRating(Math.round(real.reduce((s, r) => s + r.rating, 0) / real.length * 10) / 10)
       })
+    supabase.from('vendor_recommendations').select('id', { count: 'exact' }).eq('vendor_id', v.id)
+      .then(({ count }) => { if (count) setRecCount(count) })
   }, [v.id])
+
+  // Check if current user has already used / recommended
+  useEffect(() => {
+    if (!currentUser) return
+    supabase.from('reviews').select('id').eq('vendor_id', v.id).eq('reviewer_name', currentUser.name).eq('comment', '__used__')
+      .then(({ data }) => { if (data?.length) setHasUsed(true) })
+    supabase.from('vendor_recommendations').select('id').eq('vendor_id', v.id).eq('user_id', currentUser.email)
+      .then(({ data }) => { if (data?.length) setHasRec(true) })
+  }, [v.id, currentUser])
+
+  async function submitUsed() {
+    if (!usedName.trim()) return
+    setUsedSubmitting(true)
+    await supabase.from('reviews').insert({ vendor_id: v.id, reviewer_name: usedName, rating: 5, comment: '__used__' })
+    setUsedCount(c => c + 1)
+    setHasUsed(true)
+    setUsedInput(false)
+    setUsedName('')
+    setUsedSubmitting(false)
+  }
+
+  async function toggleRecommend() {
+    if (!currentUser) { onOpenAuth(); return }
+    if (hasRec) {
+      await supabase.from('vendor_recommendations').delete().eq('vendor_id', v.id).eq('user_id', currentUser.email)
+      setRecCount(c => Math.max(0, c - 1))
+      setHasRec(false)
+    } else {
+      await supabase.from('vendor_recommendations').insert({ vendor_id: v.id, user_id: currentUser.email })
+      setRecCount(c => c + 1)
+      setHasRec(true)
+    }
+    setRecSubmitting(false)
+  }
 
   function copyCode() {
     navigator.clipboard.writeText(v.discount_code)
@@ -283,11 +326,18 @@ function VendorCard({
   const whatsappNumber = v.phone?.replace(/\D/g, '')
   const whatsappUrl    = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null
 
+  const btnBase: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 5,
+    padding: '5px 12px', borderRadius: 20, fontSize: 11,
+    fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+    fontFamily: 'var(--font-jost, sans-serif)', border: '1px solid #E8E0F0',
+  }
+
   return (
     <div style={{ background: 'white', borderRadius: 16, border: `1.5px solid ${colour}55`, overflow: 'hidden', position: 'relative' }}>
 
-      {/* Badges */}
-      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
+      {/* Badges — top LEFT */}
+      <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
         {isFeatured && (
           <div style={{ background: '#FDF3E3', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#A07820', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>
         )}
@@ -299,12 +349,12 @@ function VendorCard({
         )}
       </div>
 
-      {/* Heart button */}
+      {/* Heart button — top RIGHT, no overlap */}
       <button
         onClick={() => { if (!currentUser) { onOpenAuth(); return } onToggleSave(v.id) }}
         title={currentUser ? (isSaved ? 'Remove from saved' : 'Save vendor') : 'Sign in to save vendors'}
         style={{
-          position: 'absolute', top: isFeatured ? 38 : 12, right: 12,
+          position: 'absolute', top: 12, right: 12,
           background: isSaved ? '#F5F0F8' : 'white',
           border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`,
           borderRadius: '50%', width: 28, height: 28,
@@ -314,7 +364,7 @@ function VendorCard({
         <HeartIcon filled={isSaved} />
       </button>
 
-      <div style={{ padding: '14px 14px 12px' }}>
+      <div style={{ padding: '14px 14px 12px', paddingTop: (isFeatured || v.verified || isNew) ? 36 : 14 }}>
         {/* Category */}
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {getEmoji(v.category)} {v.category}
@@ -325,11 +375,12 @@ function VendorCard({
           {v.name}
         </div>
 
-        {/* Rating */}
-        {(avgRating !== null || usedCount > 0) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+        {/* Rating / used */}
+        {(avgRating !== null || usedCount > 0 || recCount > 0) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
             {avgRating !== null && <span style={{ fontSize: 11, color: '#B8860B', fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
-            {usedCount > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} bride{usedCount !== 1 ? 's' : ''} used this</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} used</span>}
+            {recCount > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ {recCount} rec</span>}
           </div>
         )}
 
@@ -339,7 +390,7 @@ function VendorCard({
         {/* Price */}
         {v.price_from && <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>💰 From ₦{v.price_from}</div>}
 
-        {/* Instagram — mauve icon, muted grey handle */}
+        {/* Instagram */}
         {igHandle && (
           <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: MUTED, textDecoration: 'none', marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
@@ -363,12 +414,7 @@ function VendorCard({
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: DARK, color: '#F5EAF8', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: 'var(--font-jost, sans-serif)' }}>
               🏷️ {v.discount_code}
             </span>
-            <button onClick={copyCode} style={{
-              padding: '4px 10px', borderRadius: 20, border: '1px solid #E8E0F0',
-              background: copied ? '#F0EEFF' : 'white', fontSize: 10,
-              color: copied ? '#6050A8' : MUTED, cursor: 'pointer', fontWeight: 600,
-              transition: 'all 0.2s', fontFamily: 'var(--font-jost, sans-serif)',
-            }}>
+            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid #E8E0F0', background: copied ? '#F0EEFF' : 'white', fontSize: 10, color: copied ? '#6050A8' : MUTED, cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: 'var(--font-jost, sans-serif)' }}>
               {copied ? '✓ Copied!' : 'Copy'}
             </button>
           </div>
@@ -380,13 +426,47 @@ function VendorCard({
             {v.services && <p style={{ fontSize: 11, color: '#5A4868', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
             {v.phone    && <p style={{ fontSize: 11, color: MUTED, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
             {v.email    && <p style={{ fontSize: 11, color: MUTED, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
-            {v.website  && (
-              <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: 11, color: '#7B68C8', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
-                🌐 {v.website}
-              </a>
-            )}
-            {v.notes && <p style={{ fontSize: 10, color: '#B0A0B8', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
+            {v.website  && <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#7B68C8', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
+            {v.notes    && <p style={{ fontSize: 10, color: '#B0A0B8', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
+
+            {/* ── Used this vendor ── */}
+            <div style={{ marginTop: 4 }}>
+              {!hasUsed && !usedInput && (
+                <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; setUsedInput(true) }}
+                  style={{ ...btnBase, background: 'white', color: MUTED }}>
+                  👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
+                </button>
+              )}
+              {hasUsed && (
+                <div style={{ ...btnBase, background: '#F5F0F8', border: `1px solid ${ACCENT}44`, color: ACCENT, cursor: 'default' }}>
+                  👋 Used this · <span style={{ fontWeight: 700 }}>{usedCount}</span>
+                </div>
+              )}
+              {usedInput && (
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
+                  <input placeholder="Your name *" value={usedName} onChange={e => setUsedName(e.target.value)}
+                    style={{ flex: 1, padding: '5px 8px', border: '1px solid #DDD0E8', borderRadius: 8, fontSize: 11, background: 'white', fontFamily: 'var(--font-jost, sans-serif)' }} />
+                  <button onClick={submitUsed} disabled={usedSubmitting || !usedName.trim()}
+                    style={{ padding: '5px 12px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: !usedName.trim() ? 0.5 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>✓</button>
+                  <button onClick={() => setUsedInput(false)}
+                    style={{ padding: '5px 8px', background: 'none', border: 'none', fontSize: 13, color: '#bbb', cursor: 'pointer' }}>×</button>
+                </div>
+              )}
+            </div>
+
+            {/* ── Recommend this vendor ── */}
+            <div style={{ marginTop: 4 }}>
+              <button onClick={toggleRecommend} disabled={recSubmitting}
+                style={{
+                  ...btnBase,
+                  background: hasRec ? '#F5F0F8' : 'white',
+                  border: hasRec ? `1px solid ${ACCENT}44` : '1px solid #E8E0F0',
+                  color: hasRec ? ACCENT : MUTED,
+                }}>
+                ⭐ {hasRec ? 'Recommended' : 'I recommend this'} {recCount > 0 && <span style={{ fontWeight: 700, color: ACCENT }}>· {recCount}</span>}
+              </button>
+            </div>
+
             <ReviewSection vendor={v} />
           </div>
         )}

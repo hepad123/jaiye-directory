@@ -34,12 +34,14 @@ type Review = {
   id: string
   vendor_id: string
   reviewer_name: string
+  user_id?: string
   rating: number
   comment: string
   created_at: string
 }
 
 type CurrentUser = {
+  id: string
   name: string
   email: string
 }
@@ -47,14 +49,14 @@ type CurrentUser = {
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
 
 // ── Palette B ──────────────────────────────────────────────────────────────────
-const ACCENT    = '#8B6E9A'  // mauve
-const DARK      = '#2A1A2A'  // deep plum-black
-const BG        = '#FAFAFA'  // near white
-const PILL_BG   = '#E8DCF0'  // soft lavender
-const PILL_TEXT = '#4A3858'  // dark plum
-const GOLD      = '#C0A060'  // gold for ornament + 200+ vendors
-const MUTED     = '#9A8A9A'  // muted grey text
-const IG_COLOUR = '#8B6E9A'  // IG icon — mauve pink
+const ACCENT    = '#8B6E9A'
+const DARK      = '#2A1A2A'
+const BG        = '#FAFAFA'
+const PILL_BG   = '#E8DCF0'
+const PILL_TEXT = '#4A3858'
+const GOLD      = '#C0A060'
+const MUTED     = '#9A8A9A'
+const IG_COLOUR = '#8B6E9A'
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Event Planning':        { emoji: '📋', colour: '#7B68C8' },
@@ -135,17 +137,19 @@ function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) =
 }
 
 // ─── Review Section ───────────────────────────────────────────────────────────
+// NOTE: No "I used this vendor" button here — that lives only in VendorCard's expanded section.
+// This component only handles written reviews (star rating + comment).
 
-function ReviewSection({ vendor }: { vendor: Vendor }) {
-  const [reviews, setReviews]         = useState<Review[]>([])
-  const [name, setName]               = useState('')
-  const [rating, setRating]           = useState(0)
-  const [comment, setComment]         = useState('')
-  const [submitting, setSubmitting]   = useState(false)
-  const [showForm, setShowForm]       = useState(false)
-  const [usedVendor, setUsedVendor]   = useState(false)
-  const [usedName, setUsedName]       = useState('')
-  const [usedSubmitting, setUsedSubmitting] = useState(false)
+function ReviewSection({ vendor, currentUser, onOpenAuth }: {
+  vendor: Vendor
+  currentUser: CurrentUser | null
+  onOpenAuth: () => void
+}) {
+  const [reviews, setReviews]       = useState<Review[]>([])
+  const [rating, setRating]         = useState(0)
+  const [comment, setComment]       = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [showForm, setShowForm]     = useState(false)
 
   useEffect(() => {
     supabase.from('reviews').select('*').eq('vendor_id', vendor.id)
@@ -153,61 +157,36 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
       .then(({ data }) => { if (data) setReviews(data) })
   }, [vendor.id])
 
-  async function submitUsed() {
-    if (!usedName.trim()) return
-    setUsedSubmitting(true)
-    const { data } = await supabase.from('reviews')
-      .insert({ vendor_id: vendor.id, reviewer_name: usedName, rating: 5, comment: '__used__' })
-      .select()
-    if (data) setReviews(prev => [data[0], ...prev])
-    setUsedVendor(false); setUsedName(''); setUsedSubmitting(false)
-  }
-
   async function submitReview() {
-    if (!name.trim() || rating === 0) return
+    if (!currentUser || rating === 0) return
     setSubmitting(true)
     const { data } = await supabase.from('reviews')
-      .insert({ vendor_id: vendor.id, reviewer_name: name, rating, comment })
+      .insert({
+        vendor_id: vendor.id,
+        reviewer_name: currentUser.name,
+        user_id: currentUser.id,
+        rating,
+        comment,
+      })
       .select()
     if (data) {
       setReviews(prev => [data[0], ...prev])
-      setName(''); setRating(0); setComment(''); setShowForm(false)
+      setRating(0); setComment(''); setShowForm(false)
     }
     setSubmitting(false)
   }
 
   const realReviews = reviews.filter(r => r.comment !== '__used__')
-  const usedCount   = reviews.filter(r => r.comment === '__used__').length
   const inputStyle  = { border: '1px solid #DDD0E8', borderRadius: 8, fontSize: 11, background: 'white', fontFamily: 'var(--font-jost, sans-serif)' }
 
   return (
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EDE8F0' }}>
-      <div style={{ marginBottom: 8 }}>
-        {!usedVendor ? (
-          <button onClick={() => setUsedVendor(true)} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20,
-            border: '1px solid #DDD0E8', background: BG, cursor: 'pointer', fontSize: 11, color: '#7A6888', fontWeight: 500,
-            fontFamily: 'var(--font-jost, sans-serif)',
-          }}>
-            👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
-          </button>
-        ) : (
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input placeholder="Your name *" value={usedName} onChange={e => setUsedName(e.target.value)}
-              style={{ ...inputStyle, flex: 1, padding: '5px 8px' }} />
-            <button onClick={submitUsed} disabled={usedSubmitting || !usedName.trim()}
-              style={{ padding: '5px 12px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: !usedName.trim() ? 0.5 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>✓</button>
-            <button onClick={() => setUsedVendor(false)}
-              style={{ padding: '5px 8px', background: 'none', border: 'none', fontSize: 13, color: '#bbb', cursor: 'pointer' }}>×</button>
-          </div>
-        )}
-      </div>
-
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 10, color: '#B0A0B8', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
         </span>
-        <button onClick={() => setShowForm(!showForm)}
+        <button
+          onClick={() => { if (!currentUser) { onOpenAuth(); return }; setShowForm(!showForm) }}
           style={{ fontSize: 10, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {showForm ? 'Cancel' : '+ Add review'}
         </button>
@@ -215,13 +194,11 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
 
       {showForm && (
         <div style={{ background: '#F5F0F8', borderRadius: 10, padding: 10, marginBottom: 8 }}>
-          <input placeholder="Your name *" value={name} onChange={e => setName(e.target.value)}
-            style={{ ...inputStyle, width: '100%', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const }} />
           <div style={{ marginBottom: 6 }}><StarRating rating={rating} onRate={setRating} /></div>
           <textarea placeholder="Share your experience..." value={comment} onChange={e => setComment(e.target.value)} rows={2}
             style={{ ...inputStyle, width: '100%', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const, resize: 'none' as const }} />
-          <button onClick={submitReview} disabled={submitting || !name.trim() || rating === 0}
-            style={{ padding: '5px 14px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: (!name.trim() || rating === 0) ? 0.45 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>
+          <button onClick={submitReview} disabled={submitting || rating === 0}
+            style={{ padding: '5px 14px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: rating === 0 ? 0.45 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>
             {submitting ? 'Submitting…' : 'Submit'}
           </button>
         </div>
@@ -251,15 +228,13 @@ function VendorCard({
   currentUser: CurrentUser | null; savedIds: Set<string>
   onToggleSave: (vendorId: string) => void; onOpenAuth: () => void
 }) {
-  const [expanded, setExpanded]       = useState(false)
-  const [copied, setCopied]           = useState(false)
-  const [avgRating, setAvgRating]     = useState<number | null>(null)
-  const [usedCount, setUsedCount]     = useState(0)
-  const [recCount, setRecCount]       = useState(0)
-  const [hasUsed, setHasUsed]         = useState(false)
-  const [hasRec, setHasRec]           = useState(false)
-  const [usedInput, setUsedInput]     = useState(false)
-  const [usedName, setUsedName]       = useState('')
+  const [expanded, setExpanded]             = useState(false)
+  const [copied, setCopied]                 = useState(false)
+  const [avgRating, setAvgRating]           = useState<number | null>(null)
+  const [usedCount, setUsedCount]           = useState(0)
+  const [recCount, setRecCount]             = useState(0)
+  const [hasUsed, setHasUsed]               = useState(false)
+  const [hasRec, setHasRec]                 = useState(false)
   const [usedSubmitting, setUsedSubmitting] = useState(false)
   const [recSubmitting, setRecSubmitting]   = useState(false)
 
@@ -271,6 +246,7 @@ function VendorCard({
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
   const isSaved    = savedIds.has(v.id)
 
+  // Load counts
   useEffect(() => {
     supabase.from('reviews').select('rating, comment').eq('vendor_id', v.id)
       .then(({ data }) => {
@@ -284,34 +260,45 @@ function VendorCard({
       .then(({ count }) => { if (count) setRecCount(count) })
   }, [v.id])
 
-  // Check if current user has already used / recommended
+  // Check if current user has already used / recommended — using user_id
   useEffect(() => {
-    if (!currentUser) return
-    supabase.from('reviews').select('id').eq('vendor_id', v.id).eq('reviewer_name', currentUser.name).eq('comment', '__used__')
+    if (!currentUser?.id) return
+    supabase.from('reviews')
+      .select('id').eq('vendor_id', v.id).eq('user_id', currentUser.id).eq('comment', '__used__')
       .then(({ data }) => { if (data?.length) setHasUsed(true) })
-    supabase.from('vendor_recommendations').select('id').eq('vendor_id', v.id).eq('user_id', currentUser.email)
+    supabase.from('vendor_recommendations')
+      .select('id').eq('vendor_id', v.id).eq('user_id', currentUser.id)
       .then(({ data }) => { if (data?.length) setHasRec(true) })
   }, [v.id, currentUser])
 
+  // "I used this vendor" — no name input, uses signed-in user identity
   async function submitUsed() {
-    if (!usedName.trim()) return
+    if (!currentUser) { onOpenAuth(); return }
+    if (hasUsed) return
     setUsedSubmitting(true)
-    await supabase.from('reviews').insert({ vendor_id: v.id, reviewer_name: usedName, rating: 5, comment: '__used__' })
+    await supabase.from('reviews').insert({
+      vendor_id: v.id,
+      reviewer_name: currentUser.name,
+      user_id: currentUser.id,
+      rating: 5,
+      comment: '__used__',
+    })
     setUsedCount(c => c + 1)
     setHasUsed(true)
-    setUsedInput(false)
-    setUsedName('')
     setUsedSubmitting(false)
   }
 
   async function toggleRecommend() {
     if (!currentUser) { onOpenAuth(); return }
+    setRecSubmitting(true)
     if (hasRec) {
-      await supabase.from('vendor_recommendations').delete().eq('vendor_id', v.id).eq('user_id', currentUser.email)
+      await supabase.from('vendor_recommendations')
+        .delete().eq('vendor_id', v.id).eq('user_id', currentUser.id)
       setRecCount(c => Math.max(0, c - 1))
       setHasRec(false)
     } else {
-      await supabase.from('vendor_recommendations').insert({ vendor_id: v.id, user_id: currentUser.email })
+      await supabase.from('vendor_recommendations')
+        .insert({ vendor_id: v.id, user_id: currentUser.id })
       setRecCount(c => c + 1)
       setHasRec(true)
     }
@@ -349,9 +336,9 @@ function VendorCard({
         )}
       </div>
 
-      {/* Heart button — top RIGHT, no overlap */}
+      {/* Heart button — top RIGHT */}
       <button
-        onClick={() => { if (!currentUser) { onOpenAuth(); return } onToggleSave(v.id) }}
+        onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }}
         title={currentUser ? (isSaved ? 'Remove from saved' : 'Save vendor') : 'Sign in to save vendors'}
         style={{
           position: 'absolute', top: 12, right: 12,
@@ -375,7 +362,7 @@ function VendorCard({
           {v.name}
         </div>
 
-        {/* Rating / used */}
+        {/* Rating / used / rec counts */}
         {(avgRating !== null || usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
             {avgRating !== null && <span style={{ fontSize: 11, color: '#B8860B', fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
@@ -384,13 +371,9 @@ function VendorCard({
           </div>
         )}
 
-        {/* Location */}
         {v.location && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
-
-        {/* Price */}
         {v.price_from && <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>💰 From ₦{v.price_from}</div>}
 
-        {/* Instagram */}
         {igHandle && (
           <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: MUTED, textDecoration: 'none', marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
@@ -398,7 +381,6 @@ function VendorCard({
           </a>
         )}
 
-        {/* WhatsApp */}
         {whatsappUrl && (
           <div style={{ marginBottom: 4 }}>
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
@@ -408,7 +390,6 @@ function VendorCard({
           </div>
         )}
 
-        {/* Discount */}
         {v.discount_code && (
           <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: DARK, color: '#F5EAF8', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: 'var(--font-jost, sans-serif)' }}>
@@ -420,7 +401,7 @@ function VendorCard({
           </div>
         )}
 
-        {/* Expanded */}
+        {/* ── Expanded section ── */}
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EDE8F0', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {v.services && <p style={{ fontSize: 11, color: '#5A4868', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
@@ -429,32 +410,23 @@ function VendorCard({
             {v.website  && <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#7B68C8', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
             {v.notes    && <p style={{ fontSize: 10, color: '#B0A0B8', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
 
-            {/* ── Used this vendor ── */}
+            {/* ── "I used this vendor" — single instance, auth-gated, no name input ── */}
             <div style={{ marginTop: 4 }}>
-              {!hasUsed && !usedInput && (
-                <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; setUsedInput(true) }}
-                  style={{ ...btnBase, background: 'white', color: MUTED }}>
-                  👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
-                </button>
-              )}
-              {hasUsed && (
+              {hasUsed ? (
                 <div style={{ ...btnBase, background: '#F5F0F8', border: `1px solid ${ACCENT}44`, color: ACCENT, cursor: 'default' }}>
                   👋 Used this · <span style={{ fontWeight: 700 }}>{usedCount}</span>
                 </div>
-              )}
-              {usedInput && (
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
-                  <input placeholder="Your name *" value={usedName} onChange={e => setUsedName(e.target.value)}
-                    style={{ flex: 1, padding: '5px 8px', border: '1px solid #DDD0E8', borderRadius: 8, fontSize: 11, background: 'white', fontFamily: 'var(--font-jost, sans-serif)' }} />
-                  <button onClick={submitUsed} disabled={usedSubmitting || !usedName.trim()}
-                    style={{ padding: '5px 12px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: !usedName.trim() ? 0.5 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>✓</button>
-                  <button onClick={() => setUsedInput(false)}
-                    style={{ padding: '5px 8px', background: 'none', border: 'none', fontSize: 13, color: '#bbb', cursor: 'pointer' }}>×</button>
-                </div>
+              ) : (
+                <button
+                  onClick={submitUsed}
+                  disabled={usedSubmitting}
+                  style={{ ...btnBase, background: 'white', color: MUTED, opacity: usedSubmitting ? 0.6 : 1 }}>
+                  👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
+                </button>
               )}
             </div>
 
-            {/* ── Recommend this vendor ── */}
+            {/* ── "I recommend this vendor" ── */}
             <div style={{ marginTop: 4 }}>
               <button onClick={toggleRecommend} disabled={recSubmitting}
                 style={{
@@ -462,16 +434,18 @@ function VendorCard({
                   background: hasRec ? '#F5F0F8' : 'white',
                   border: hasRec ? `1px solid ${ACCENT}44` : '1px solid #E8E0F0',
                   color: hasRec ? ACCENT : MUTED,
+                  opacity: recSubmitting ? 0.6 : 1,
                 }}>
                 ⭐ {hasRec ? 'Recommended' : 'I recommend this'} {recCount > 0 && <span style={{ fontWeight: 700, color: ACCENT }}>· {recCount}</span>}
               </button>
             </div>
 
-            <ReviewSection vendor={v} />
+            {/* Reviews — no duplicate used button here */}
+            <ReviewSection vendor={v} currentUser={currentUser} onOpenAuth={onOpenAuth} />
           </div>
         )}
 
-        {/* More/Less */}
+        {/* More/Less toggle */}
         {hasDetails && (
           <button onClick={() => setExpanded(!expanded)} style={{
             marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
@@ -504,17 +478,13 @@ export default function Home() {
   const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
 
+  // Derive currentUser from Supabase auth (uses user.id, not email)
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('jaiye_user')
-      if (stored) setCurrentUser(JSON.parse(stored) as CurrentUser)
-    } catch {}
-  }, [])
-
-  useEffect(() => {
-    if (authUser?.email) {
+    if (authUser?.id && authUser?.email) {
       const displayName = authUser.user_metadata?.display_name || authUser.email.split('@')[0]
-      setCurrentUser({ name: displayName, email: authUser.email })
+      setCurrentUser({ id: authUser.id, name: displayName, email: authUser.email })
+    } else {
+      setCurrentUser(null)
     }
   }, [authUser])
 
@@ -533,11 +503,6 @@ export default function Home() {
   }, [])
 
   useEffect(() => { setCardResetKey(k => k + 1) }, [category])
-
-  function handleSignOut() {
-    localStorage.removeItem('jaiye_user')
-    setCurrentUser(null); setSavedIds(new Set())
-  }
 
   const handleToggleSave = useCallback(async (vendorId: string) => {
     if (!currentUser) return
@@ -589,7 +554,7 @@ export default function Home() {
         <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
 
         {currentUser && authUser ? (
-          <Link href={`/profile/${authUser.email?.split('@')[0]}`} title="My profile"
+          <Link href={`/profile/${authUser.user_metadata?.username || authUser.email?.split('@')[0]}`} title="My profile"
             style={{ width: 32, height: 32, borderRadius: '50%', background: '#F0E8F0', border: '1.5px solid #D0C0D8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: 12, fontWeight: 600, color: DARK, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
             {currentUser.name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}
           </Link>
@@ -602,7 +567,14 @@ export default function Home() {
         )}
 
         {currentUser && (
-          <button onClick={handleSignOut} style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
+          <button
+            onClick={async () => {
+              const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+              const sb = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+              await sb.auth.signOut()
+              setCurrentUser(null); setSavedIds(new Set())
+            }}
+            style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
             Sign out
           </button>
         )}
@@ -611,35 +583,26 @@ export default function Home() {
       {/* ── Hero ── */}
       <div style={{ background: 'linear-gradient(180deg, #DDD0E4 0%, #EDE4F0 40%, #FAFAFA 100%)' }}>
         <div style={{ textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) clamp(20px, 4vw, 40px) clamp(28px, 4vw, 36px)', maxWidth: 1200, margin: '0 auto' }}>
-
-          {/* Ornament — gold */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 18 }}>
             <div style={{ height: 1, width: 44, background: GOLD, opacity: 0.6 }} />
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: GOLD, opacity: 0.8 }} />
             <div style={{ height: 1, width: 44, background: GOLD, opacity: 0.6 }} />
           </div>
-
           <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, fontWeight: 500, marginBottom: 10 }}>
             Wedding &amp; Event Vendors
           </div>
-
           <h1 style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 'clamp(36px, 6vw, 48px)', fontWeight: 700, color: DARK, letterSpacing: '0.14em', textTransform: 'uppercase', lineHeight: 1, margin: '0 0 6px' }}>
             Jaiye
           </h1>
-
           <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#6A586A', marginBottom: 18 }}>
             Directory
           </div>
-
           <p style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 11, color: '#6A586A', letterSpacing: '0.04em', fontWeight: 400, margin: '0 0 5px' }}>
             Your guide to the best Nigerian wedding and event vendors
           </p>
-
           <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 11, color: GOLD, letterSpacing: '0.06em', fontWeight: 500 }}>
             200+ vendors
           </div>
-
-          {/* Gold rule */}
           <div style={{ marginTop: 26, height: 1, background: `linear-gradient(to right, transparent, ${GOLD} 30%, ${GOLD} 70%, transparent 100%)` }} />
         </div>
       </div>

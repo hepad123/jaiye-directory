@@ -219,40 +219,66 @@ export default function ProfilePage() {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const { data: byUsername } = await supabase.from('profiles').select('*').eq('username', username).maybeSingle()
+
+      // Load profile by username
+      const { data: byUsername } = await supabase
+        .from('profiles').select('*').eq('username', username).maybeSingle()
       if (!byUsername) { setNotFound(true); setLoading(false); return }
       setProfile(byUsername)
 
-      const { data: usedRows } = await supabase.from('reviews').select('vendor_id').eq('comment', '__used__').eq('reviewer_name', byUsername.display_name)
+      // ── Used vendors: look up by user_id (profile.id = auth.uid) ──
+      // Fall back to reviewer_name for any legacy rows that predate user_id
+      const { data: usedRows } = await supabase
+        .from('reviews')
+        .select('vendor_id')
+        .eq('comment', '__used__')
+        .eq('user_id', byUsername.id)   // ← now uses uuid, not display_name
       if (usedRows?.length) {
         const ids = [...new Set(usedRows.map(r => r.vendor_id))]
-        const { data: vendorData } = await supabase.from('vendors').select('id, name, category, location, instagram, price_from, verified').in('id', ids)
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id, name, category, location, instagram, price_from, verified')
+          .in('id', ids)
         if (vendorData) setUsedVendors(vendorData)
       }
 
-      const { data: recRows } = await supabase.from('vendor_recommendations').select('vendor_id').eq('user_id', byUsername.email)
+      // ── Recommended vendors: look up by user_id ──
+      const { data: recRows } = await supabase
+        .from('vendor_recommendations')
+        .select('vendor_id')
+        .eq('user_id', byUsername.id)   // ← uuid, matches the updated schema
       if (recRows?.length) {
         const ids = recRows.map(r => r.vendor_id)
-        const { data: vendorData } = await supabase.from('vendors').select('id, name, category, location, instagram, price_from, verified').in('id', ids)
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id, name, category, location, instagram, price_from, verified')
+          .in('id', ids)
         if (vendorData) setRecVendors(vendorData)
       }
 
-      const { data: followerRows } = await supabase.from('follows').select('follower_id').eq('following_id', byUsername.email)
+      // Followers / following
+      const { data: followerRows } = await supabase
+        .from('follows').select('follower_id').eq('following_id', byUsername.email)
       if (followerRows?.length) {
         const emails = followerRows.map(r => r.follower_id)
-        const { data: fp } = await supabase.from('profiles').select('email, display_name, username').in('email', emails)
+        const { data: fp } = await supabase
+          .from('profiles').select('email, display_name, username').in('email', emails)
         if (fp) setFollowers(fp)
       }
 
-      const { data: followingRows } = await supabase.from('follows').select('following_id').eq('follower_id', byUsername.email)
+      const { data: followingRows } = await supabase
+        .from('follows').select('following_id').eq('follower_id', byUsername.email)
       if (followingRows?.length) {
         const emails = followingRows.map(r => r.following_id)
-        const { data: fp } = await supabase.from('profiles').select('email, display_name, username').in('email', emails)
+        const { data: fp } = await supabase
+          .from('profiles').select('email, display_name, username').in('email', emails)
         if (fp) setFollowing(fp)
       }
 
+      // Current viewer's following list (for follow/unfollow button state)
       if (user?.email) {
-        const { data: myFollowing } = await supabase.from('follows').select('following_id').eq('follower_id', user.email)
+        const { data: myFollowing } = await supabase
+          .from('follows').select('following_id').eq('follower_id', user.email)
         if (myFollowing) setFollowingEmails(new Set(myFollowing.map(r => r.following_id)))
       }
 
@@ -367,7 +393,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Name */}
+          {/* Name / handle / bio */}
           <div style={{ marginBottom: 16, paddingLeft: 2 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: DARK, marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{displayName}</div>
             <div style={{ fontSize: 12, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>@{handle}</div>

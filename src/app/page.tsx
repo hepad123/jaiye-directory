@@ -42,7 +42,7 @@ const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Event Planning':        { emoji: '📋', colour: '#9B7BB8' },
   'Styling':               { emoji: '✨', colour: '#C45C7A' },
-  'Fashion':               { emoji: '👗', colour: '#C4922A' },
+  'Outfits':               { emoji: '👗', colour: '#C4922A' },
   'Makeup':                { emoji: '💄', colour: '#D4789A' },
   'Hair & Gele':           { emoji: '💇🏾', colour: '#6A9BB5' },
   'Photography':           { emoji: '📸', colour: '#5A8A72' },
@@ -51,18 +51,8 @@ const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Catering':              { emoji: '🍽️', colour: '#C4724A' },
   'Entertainment':         { emoji: '🎤', colour: '#7A6A9A' },
   'Other':                 { emoji: '✦',  colour: '#8A8A8A' },
-  'Fashion (White Wedding)': { emoji: '👰', colour: '#C4922A' },
-  'Fashion (Traditional)':   { emoji: '🪘', colour: '#B5540A' },
 }
 
-const FASHION_WHITE = [
-  'Mazelle Bridal', 'Airvy Studio', 'Scholtz Ruberto', 'Wealth Atelier',
-  'Ovems', 'House of Vieve', 'Horllard Fashion', 'Style by JC',
-]
-const FASHION_TRAD = [
-  'Ziurry Fashion', 'Clasik Q Diane', 'Somo by Somo', 'Florence by Ester',
-  'Myde Clothing', 'Prudential Atelier',
-]
 
 const LOCATION_ORDER = ['All', '🇳🇬 Nigeria', '🟢 Abuja', '🟢 Lagos', '🏙️ Lekki (Lagos)']
 const DB_LOCATION_MAP: Record<string, string> = {
@@ -73,7 +63,7 @@ const DB_LOCATION_MAP: Record<string, string> = {
 }
 
 const CATEGORY_ORDER = [
-  'All', 'Event Planning', 'Fashion (White Wedding)', 'Fashion (Traditional)',
+  'All', 'Event Planning', 'Outfits',
   'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content',
 ]
 
@@ -412,12 +402,9 @@ export default function Home() {
 
   useEffect(() => { setCardResetKey(k => k + 1) }, [category])
 
-  // Remap fashion vendors into subcategories for display
+  // Remap Fashion → Outfits for display
   const vendorsWithSubcats = vendors.map(v => {
-    if (v.category === 'Fashion') {
-      if (FASHION_WHITE.includes(v.name)) return { ...v, category: 'Fashion (White Wedding)' }
-      if (FASHION_TRAD.includes(v.name))  return { ...v, category: 'Fashion (Traditional)' }
-    }
+    if (v.category === 'Fashion') return { ...v, category: 'Outfits' }
     return v
   })
 
@@ -443,7 +430,7 @@ export default function Home() {
     const dbLoc = Object.entries(DB_LOCATION_MAP).find(([, label]) => label === location)?.[0]
     const matchLocation = location === 'All' || v.location === dbLoc
     const matchNew = !showNewOnly || isNewVendor(v)
-    const matchWeddingType = category !== 'Fashion' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
+    const matchWeddingType = category !== 'Outfits' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
     return matchSearch && matchCat && matchLocation && matchNew && matchWeddingType
   })
 
@@ -510,7 +497,7 @@ export default function Home() {
         </div>
 
         {/* Fashion sub-filter pills */}
-        {category === 'Fashion' && (
+        {category === 'Outfits' && (
           <div style={{ padding: '0 16px 8px', maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ display: 'flex', gap: 7 }}>
               {['All', 'White Wedding', 'Traditional', 'Both'].map(type => (

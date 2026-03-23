@@ -226,22 +226,27 @@ export default function ProfilePage() {
       if (!byUsername) { setNotFound(true); setLoading(false); return }
       setProfile(byUsername)
 
-      // ── Used vendors: run separate queries and merge results ──
-      const [
-        { data: usedByUid },
-        { data: usedByDisplayName },
-        { data: usedByEmailPrefix },
-      ] = await Promise.all([
-        supabase.from('reviews').select('vendor_id').eq('comment', '__used__').eq('user_id', byUsername.id),
-        supabase.from('reviews').select('vendor_id').eq('comment', '__used__').eq('reviewer_name', byUsername.display_name),
-        supabase.from('reviews').select('vendor_id').eq('comment', '__used__').eq('reviewer_name', byUsername.email.split('@')[0]),
-      ])
+      // ── Used vendors: fetch ALL __used__ rows then filter client-side ──
+      // (avoids UUID casting issues with eq() filter on uuid columns)
+      const profileId    = String(byUsername.id).trim()
+      const profileName  = String(byUsername.display_name).trim()
+      const profileEmail = String(byUsername.email).trim()
+      const emailPrefix  = profileEmail.split('@')[0]
 
-      const allUsedIds = [...new Set([
-        ...(usedByUid ?? []).map((r: any) => r.vendor_id),
-        ...(usedByDisplayName ?? []).map((r: any) => r.vendor_id),
-        ...(usedByEmailPrefix ?? []).map((r: any) => r.vendor_id),
-      ])]
+      const { data: allReviewRows } = await supabase
+        .from('reviews')
+        .select('vendor_id, user_id, reviewer_name')
+        .eq('comment', '__used__')
+
+      const allUsedIds = [...new Set(
+        (allReviewRows ?? [])
+          .filter((r: any) =>
+            String(r.user_id).trim() === profileId ||
+            String(r.reviewer_name).trim() === profileName ||
+            String(r.reviewer_name).trim() === emailPrefix
+          )
+          .map((r: any) => r.vendor_id)
+      )]
 
       if (allUsedIds.length) {
         const { data: vendorData } = await supabase
@@ -251,18 +256,22 @@ export default function ProfilePage() {
         if (vendorData) setUsedVendors(vendorData)
       }
 
-      // ── Recommended vendors: query by user_id (uuid) ──
-      const { data: recRows } = await supabase
+      // ── Recommended vendors: fetch all then filter client-side ──
+      const { data: allRecRows } = await supabase
         .from('vendor_recommendations')
-        .select('vendor_id')
-        .eq('user_id', byUsername.id)
+        .select('vendor_id, user_id')
 
-      if (recRows?.length) {
-        const ids = recRows.map((r: any) => r.vendor_id)
+      const recIds = [...new Set(
+        (allRecRows ?? [])
+          .filter((r: any) => String(r.user_id).trim() === profileId)
+          .map((r: any) => r.vendor_id)
+      )]
+
+      if (recIds.length) {
         const { data: vendorData } = await supabase
           .from('vendors')
           .select('id, name, category, location, instagram, price_from, verified')
-          .in('id', ids)
+          .in('id', recIds)
         if (vendorData) setRecVendors(vendorData)
       }
 

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
+import { useAuth } from '@/hooks/useAuth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -235,7 +236,7 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
 // ─── Vendor Card ──────────────────────────────────────────────────────────────
 
 function VendorCard({
-  v, isNew, resetKey, currentUser, savedIds, onToggleSave,
+  v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth,
 }: {
   v: Vendor
   isNew: boolean
@@ -243,6 +244,7 @@ function VendorCard({
   currentUser: CurrentUser | null
   savedIds: Set<string>
   onToggleSave: (vendorId: string) => void
+  onOpenAuth: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
   useEffect(() => { setExpanded(false) }, [resetKey])
@@ -311,11 +313,7 @@ function VendorCard({
       {/* Save / Heart button */}
       <button
         onClick={() => {
-          if (!currentUser) {
-            document.getElementById('signin-banner')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            document.getElementById('signin-email-input')?.focus()
-            return
-          }
+          if (!currentUser) { onOpenAuth(); return }
           onToggleSave(v.id)
         }}
         title={currentUser ? (isSaved ? 'Remove from saved' : 'Save vendor') : 'Sign in to save vendors'}
@@ -333,17 +331,14 @@ function VendorCard({
       </button>
 
       <div style={{ padding: '12px 14px' }}>
-        {/* Category label */}
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3, opacity: 0.9 }}>
           {getEmoji(v.category)} {v.category}
         </div>
 
-        {/* Name */}
         <div style={{ fontSize: 16, fontWeight: 600, color: '#2C1A12', lineHeight: 1.25, marginBottom: 6, paddingRight: 36 }}>
           {v.name}
         </div>
 
-        {/* Social proof */}
         {(avgRating !== null || usedCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
             {avgRating !== null && (
@@ -355,17 +350,14 @@ function VendorCard({
           </div>
         )}
 
-        {/* Location */}
         {v.location && (
           <div style={{ fontSize: 11, color: '#9A8070', marginBottom: 4 }}>📍 {v.location}</div>
         )}
 
-        {/* Price */}
         {v.price_from && (
           <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 4 }}>💰 From ₦{v.price_from}</div>
         )}
 
-        {/* Instagram */}
         {igHandle && (
           <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#C45C7A', textDecoration: 'none', fontWeight: 500, marginBottom: 4 }}>
@@ -373,7 +365,6 @@ function VendorCard({
           </a>
         )}
 
-        {/* WhatsApp */}
         {whatsappUrl && (
           <div style={{ marginBottom: 4 }}>
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
@@ -383,7 +374,6 @@ function VendorCard({
           </div>
         )}
 
-        {/* Discount code */}
         {v.discount_code && (
           <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: '#2C1A12', color: '#F5E6C8', fontSize: 10, fontWeight: 700, letterSpacing: 0.8 }}>
@@ -400,7 +390,6 @@ function VendorCard({
           </div>
         )}
 
-        {/* Expanded details */}
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {v.services && <p style={{ fontSize: 11, color: '#6A4A38', margin: 0, lineHeight: 1.55 }}>{v.services}</p>}
@@ -418,7 +407,6 @@ function VendorCard({
           </div>
         )}
 
-        {/* More info toggle */}
         {hasDetails && (
           <button onClick={() => setExpanded(!expanded)} style={{
             marginTop: 10, width: '100%',
@@ -439,93 +427,22 @@ function VendorCard({
   )
 }
 
-// ─── Sign In Modal ─────────────────────────────────────────────────────────────
-
-function SignInModal({ onClose, onSignIn }: { onClose: () => void; onSignIn: (user: CurrentUser) => void }) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
-
-  function handleSubmit() {
-    if (!name.trim()) { setError('Please enter your name'); return }
-    if (!email.trim() || !email.includes('@')) { setError('Please enter a valid email'); return }
-    onSignIn({ name: name.trim(), email: email.toLowerCase().trim() })
-  }
-
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 100,
-      background: 'rgba(44,26,18,0.55)', backdropFilter: 'blur(3px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-    }} onClick={onClose}>
-      <div style={{
-        background: '#FDF8F4', borderRadius: 20, padding: 28, width: '100%', maxWidth: 360,
-        boxShadow: '0 20px 60px rgba(44,26,18,0.25)',
-      }} onClick={e => e.stopPropagation()}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>♡</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px' }}>Save your favourites</h2>
-          <p style={{ fontSize: 12, color: '#9A8070', margin: 0 }}>Enter your name and email to create your saved list</p>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input
-            placeholder="Your name *"
-            value={name}
-            onChange={e => { setName(e.target.value); setError('') }}
-            style={{
-              padding: '10px 14px', border: '1px solid #EDE4DC', borderRadius: 12,
-              fontSize: 13, background: 'white', color: '#2C1A12', outline: 'none',
-            }}
-          />
-          <input
-            id="signin-email-input"
-            type="email"
-            placeholder="Email address *"
-            value={email}
-            onChange={e => { setEmail(e.target.value); setError('') }}
-            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            style={{
-              padding: '10px 14px', border: '1px solid #EDE4DC', borderRadius: 12,
-              fontSize: 13, background: 'white', color: '#2C1A12', outline: 'none',
-            }}
-          />
-          {error && <p style={{ color: '#C45C7A', fontSize: 11, margin: 0 }}>{error}</p>}
-          <button onClick={handleSubmit} style={{
-            padding: '11px', background: '#C45C7A', color: 'white',
-            border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700,
-            cursor: 'pointer', marginTop: 4,
-          }}>
-            Save vendors ♡
-          </button>
-          <button onClick={onClose} style={{
-            padding: '8px', background: 'none', color: '#9A8070',
-            border: 'none', fontSize: 12, cursor: 'pointer',
-          }}>
-            Maybe later
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const [vendors, setVendors]         = useState<Vendor[]>([])
-  const [search, setSearch]           = useState('')
-  const [category, setCategory]       = useState('All')
-  const [location, setLocation]       = useState('All')
-  const [showNewOnly, setShowNewOnly] = useState(false)
-  const [weddingType, setWeddingType] = useState('All')
-  const [loading, setLoading]         = useState(true)
+  const { user: authUser, openAuthModal } = useAuth()
+
+  const [vendors, setVendors]           = useState<Vendor[]>([])
+  const [search, setSearch]             = useState('')
+  const [category, setCategory]         = useState('All')
+  const [location, setLocation]         = useState('All')
+  const [showNewOnly, setShowNewOnly]   = useState(false)
+  const [weddingType, setWeddingType]   = useState('All')
+  const [loading, setLoading]           = useState(true)
   const [cardResetKey, setCardResetKey] = useState(0)
 
-  // Auth + save state
-  const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
-  const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
-  const [showSignIn, setShowSignIn]     = useState(false)
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [savedIds, setSavedIds]       = useState<Set<string>>(new Set())
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -537,6 +454,16 @@ export default function Home() {
       }
     } catch {}
   }, [])
+
+  // If Supabase auth user exists, keep currentUser in sync
+  useEffect(() => {
+    if (authUser?.email) {
+      const displayName =
+        authUser.user_metadata?.display_name ||
+        authUser.email.split('@')[0]
+      setCurrentUser({ name: displayName, email: authUser.email })
+    }
+  }, [authUser])
 
   // Load saved vendor IDs whenever user changes
   useEffect(() => {
@@ -561,12 +488,6 @@ export default function Home() {
 
   useEffect(() => { setCardResetKey(k => k + 1) }, [category])
 
-  function handleSignIn(user: CurrentUser) {
-    localStorage.setItem('jaiye_user', JSON.stringify(user))
-    setCurrentUser(user)
-    setShowSignIn(false)
-  }
-
   function handleSignOut() {
     localStorage.removeItem('jaiye_user')
     setCurrentUser(null)
@@ -577,7 +498,6 @@ export default function Home() {
     if (!currentUser) return
     const isSaved = savedIds.has(vendorId)
 
-    // Optimistic update
     setSavedIds(prev => {
       const next = new Set(prev)
       if (isSaved) next.delete(vendorId)
@@ -596,11 +516,9 @@ export default function Home() {
     }
   }, [currentUser, savedIds])
 
-  // Remap Fashion → Outfits
-  const vendorsWithSubcats = vendors.map(v => {
-    if (v.category === 'Fashion') return { ...v, category: 'Outfits' }
-    return v
-  })
+  const vendorsWithSubcats = vendors.map(v =>
+    v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v
+  )
 
   const allCats       = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
   const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
@@ -637,11 +555,6 @@ export default function Home() {
   return (
     <main style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', background: '#FDF8F4', minHeight: '100vh' }}>
 
-      {/* Sign in modal */}
-      {showSignIn && (
-        <SignInModal onClose={() => setShowSignIn(false)} onSignIn={handleSignIn} />
-      )}
-
       {/* Sign-in banner (shown when not signed in) */}
       {!currentUser && (
         <div id="signin-banner" style={{
@@ -650,7 +563,7 @@ export default function Home() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap',
         }}>
           <span style={{ fontSize: 12, color: 'rgba(255,240,225,0.85)' }}>♡ Sign in to save your favourite vendors</span>
-          <button onClick={() => setShowSignIn(true)} style={{
+          <button onClick={openAuthModal} style={{
             padding: '5px 14px', background: '#C45C7A', color: 'white',
             border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer',
           }}>
@@ -678,6 +591,35 @@ export default function Home() {
                 ♡ View saved
               </Link>
             )}
+            {/* Profile icon */}
+            {authUser ? (
+              <Link
+                href={`/profile/${authUser.email?.split('@')[0]}`}
+                title="My profile"
+                style={{
+                  width: 26, height: 26, borderRadius: '50%',
+                  background: '#C45C7A',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  textDecoration: 'none', fontSize: 10, fontWeight: 700, color: 'white',
+                  flexShrink: 0,
+                }}>
+                {currentUser.name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}
+              </Link>
+            ) : (
+              <button onClick={openAuthModal} style={{
+                width: 26, height: 26, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.12)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', padding: 0,
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="rgba(255,240,220,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </button>
+            )}
             <button onClick={handleSignOut} style={{
               fontSize: 10, color: 'rgba(255,240,225,0.45)', background: 'none',
               border: 'none', cursor: 'pointer', padding: 0,
@@ -704,7 +646,6 @@ export default function Home() {
         <p style={{ color: '#E8C87A', fontSize: 13, margin: '10px 0 0', opacity: 0.8 }}>
           200+ vendors and counting
         </p>
-        {/* Saved link in hero */}
         {currentUser && savedIds.size > 0 && (
           <Link href="/saved" style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -712,13 +653,12 @@ export default function Home() {
             background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(4px)',
             border: '1px solid rgba(232,200,122,0.4)', borderRadius: 24,
             color: '#E8C87A', fontSize: 12, fontWeight: 600, textDecoration: 'none',
-            transition: 'all 0.15s ease',
           }}>
             ♡ My saved vendors ({savedIds.size})
           </Link>
         )}
         {!currentUser && (
-          <button onClick={() => setShowSignIn(true)} style={{
+          <button onClick={openAuthModal} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             marginTop: 16, padding: '8px 20px',
             background: 'rgba(255,255,255,0.10)',
@@ -895,6 +835,7 @@ export default function Home() {
                 currentUser={currentUser}
                 savedIds={savedIds}
                 onToggleSave={handleToggleSave}
+                onOpenAuth={openAuthModal}
               />
             ))
         }

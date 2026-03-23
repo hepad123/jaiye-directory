@@ -44,6 +44,7 @@ type CurrentUser = {
   id: string
   name: string
   email: string
+  username: string
 }
 
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
@@ -478,14 +479,15 @@ export default function Home() {
   const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
 
-  // Derive currentUser from Supabase auth (uses user.id, not email)
+  // Derive currentUser from Supabase auth + look up real username from profiles table
   useEffect(() => {
-    if (authUser?.id && authUser?.email) {
-      const displayName = authUser.user_metadata?.display_name || authUser.email.split('@')[0]
-      setCurrentUser({ id: authUser.id, name: displayName, email: authUser.email })
-    } else {
-      setCurrentUser(null)
-    }
+    if (!authUser?.id || !authUser?.email) { setCurrentUser(null); return }
+    const displayName = authUser.user_metadata?.display_name || authUser.email.split('@')[0]
+    supabase.from('profiles').select('username').eq('id', authUser.id).maybeSingle()
+      .then(({ data }) => {
+        const username = data?.username || authUser.email!.split('@')[0]
+        setCurrentUser({ id: authUser.id, name: displayName, email: authUser.email!, username })
+      })
   }, [authUser])
 
   useEffect(() => {
@@ -554,7 +556,7 @@ export default function Home() {
         <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
 
         {currentUser && authUser ? (
-          <Link href={`/profile/${authUser.user_metadata?.username || authUser.email?.split('@')[0]}`} title="My profile"
+          <Link href={`/profile/${currentUser.username}`} title="My profile"
             style={{ width: 32, height: 32, borderRadius: '50%', background: '#F0E8F0', border: '1.5px solid #D0C0D8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: 12, fontWeight: 600, color: DARK, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
             {currentUser.name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}
           </Link>

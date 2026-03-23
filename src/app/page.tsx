@@ -479,13 +479,13 @@ export default function Home() {
   const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
 
-  // Derive currentUser from Supabase auth + look up real username from profiles table
+  // Derive currentUser: pull display_name + username from profiles table (source of truth)
   useEffect(() => {
     if (!authUser?.id || !authUser?.email) { setCurrentUser(null); return }
-    const displayName = authUser.user_metadata?.display_name || authUser.email.split('@')[0]
-    supabase.from('profiles').select('username').eq('id', authUser.id).maybeSingle()
+    supabase.from('profiles').select('username, display_name').eq('id', authUser.id).maybeSingle()
       .then(({ data }) => {
-        const username = data?.username || authUser.email!.split('@')[0]
+        const username    = data?.username     || authUser.email!.split('@')[0]
+        const displayName = data?.display_name || authUser.user_metadata?.display_name || authUser.email!.split('@')[0]
         setCurrentUser({ id: authUser.id, name: displayName, email: authUser.email!, username })
       })
   }, [authUser])

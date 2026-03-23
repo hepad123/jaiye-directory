@@ -226,28 +226,40 @@ export default function ProfilePage() {
       if (!byUsername) { setNotFound(true); setLoading(false); return }
       setProfile(byUsername)
 
-      // ── Used vendors: query by user_id first, then union any legacy rows by reviewer_name ──
-      const [{ data: usedByUid }, { data: usedByName }] = await Promise.all([
-        supabase.from('reviews').select('vendor_id').eq('comment', '__used__').eq('user_id', byUsername.id),
-        supabase.from('reviews').select('vendor_id').eq('comment', '__used__').eq('reviewer_name', byUsername.display_name),
-      ])
-      const allUsedIds = [...new Set([
-        ...(usedByUid ?? []).map(r => r.vendor_id),
-        ...(usedByName ?? []).map(r => r.vendor_id),
-      ])]
+      // ── Used vendors: try ALL possible identifiers to maximise matches ──
+      console.log('[Profile] Loading used vendors for:', {
+        id: byUsername.id,
+        display_name: byUsername.display_name,
+        email: byUsername.email,
+      })
+
+      const { data: allUsedRows, error: usedErr } = await supabase
+        .from('reviews')
+        .select('vendor_id, user_id, reviewer_name')
+        .eq('comment', '__used__')
+        .or(`user_id.eq.${byUsername.id},reviewer_name.eq.${byUsername.display_name},reviewer_name.eq.${byUsername.email.split('@')[0]}`)
+
+      console.log('[Profile] Used rows found:', allUsedRows, 'error:', usedErr)
+
+      const allUsedIds = [...new Set((allUsedRows ?? []).map(r => r.vendor_id))]
       if (allUsedIds.length) {
         const { data: vendorData } = await supabase
           .from('vendors')
           .select('id, name, category, location, instagram, price_from, verified')
           .in('id', allUsedIds)
+        console.log('[Profile] Used vendors fetched:', vendorData)
         if (vendorData) setUsedVendors(vendorData)
       }
 
-      // ── Recommended vendors: look up by user_id ──
-      const { data: recRows } = await supabase
+      // ── Recommended vendors: try user_id (uuid) ──
+      console.log('[Profile] Loading recs for user_id:', byUsername.id)
+      const { data: recRows, error: recErr } = await supabase
         .from('vendor_recommendations')
-        .select('vendor_id')
-        .eq('user_id', byUsername.id)   // ← uuid, matches the updated schema
+        .select('vendor_id, user_id')
+        .eq('user_id', byUsername.id)
+
+      console.log('[Profile] Rec rows found:', recRows, 'error:', recErr)
+
       if (recRows?.length) {
         const ids = recRows.map(r => r.vendor_id)
         const { data: vendorData } = await supabase

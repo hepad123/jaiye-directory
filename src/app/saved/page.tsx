@@ -9,6 +9,14 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+// ── Palette B ──────────────────────────────────────────────────────────────────
+const ACCENT    = '#8B6E9A'
+const DARK      = '#2A1A2A'
+const BG        = '#FAFAFA'
+const GOLD      = '#C0A060'
+const MUTED     = '#9A8A9A'
+const IG_COLOUR = '#8B6E9A'
+
 type Vendor = {
   id: string
   category: string
@@ -46,17 +54,17 @@ type CurrentUser = {
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
-  'Event Planning':        { emoji: '📋', colour: '#9B7BB8' },
-  'Styling':               { emoji: '✨', colour: '#C45C7A' },
-  'Outfits':               { emoji: '👗', colour: '#C4922A' },
-  'Makeup':                { emoji: '💄', colour: '#D4789A' },
-  'Hair & Gele':           { emoji: '💇🏾', colour: '#6A9BB5' },
-  'Photography':           { emoji: '📸', colour: '#5A8A72' },
-  'Videography & Content': { emoji: '🎥', colour: '#4A6A8A' },
+  'Event Planning':        { emoji: '📋', colour: '#7B68C8' },
+  'Styling':               { emoji: '✨', colour: '#2E9E7A' },
+  'Outfits':               { emoji: '👗', colour: '#C07A2F' },
+  'Makeup':                { emoji: '💄', colour: '#C45C7A' },
+  'Hair & Gele':           { emoji: '💅', colour: '#C4563A' },
+  'Photography':           { emoji: '📷', colour: '#4A8FC4' },
+  'Videography & Content': { emoji: '🎬', colour: '#7A6058' },
   'Decor & Venue':         { emoji: '🏛️', colour: '#9A7A5A' },
   'Catering':              { emoji: '🍽️', colour: '#C4724A' },
   'Entertainment':         { emoji: '🎤', colour: '#7A6A9A' },
-  'Other':                 { emoji: '✦',  colour: '#8A8A8A' },
+  'Other':                 { emoji: '✦',  colour: '#9E6BAA' },
 }
 
 const CATEGORY_ORDER = [
@@ -65,14 +73,18 @@ const CATEGORY_ORDER = [
   'Decor & Venue', 'Catering', 'Entertainment', 'Other',
 ]
 
-const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#B5294E'
+const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? ACCENT
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
-// ─── Icons ─────────────────────────────────────────────────────────────────
+// ─── Icons ─────────────────────────────────────────────────────────────────────
 
 const InstagramIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+    stroke={IG_COLOUR} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    style={{ flexShrink: 0 }}>
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+    <circle cx="12" cy="12" r="4"/>
+    <circle cx="17.5" cy="6.5" r="1" fill={IG_COLOUR} stroke="none"/>
   </svg>
 )
 
@@ -82,40 +94,39 @@ const WhatsAppIcon = () => (
   </svg>
 )
 
-function HeartIcon({ filled, colour }: { filled: boolean; colour: string }) {
+function HeartIcon({ filled }: { filled: boolean }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? colour : 'none'}
-      stroke={filled ? colour : '#C4A898'} strokeWidth="2"
+    <svg width="16" height="16" viewBox="0 0 24 24"
+      fill={filled ? ACCENT : 'none'}
+      stroke={filled ? ACCENT : '#C4A8C8'} strokeWidth="2"
       style={{ flexShrink: 0, transition: 'all 0.15s ease' }}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
     </svg>
   )
 }
 
-// ─── Star Rating ──────────────────────────────────────────────────────────────
-
 function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) => void }) {
   return (
     <div style={{ display: 'flex', gap: 1 }}>
       {[1,2,3,4,5].map(s => (
         <span key={s} onClick={() => onRate?.(s)}
-          style={{ cursor: onRate ? 'pointer' : 'default', color: s <= rating ? '#D4A853' : '#E8DDD5', fontSize: 13 }}>★</span>
+          style={{ cursor: onRate ? 'pointer' : 'default', color: s <= rating ? '#D4A853' : '#E0D8E8', fontSize: 13 }}>★</span>
       ))}
     </div>
   )
 }
 
-// ─── Review Section ───────────────────────────────────────────────────────────
+// ─── Review Section ────────────────────────────────────────────────────────────
 
 function ReviewSection({ vendor }: { vendor: Vendor }) {
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [name, setName] = useState('')
-  const [rating, setRating] = useState(0)
-  const [comment, setComment] = useState('')
+  const [reviews, setReviews]       = useState<Review[]>([])
+  const [name, setName]             = useState('')
+  const [rating, setRating]         = useState(0)
+  const [comment, setComment]       = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm]     = useState(false)
   const [usedVendor, setUsedVendor] = useState(false)
-  const [usedName, setUsedName] = useState('')
+  const [usedName, setUsedName]     = useState('')
   const [usedSubmitting, setUsedSubmitting] = useState(false)
 
   useEffect(() => {
@@ -128,86 +139,65 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
     if (!usedName.trim()) return
     setUsedSubmitting(true)
     const { data } = await supabase.from('reviews')
-      .insert({ vendor_id: vendor.id, reviewer_name: usedName, rating: 5, comment: '__used__' })
-      .select()
+      .insert({ vendor_id: vendor.id, reviewer_name: usedName, rating: 5, comment: '__used__' }).select()
     if (data) setReviews(prev => [data[0], ...prev])
-    setUsedVendor(false)
-    setUsedName('')
-    setUsedSubmitting(false)
+    setUsedVendor(false); setUsedName(''); setUsedSubmitting(false)
   }
 
   async function submitReview() {
     if (!name.trim() || rating === 0) return
     setSubmitting(true)
     const { data } = await supabase.from('reviews')
-      .insert({ vendor_id: vendor.id, reviewer_name: name, rating, comment })
-      .select()
-    if (data) {
-      setReviews(prev => [data[0], ...prev])
-      setName(''); setRating(0); setComment(''); setShowForm(false)
-    }
+      .insert({ vendor_id: vendor.id, reviewer_name: name, rating, comment }).select()
+    if (data) { setReviews(prev => [data[0], ...prev]); setName(''); setRating(0); setComment(''); setShowForm(false) }
     setSubmitting(false)
   }
 
   const realReviews = reviews.filter(r => r.comment !== '__used__')
   const usedCount   = reviews.filter(r => r.comment === '__used__').length
+  const inputStyle  = { border: '1px solid #DDD0E8', borderRadius: 8, fontSize: 11, background: 'white', fontFamily: 'var(--font-jost, sans-serif)' }
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4' }}>
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EDE8F0' }}>
       <div style={{ marginBottom: 8 }}>
         {!usedVendor ? (
-          <button onClick={() => setUsedVendor(true)} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '5px 12px', borderRadius: 20,
-            border: '1px solid #E8DDD5', background: '#FDF8F4',
-            cursor: 'pointer', fontSize: 11, color: '#9A7060', fontWeight: 500,
-          }}>
-            👋 I used this vendor {usedCount > 0 && <span style={{ color: '#C45C7A', fontWeight: 700 }}>· {usedCount}</span>}
+          <button onClick={() => setUsedVendor(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, border: '1px solid #DDD0E8', background: BG, cursor: 'pointer', fontSize: 11, color: '#7A6888', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
           </button>
         ) : (
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input placeholder="Your name *" value={usedName} onChange={e => setUsedName(e.target.value)}
-              style={{ flex: 1, padding: '5px 8px', border: '1px solid #EDD8CE', borderRadius: 8, fontSize: 11, background: 'white' }} />
-            <button onClick={submitUsed} disabled={usedSubmitting || !usedName.trim()}
-              style={{ padding: '5px 12px', background: '#C45C7A', color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: !usedName.trim() ? 0.5 : 1 }}>✓</button>
-            <button onClick={() => setUsedVendor(false)}
-              style={{ padding: '5px 8px', background: 'none', border: 'none', fontSize: 13, color: '#bbb', cursor: 'pointer' }}>×</button>
+            <input placeholder="Your name *" value={usedName} onChange={e => setUsedName(e.target.value)} style={{ ...inputStyle, flex: 1, padding: '5px 8px' }} />
+            <button onClick={submitUsed} disabled={usedSubmitting || !usedName.trim()} style={{ padding: '5px 12px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: !usedName.trim() ? 0.5 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>✓</button>
+            <button onClick={() => setUsedVendor(false)} style={{ padding: '5px 8px', background: 'none', border: 'none', fontSize: 13, color: '#bbb', cursor: 'pointer' }}>×</button>
           </div>
         )}
       </div>
-
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontSize: 10, color: '#C4A898', letterSpacing: 0.5 }}>
+        <span style={{ fontSize: 10, color: '#B0A0B8', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
         </span>
-        <button onClick={() => setShowForm(!showForm)}
-          style={{ fontSize: 10, color: '#C45C7A', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+        <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 10, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {showForm ? 'Cancel' : '+ Add review'}
         </button>
       </div>
-
       {showForm && (
-        <div style={{ background: '#FDF5F0', borderRadius: 10, padding: 10, marginBottom: 8 }}>
-          <input placeholder="Your name *" value={name} onChange={e => setName(e.target.value)}
-            style={{ width: '100%', padding: '6px 10px', border: '1px solid #EDD8CE', borderRadius: 8, fontSize: 11, marginBottom: 6, boxSizing: 'border-box', background: 'white' }} />
+        <div style={{ background: '#F5F0F8', borderRadius: 10, padding: 10, marginBottom: 8 }}>
+          <input placeholder="Your name *" value={name} onChange={e => setName(e.target.value)} style={{ ...inputStyle, width: '100%', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const }} />
           <div style={{ marginBottom: 6 }}><StarRating rating={rating} onRate={setRating} /></div>
-          <textarea placeholder="Share your experience..." value={comment} onChange={e => setComment(e.target.value)} rows={2}
-            style={{ width: '100%', padding: '6px 10px', border: '1px solid #EDD8CE', borderRadius: 8, fontSize: 11, marginBottom: 6, boxSizing: 'border-box', resize: 'none', background: 'white' }} />
-          <button onClick={submitReview} disabled={submitting || !name.trim() || rating === 0}
-            style={{ padding: '5px 14px', background: '#C45C7A', color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: (!name.trim() || rating === 0) ? 0.45 : 1 }}>
+          <textarea placeholder="Share your experience..." value={comment} onChange={e => setComment(e.target.value)} rows={2} style={{ ...inputStyle, width: '100%', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const, resize: 'none' as const }} />
+          <button onClick={submitReview} disabled={submitting || !name.trim() || rating === 0} style={{ padding: '5px 14px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: (!name.trim() || rating === 0) ? 0.45 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>
             {submitting ? 'Submitting…' : 'Submit'}
           </button>
         </div>
       )}
-
       {realReviews.slice(0, 2).map(r => (
-        <div key={r.id} style={{ background: '#FBF7F4', borderRadius: 8, padding: '6px 8px', marginBottom: 4 }}>
+        <div key={r.id} style={{ background: '#F5F0F8', borderRadius: 8, padding: '6px 8px', marginBottom: 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#7A5A4A' }}>{r.reviewer_name}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: '#5A4868', fontFamily: 'var(--font-jost, sans-serif)' }}>{r.reviewer_name}</span>
             <StarRating rating={r.rating} />
           </div>
           {r.comment && r.comment !== '__used__' && (
-            <p style={{ fontSize: 10, color: '#9A7A6A', margin: '3px 0 0', lineHeight: 1.4 }}>{r.comment}</p>
+            <p style={{ fontSize: 10, color: '#7A6888', margin: '3px 0 0', lineHeight: 1.4, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.comment}</p>
           )}
         </div>
       ))}
@@ -215,112 +205,59 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
   )
 }
 
-// ─── My Notes ────────────────────────────────────────────────────────────────
+// ─── My Notes ─────────────────────────────────────────────────────────────────
 
-function MyNotes({
-  vendorId,
-  userId,
-  initialNote,
-}: {
-  vendorId: string
-  userId: string
-  initialNote: string
-}) {
-  const [note, setNote] = useState(initialNote)
+function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: string; initialNote: string }) {
+  const [note, setNote]           = useState(initialNote)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [isEditing, setIsEditing] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Debounced auto-save — fires 800ms after user stops typing
   function handleChange(val: string) {
     setNote(val)
     setSaveStatus('saving')
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
-      await supabase
-        .from('saved_vendors')
-        .update({ notes: val })
-        .eq('user_id', userId)
-        .eq('vendor_id', vendorId)
+      await supabase.from('saved_vendors').update({ notes: val }).eq('user_id', userId).eq('vendor_id', vendorId)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 1800)
     }, 800)
   }
 
-  useEffect(() => () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-  }, [])
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
   return (
-    <div style={{
-      marginTop: 10,
-      background: '#FFFBF5',
-      border: '1px dashed #E8C87A',
-      borderRadius: 10,
-      padding: '8px 10px',
-    }}>
-      {/* Header */}
+    <div style={{ marginTop: 10, background: '#F8F5FC', border: `1px dashed ${GOLD}`, borderRadius: 10, padding: '8px 10px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#B8860B', letterSpacing: 0.4 }}>
-          📝 My notes
-        </span>
-        <span style={{
-          fontSize: 9, fontWeight: 600, transition: 'color 0.2s',
-          color: saveStatus === 'saving' ? '#C4A898' : saveStatus === 'saved' ? '#5A8A72' : 'transparent',
-        }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: 0.4, fontFamily: 'var(--font-jost, sans-serif)' }}>📝 My notes</span>
+        <span style={{ fontSize: 9, fontWeight: 600, transition: 'color 0.2s', fontFamily: 'var(--font-jost, sans-serif)', color: saveStatus === 'saving' ? '#B0A0B8' : saveStatus === 'saved' ? '#5A8A72' : 'transparent' }}>
           {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? '✓ Saved' : '·'}
         </span>
       </div>
-
-      {/* Prompt to start typing (no note yet, not focused) */}
       {!isEditing && !note && (
-        <button
-          onClick={() => setIsEditing(true)}
-          style={{
-            width: '100%', padding: '4px 0', background: 'none',
-            border: 'none', cursor: 'text', textAlign: 'left',
-            fontSize: 11, color: '#C4A898', fontStyle: 'italic',
-            fontFamily: 'var(--font-dm-sans, sans-serif)',
-          }}>
+        <button onClick={() => setIsEditing(true)} style={{ width: '100%', padding: '4px 0', background: 'none', border: 'none', cursor: 'text', textAlign: 'left', fontSize: 11, color: '#B0A0B8', fontStyle: 'italic', fontFamily: 'var(--font-jost, sans-serif)' }}>
           + Add a private note about this vendor…
         </button>
       )}
-
-      {/* Textarea — shown when editing or when there's an existing note */}
       {(isEditing || !!note) && (
         <textarea
           autoFocus={isEditing && !note}
           placeholder="e.g. Quoted ₦250k for aso-ebi, follow up in March…"
-          value={note}
-          onChange={e => handleChange(e.target.value)}
-          onFocus={() => setIsEditing(true)}
-          rows={3}
-          style={{
-            width: '100%', border: 'none', background: 'transparent',
-            fontSize: 11, color: '#4A2A1A', lineHeight: 1.6,
-            resize: 'vertical', outline: 'none', boxSizing: 'border-box',
-            fontFamily: 'var(--font-dm-sans, sans-serif)',
-            padding: 0,
-          }}
+          value={note} onChange={e => handleChange(e.target.value)} onFocus={() => setIsEditing(true)} rows={3}
+          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: DARK, lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'var(--font-jost, sans-serif)', padding: 0 }}
         />
       )}
     </div>
   )
 }
 
-// ─── Vendor Card (Saved Page) ─────────────────────────────────────────────────
+// ─── Vendor Card (Saved Page) ──────────────────────────────────────────────────
 
-function VendorCard({
-  v, savedIds, onToggleSave, userId, savedNote,
-}: {
-  v: Vendor
-  savedIds: Set<string>
-  onToggleSave: (vendorId: string) => void
-  userId: string
-  savedNote: string
+function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
+  v: Vendor; savedIds: Set<string>; onToggleSave: (vendorId: string) => void; userId: string; savedNote: string
 }) {
-  const [expanded, setExpanded] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [expanded, setExpanded]   = useState(false)
+  const [copied, setCopied]       = useState(false)
   const [avgRating, setAvgRating] = useState<number | null>(null)
   const [usedCount, setUsedCount] = useState(0)
 
@@ -337,95 +274,59 @@ function VendorCard({
         const real = data.filter(r => r.comment !== '__used__')
         const used = data.filter(r => r.comment === '__used__')
         setUsedCount(used.length)
-        if (real.length > 0) {
-          const avg = real.reduce((sum, r) => sum + r.rating, 0) / real.length
-          setAvgRating(Math.round(avg * 10) / 10)
-        }
+        if (real.length > 0) setAvgRating(Math.round(real.reduce((s, r) => s + r.rating, 0) / real.length * 10) / 10)
       })
   }, [v.id])
 
-  function copyCode() {
-    navigator.clipboard.writeText(v.discount_code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  function copyCode() { navigator.clipboard.writeText(v.discount_code); setCopied(true); setTimeout(() => setCopied(false), 2000) }
 
   const whatsappNumber = v.phone?.replace(/\D/g, '')
   const whatsappUrl    = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null
 
   return (
-    <div style={{
-      background: 'white', borderRadius: 16,
-      border: isFeatured ? `1.5px solid ${colour}55` : '1px solid #F0E8E2',
-      overflow: 'hidden',
-      boxShadow: isFeatured ? `0 4px 18px ${colour}22` : '0 2px 12px rgba(180,130,110,0.07)',
-      position: 'relative',
-    }}>
-      <div style={{ height: 4, background: `linear-gradient(90deg, ${colour}CC, ${colour}55)` }} />
+    <div style={{ background: 'white', borderRadius: 16, border: `1.5px solid ${colour}55`, overflow: 'hidden', position: 'relative' }}>
 
-      {isFeatured && (
-        <div style={{ position: 'absolute', top: 10, right: 10 }}>
-          <div style={{ background: '#FFF8E7', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#B8860B' }}>
-            ⭐ Top pick
-          </div>
-        </div>
-      )}
+      {/* Badges */}
+      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
+        {isFeatured && <div style={{ background: '#FDF3E3', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#A07820', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>}
+        {v.verified && <div style={{ background: '#F0EEFF', border: '1px solid #C0A8E8', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#6050A8', fontFamily: 'var(--font-jost, sans-serif)' }}>✓ Verified</div>}
+      </div>
 
-      <button
-        onClick={() => onToggleSave(v.id)}
-        title="Remove from saved"
-        style={{
-          position: 'absolute', top: isFeatured ? 34 : 10, right: 10,
-          background: isSaved ? '#FFF0F4' : 'white',
-          border: `1px solid ${isSaved ? '#F4C0CC' : '#EDE4DC'}`,
-          borderRadius: '50%', width: 28, height: 28,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', padding: 0,
-          boxShadow: isSaved ? '0 2px 8px rgba(196,92,122,0.2)' : '0 1px 4px rgba(0,0,0,0.06)',
-          transition: 'all 0.15s ease',
-        }}>
-        <HeartIcon filled={isSaved} colour="#C45C7A" />
+      {/* Heart */}
+      <button onClick={() => onToggleSave(v.id)} title="Remove from saved"
+        style={{ position: 'absolute', top: isFeatured ? 38 : 12, right: 12, background: isSaved ? '#F5F0F8' : 'white', border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
+        <HeartIcon filled={isSaved} />
       </button>
 
-      <div style={{ padding: '12px 14px' }}>
-        <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3, opacity: 0.9 }}>
+      <div style={{ padding: '14px 14px 12px' }}>
+        <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {getEmoji(v.category)} {v.category}
         </div>
-
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#2C1A12', lineHeight: 1.25, marginBottom: 6, paddingRight: 36 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: DARK, lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: 'var(--font-playfair, serif)' }}>
           {v.name}
         </div>
 
         {(avgRating !== null || usedCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-            {avgRating !== null && (
-              <span style={{ fontSize: 11, color: '#B8860B', display: 'flex', alignItems: 'center', gap: 3 }}>★ {avgRating}</span>
-            )}
-            {usedCount > 0 && (
-              <span style={{ fontSize: 11, color: '#9A7060' }}>👋 {usedCount} bride{usedCount !== 1 ? 's' : ''} used this</span>
-            )}
+            {avgRating !== null && <span style={{ fontSize: 11, color: '#B8860B', fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} bride{usedCount !== 1 ? 's' : ''} used this</span>}
           </div>
         )}
 
-        {v.location && (
-          <div style={{ fontSize: 11, color: '#9A8070', marginBottom: 4 }}>📍 {v.location}</div>
-        )}
-
-        {v.price_from && (
-          <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 4 }}>💰 From ₦{v.price_from}</div>
-        )}
+        {v.location && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
+        {v.price_from && <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>💰 From ₦{v.price_from}</div>}
 
         {igHandle && (
           <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#C45C7A', textDecoration: 'none', fontWeight: 500, marginBottom: 4 }}>
-            <InstagramIcon /> @{igHandle}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: MUTED, textDecoration: 'none', marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            <InstagramIcon />@{igHandle}
           </a>
         )}
 
         {whatsappUrl && (
           <div style={{ marginBottom: 4 }}>
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: '#25D366', color: 'white', fontSize: 10, fontWeight: 700, textDecoration: 'none' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: '#25D366', color: 'white', fontSize: 10, fontWeight: 700, textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
               <WhatsAppIcon /> WhatsApp
             </a>
           </div>
@@ -433,53 +334,31 @@ function VendorCard({
 
         {v.discount_code && (
           <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: '#2C1A12', color: '#F5E6C8', fontSize: 10, fontWeight: 700, letterSpacing: 0.8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: DARK, color: '#F5EAF8', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: 'var(--font-jost, sans-serif)' }}>
               🏷️ {v.discount_code}
             </span>
-            <button onClick={copyCode} style={{
-              padding: '4px 10px', borderRadius: 20,
-              border: '1px solid #EDE4DC', background: copied ? '#F0FFF4' : 'white',
-              fontSize: 10, color: copied ? '#276749' : '#9A7060',
-              cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s',
-            }}>
+            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid #E8E0F0', background: copied ? '#F0EEFF' : 'white', fontSize: 10, color: copied ? '#6050A8' : MUTED, cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: 'var(--font-jost, sans-serif)' }}>
               {copied ? '✓ Copied!' : 'Copy'}
             </button>
           </div>
         )}
 
-        {/* ── Notes — always visible on the saved page ── */}
         <MyNotes vendorId={v.id} userId={userId} initialNote={savedNote} />
 
-        {/* Expanded vendor details */}
         {expanded && (
-          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4', display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {v.services && <p style={{ fontSize: 11, color: '#6A4A38', margin: 0, lineHeight: 1.55 }}>{v.services}</p>}
-            {v.phone    && <p style={{ fontSize: 11, color: '#8A7060', margin: 0 }}>📞 {v.phone}</p>}
-            {v.email    && <p style={{ fontSize: 11, color: '#8A7060', margin: 0 }}>✉️ {v.email}</p>}
-            {v.website  && (
-              <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`}
-                target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: 11, color: '#6A9BB5', textDecoration: 'none' }}>
-                🌐 {v.website}
-              </a>
-            )}
-            {v.notes && <p style={{ fontSize: 10, color: '#B8A090', margin: 0, fontStyle: 'italic', lineHeight: 1.5 }}>{v.notes}</p>}
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EDE8F0', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {v.services && <p style={{ fontSize: 11, color: '#5A4868', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
+            {v.phone    && <p style={{ fontSize: 11, color: MUTED, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
+            {v.email    && <p style={{ fontSize: 11, color: MUTED, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
+            {v.website  && <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#7B68C8', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
+            {v.notes    && <p style={{ fontSize: 10, color: '#B0A0B8', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
             <ReviewSection vendor={v} />
           </div>
         )}
 
         {hasDetails && (
-          <button onClick={() => setExpanded(!expanded)} style={{
-            marginTop: 10, width: '100%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            background: 'none', border: '1px solid #EDE4DC', borderRadius: 20,
-            cursor: 'pointer', fontSize: 10, color: '#B09080', fontWeight: 500, padding: '5px 0',
-          }}>
-            <span style={{
-              width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #DDD0C8',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, color: '#B09080', lineHeight: 1,
-            }}>{expanded ? '−' : '+'}</span>
+          <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid #E8E0F0', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: MUTED, fontWeight: 500, padding: '6px 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
+            <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #D8D0E8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: MUTED, lineHeight: 1 }}>{expanded ? '−' : '+'}</span>
             {expanded ? 'Less info' : 'More info'}
           </button>
         )}
@@ -491,98 +370,51 @@ function VendorCard({
 // ─── Saved Page ────────────────────────────────────────────────────────────────
 
 export default function SavedPage() {
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
   const [savedVendors, setSavedVendors] = useState<Vendor[]>([])
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
-  const [savedNotes, setSavedNotes] = useState<Record<string, string>>({})
-  const [loading, setLoading] = useState(true)
+  const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
+  const [savedNotes, setSavedNotes]     = useState<Record<string, string>>({})
+  const [loading, setLoading]           = useState(true)
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('jaiye_user')
-      if (stored) {
-        const user = JSON.parse(stored) as CurrentUser
-        setCurrentUser(user)
-      } else {
-        setLoading(false)
-      }
-    } catch {
-      setLoading(false)
-    }
+      if (stored) setCurrentUser(JSON.parse(stored) as CurrentUser)
+      else setLoading(false)
+    } catch { setLoading(false) }
   }, [])
 
   useEffect(() => {
     if (!currentUser) return
-
     async function loadSaved() {
       setLoading(true)
-
-      // Fetch saved rows including notes
-      const { data: savedRows } = await supabase
-        .from('saved_vendors')
-        .select('vendor_id, notes')
-        .eq('user_id', currentUser!.email)
-
-      if (!savedRows || savedRows.length === 0) {
-        setSavedVendors([])
-        setSavedIds(new Set())
-        setSavedNotes({})
-        setLoading(false)
-        return
-      }
-
+      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, notes').eq('user_id', currentUser!.email)
+      if (!savedRows || savedRows.length === 0) { setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({}); setLoading(false); return }
       const ids = savedRows.map(r => r.vendor_id)
       setSavedIds(new Set(ids))
-
-      // Build notes map: vendorId → note text
       const notesMap: Record<string, string> = {}
       savedRows.forEach(r => { notesMap[r.vendor_id] = r.notes ?? '' })
       setSavedNotes(notesMap)
-
-      const { data: vendorData } = await supabase
-        .from('vendors')
-        .select('*')
-        .in('id', ids)
-
-      if (vendorData) {
-        const remapped = vendorData.map(v =>
-          v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v
-        )
-        setSavedVendors(remapped)
-      }
+      const { data: vendorData } = await supabase.from('vendors').select('*').in('id', ids)
+      if (vendorData) setSavedVendors(vendorData.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v))
       setLoading(false)
     }
-
     loadSaved()
   }, [currentUser])
 
   const handleToggleSave = useCallback(async (vendorId: string) => {
     if (!currentUser) return
     const isSaved = savedIds.has(vendorId)
-
-    setSavedIds(prev => {
-      const next = new Set(prev)
-      if (isSaved) next.delete(vendorId)
-      else next.add(vendorId)
-      return next
-    })
+    setSavedIds(prev => { const n = new Set(prev); if (isSaved) n.delete(vendorId); else n.add(vendorId); return n })
     if (isSaved) {
       setSavedVendors(prev => prev.filter(v => v.id !== vendorId))
       setSavedNotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
-    }
-
-    if (isSaved) {
-      await supabase.from('saved_vendors')
-        .delete()
-        .eq('user_id', currentUser.email)
-        .eq('vendor_id', vendorId)
+      await supabase.from('saved_vendors').delete().eq('user_id', currentUser.email).eq('vendor_id', vendorId)
     } else {
-      await supabase.from('saved_vendors')
-        .insert({ user_id: currentUser.email, vendor_id: vendorId })
+      await supabase.from('saved_vendors').insert({ user_id: currentUser.email, vendor_id: vendorId })
     }
   }, [currentUser, savedIds])
 
-  // Group by category in canonical order
   const grouped = CATEGORY_ORDER.reduce<Record<string, Vendor[]>>((acc, cat) => {
     const inCat = savedVendors.filter(v => v.category === cat)
     if (inCat.length > 0) acc[cat] = inCat
@@ -598,114 +430,99 @@ export default function SavedPage() {
   const totalSaved = savedVendors.length
 
   return (
-    <main style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', background: '#FDF8F4', minHeight: '100vh' }}>
+    <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
+
+      {/* Nav */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #E8E0E8', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, textDecoration: 'none', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
+          ← Directory
+        </Link>
+        {currentUser && (
+          <div style={{ fontSize: 12, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            {currentUser.name.split(' ')[0]}'s saved vendors
+          </div>
+        )}
+      </div>
 
       {/* Hero */}
-      <div style={{
-        background: 'linear-gradient(160deg, #3D1515 0%, #7A2A2A 45%, #B85C3A 100%)',
-        padding: 'clamp(28px, 5vw, 52px) 20px', textAlign: 'center',
-      }}>
-        <Link href="/" style={{
-          display: 'inline-flex', alignItems: 'center', gap: 5,
-          fontSize: 11, color: 'rgba(232,200,122,0.7)', textDecoration: 'none',
-          marginBottom: 16, letterSpacing: 0.3,
-        }}>
-          ← Back to directory
-        </Link>
-        <div style={{ fontSize: 13, color: '#E8C87A', letterSpacing: 8, marginBottom: 10, opacity: 0.9 }}>♡ ♡ ♡</div>
-        <h1 style={{ fontSize: 'clamp(26px, 5vw, 48px)', color: '#FFF5EC', margin: '0 0 6px', fontWeight: 700, lineHeight: 1.15, letterSpacing: -0.5 }}>
-          {currentUser ? `${currentUser.name.split(' ')[0]}'s Saved Vendors` : 'Saved Vendors'}
+      <div style={{ background: 'linear-gradient(180deg, #DDD0E4 0%, #EDE4F0 40%, #FAFAFA 100%)', textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) 20px clamp(28px, 4vw, 36px)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 18 }}>
+          <div style={{ height: 1, width: 44, background: GOLD, opacity: 0.6 }} />
+          <div style={{ width: 4, height: 4, borderRadius: '50%', background: GOLD, opacity: 0.8 }} />
+          <div style={{ height: 1, width: 44, background: GOLD, opacity: 0.6 }} />
+        </div>
+        <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, fontWeight: 500, marginBottom: 10 }}>
+          Your Shortlist
+        </div>
+        <h1 style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: 700, color: DARK, letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1, margin: '0 0 6px' }}>
+          {currentUser ? `${currentUser.name.split(' ')[0]}'s` : 'Saved'}
         </h1>
-        <div style={{ width: 36, height: 1.5, background: '#E8C87A', margin: '10px auto', opacity: 0.8 }} />
-        <p style={{ color: 'rgba(255,240,225,0.65)', fontSize: 13, margin: 0 }}>
+        <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#6A586A', marginBottom: 16 }}>
+          Saved Vendors
+        </div>
+        <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 11, color: GOLD, fontWeight: 500 }}>
           {loading ? 'Loading…' : totalSaved > 0 ? `${totalSaved} vendor${totalSaved !== 1 ? 's' : ''} saved` : 'Your shortlist, all in one place'}
-        </p>
+        </div>
+        <div style={{ marginTop: 26, height: 1, background: `linear-gradient(to right, transparent, ${GOLD} 30%, ${GOLD} 70%, transparent 100%)` }} />
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 60px' }}>
 
+        {/* Not signed in */}
         {!currentUser && !loading && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
-            <h2 style={{ fontSize: 18, color: '#2C1A12', fontWeight: 700, margin: '0 0 8px' }}>Sign in to see your saved vendors</h2>
-            <p style={{ color: '#9A8070', fontSize: 13, margin: '0 0 20px' }}>Head back to the directory and sign in to start saving vendors.</p>
-            <Link href="/" style={{
-              display: 'inline-block', padding: '10px 24px',
-              background: '#C45C7A', color: 'white', borderRadius: 24,
-              textDecoration: 'none', fontSize: 13, fontWeight: 700,
-            }}>
+            <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Sign in to see your saved vendors</h2>
+            <p style={{ color: MUTED, fontSize: 13, margin: '0 0 20px', fontFamily: 'var(--font-jost, sans-serif)' }}>Head back to the directory and sign in to start saving vendors.</p>
+            <Link href="/" style={{ display: 'inline-block', padding: '10px 24px', background: ACCENT, color: 'white', borderRadius: 24, textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>
               Go to directory
             </Link>
           </div>
         )}
 
+        {/* Loading */}
         {loading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12, marginTop: 8 }}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={{ background: 'white', borderRadius: 16, height: 120, opacity: 0.3, border: '1px solid #EDE4DC' }} />
+              <div key={i} style={{ background: 'white', borderRadius: 16, height: 120, opacity: 0.3, border: '1px solid #E8E0E8' }} />
             ))}
           </div>
         )}
 
+        {/* Empty */}
         {!loading && currentUser && totalSaved === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
-            <h2 style={{ fontSize: 18, color: '#2C1A12', fontWeight: 700, margin: '0 0 8px' }}>No saved vendors yet</h2>
-            <p style={{ color: '#9A8070', fontSize: 13, margin: '0 0 20px' }}>Browse the directory and tap the ♡ on vendors you love.</p>
-            <Link href="/" style={{
-              display: 'inline-block', padding: '10px 24px',
-              background: '#C45C7A', color: 'white', borderRadius: 24,
-              textDecoration: 'none', fontSize: 13, fontWeight: 700,
-            }}>
+            <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>No saved vendors yet</h2>
+            <p style={{ color: MUTED, fontSize: 13, margin: '0 0 20px', fontFamily: 'var(--font-jost, sans-serif)' }}>Browse the directory and tap the ♡ on vendors you love.</p>
+            <Link href="/" style={{ display: 'inline-block', padding: '10px 24px', background: ACCENT, color: 'white', borderRadius: 24, textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>
               Browse vendors
             </Link>
           </div>
         )}
 
+        {/* Vendor groups */}
         {!loading && currentUser && totalSaved > 0 && (
           <div>
             {Object.entries(grouped).map(([cat, vendors]) => (
               <div key={cat} style={{ marginBottom: 32 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '5px 14px', borderRadius: 20,
-                    background: getColour(cat), color: 'white',
-                    fontSize: 11, fontWeight: 700, letterSpacing: 0.3,
-                  }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 40, background: getColour(cat), color: 'white', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
                     {getEmoji(cat)} {cat}
                   </span>
-                  <span style={{ fontSize: 11, color: '#C4A898' }}>
+                  <span style={{ fontSize: 12, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>
                     {vendors.length} vendor{vendors.length !== 1 ? 's' : ''}
                   </span>
                 </div>
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))',
-                  gap: 12,
-                }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12 }}>
                   {vendors.map(v => (
-                    <VendorCard
-                      key={v.id}
-                      v={v}
-                      savedIds={savedIds}
-                      onToggleSave={handleToggleSave}
-                      userId={currentUser.email}
-                      savedNote={savedNotes[v.id] ?? ''}
-                    />
+                    <VendorCard key={v.id} v={v} savedIds={savedIds} onToggleSave={handleToggleSave} userId={currentUser.email} savedNote={savedNotes[v.id] ?? ''} />
                   ))}
                 </div>
               </div>
             ))}
-
             <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <Link href="/" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '9px 22px', borderRadius: 24,
-                border: '1px solid #EDE4DC', background: 'white',
-                color: '#8A6A58', fontSize: 12, textDecoration: 'none', fontWeight: 500,
-              }}>
+              <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid #E8E0F0', background: 'white', color: MUTED, fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 ← Browse more vendors
               </Link>
             </div>
@@ -713,7 +530,7 @@ export default function SavedPage() {
         )}
       </div>
 
-      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid #EDE4DC', color: '#C4A898', fontSize: 13 }}>
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid #E8E0E8', color: MUTED, fontSize: 13, fontFamily: 'var(--font-jost, sans-serif)' }}>
         Made with ♥ for Nigerian brides
       </footer>
     </main>

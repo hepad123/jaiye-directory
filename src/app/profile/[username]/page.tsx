@@ -1,0 +1,566 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import { createBrowserClient } from '@supabase/ssr'
+import { useAuth } from '@/hooks/useAuth'
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Profile = {
+  id: string
+  email: string
+  display_name: string
+  username?: string
+  bio?: string
+}
+
+type Vendor = {
+  id: string
+  name: string
+  category: string
+  location: string
+  instagram?: string
+  price_from?: string
+  verified?: boolean
+}
+
+type FollowEntry = {
+  email: string
+  display_name: string
+  username?: string
+}
+
+// ─── Category meta ────────────────────────────────────────────────────────────
+
+const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
+  'Event Planning':        { emoji: '📋', colour: '#9B7BB8' },
+  'Styling':               { emoji: '✨', colour: '#C45C7A' },
+  'Outfits':               { emoji: '👗', colour: '#C4922A' },
+  'Makeup':                { emoji: '💄', colour: '#D4789A' },
+  'Hair & Gele':           { emoji: '💇🏾', colour: '#6A9BB5' },
+  'Photography':           { emoji: '📸', colour: '#5A8A72' },
+  'Videography & Content': { emoji: '🎥', colour: '#4A6A8A' },
+  'Decor & Venue':         { emoji: '🏛️', colour: '#9A7A5A' },
+  'Catering':              { emoji: '🍽️', colour: '#C4724A' },
+  'Entertainment':         { emoji: '🎤', colour: '#7A6A9A' },
+  'Other':                 { emoji: '✦',  colour: '#8A8A8A' },
+}
+
+const CATEGORY_ORDER = [
+  'Event Planning', 'Outfits', 'Styling', 'Makeup',
+  'Hair & Gele', 'Photography', 'Videography & Content',
+  'Decor & Venue', 'Catering', 'Entertainment', 'Other',
+]
+
+const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#B5294E'
+const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+
+function Avatar({ name, size = 64 }: { name: string; size?: number }) {
+  const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+  const colours  = ['#C45C7A', '#9B7BB8', '#C4922A', '#5A8A72', '#6A9BB5', '#D4789A']
+  const colour   = colours[name.charCodeAt(0) % colours.length]
+
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: `linear-gradient(135deg, ${colour}22, ${colour}44)`,
+      border: `2px solid ${colour}55`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.32, fontWeight: 700, color: colour,
+      fontFamily: 'var(--font-dm-sans, sans-serif)',
+      flexShrink: 0,
+    }}>
+      {initials || '?'}
+    </div>
+  )
+}
+
+// ─── Vendor Row ───────────────────────────────────────────────────────────────
+
+function VendorRow({ vendor }: { vendor: Vendor }) {
+  const colour   = getColour(vendor.category)
+  const igHandle = vendor.instagram?.replace('@', '').trim()
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '11px 16px',
+      borderBottom: '1px solid #F5EFE9',
+      background: 'white',
+    }}>
+      <div style={{
+        width: 36, height: 36, borderRadius: 10,
+        background: `${colour}18`, border: `1px solid ${colour}33`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 17, flexShrink: 0,
+      }}>
+        {getEmoji(vendor.category)}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 14, fontWeight: 600, color: '#2C1A12',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2,
+        }}>
+          {vendor.name}
+          {vendor.verified && <span style={{ marginLeft: 5, fontSize: 11, color: '#5A8A72' }}>✓</span>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {vendor.location && <span style={{ fontSize: 11, color: '#B09080' }}>{vendor.location}</span>}
+          {igHandle && <span style={{ fontSize: 11, color: '#C45C7A' }}>@{igHandle}</span>}
+        </div>
+      </div>
+
+      {vendor.price_from && (
+        <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, flexShrink: 0 }}>
+          ₦{vendor.price_from}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Grouped vendor list ──────────────────────────────────────────────────────
+
+function GroupedVendorList({ vendors }: { vendors: Vendor[] }) {
+  if (vendors.length === 0) return null
+
+  const grouped = CATEGORY_ORDER.reduce<Record<string, Vendor[]>>((acc, cat) => {
+    const inCat = vendors.filter(v =>
+      v.category === cat || (cat === 'Outfits' && v.category === 'Fashion')
+    )
+    if (inCat.length > 0) acc[cat] = inCat
+    return acc
+  }, {})
+
+  vendors.forEach(v => {
+    const normCat = v.category === 'Fashion' ? 'Outfits' : v.category
+    if (!CATEGORY_ORDER.includes(normCat)) {
+      if (!grouped[normCat]) grouped[normCat] = []
+      if (!grouped[normCat].find(x => x.id === v.id)) grouped[normCat].push(v)
+    }
+  })
+
+  return (
+    <div>
+      {Object.entries(grouped).map(([cat, catVendors]) => (
+        <div key={cat} style={{ marginBottom: 20 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 16px',
+            background: '#FDF8F4',
+            borderBottom: '1px solid #F0E8E2',
+            borderTop: '1px solid #F0E8E2',
+          }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: getColour(cat), textTransform: 'uppercase', letterSpacing: 1.2 }}>
+              {getEmoji(cat)} {cat}
+            </span>
+            <span style={{ fontSize: 10, color: '#C4A898' }}>· {catVendors.length}</span>
+          </div>
+          <div style={{ background: 'white', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
+            {catVendors.map(v => <VendorRow key={v.id} vendor={v} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── People sheet (followers / following) ─────────────────────────────────────
+
+function PeopleSheet({ title, people, onClose, currentUserEmail, onToggleFollow, followingEmails }: {
+  title: string
+  people: FollowEntry[]
+  onClose: () => void
+  currentUserEmail?: string
+  onToggleFollow: (email: string) => void
+  followingEmails: Set<string>
+}) {
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: 'fixed', inset: 0, zIndex: 998,
+        background: 'rgba(44,26,18,0.4)', backdropFilter: 'blur(2px)',
+      }} />
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 999,
+        background: '#FDF8F4', borderRadius: '20px 20px 0 0',
+        maxWidth: 480, margin: '0 auto',
+        maxHeight: '70vh', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 -8px 40px rgba(44,26,18,0.15)',
+        fontFamily: 'var(--font-dm-sans, sans-serif)',
+      }}>
+        <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #EDE4DC', flexShrink: 0 }}>
+          <div style={{ width: 32, height: 3, background: '#E8DDD5', borderRadius: 2, margin: '0 auto 14px' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#2C1A12', margin: 0 }}>{title}</h3>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: '#B09080', cursor: 'pointer', padding: 0 }}>×</button>
+          </div>
+        </div>
+
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          {people.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#C4A898', fontSize: 13 }}>
+              No one here yet
+            </div>
+          ) : people.map(p => (
+            <div key={p.email} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '12px 20px', borderBottom: '1px solid #F5EFE9',
+            }}>
+              <Avatar name={p.display_name} size={38} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#2C1A12' }}>{p.display_name}</div>
+                {p.username && <div style={{ fontSize: 11, color: '#B09080' }}>@{p.username}</div>}
+              </div>
+              {currentUserEmail && p.email !== currentUserEmail && (
+                <button
+                  onClick={() => onToggleFollow(p.email)}
+                  style={{
+                    padding: '5px 14px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                    background: followingEmails.has(p.email) ? 'white' : '#C45C7A',
+                    color: followingEmails.has(p.email) ? '#9A8070' : 'white',
+                    border: followingEmails.has(p.email) ? '1px solid #EDE4DC' : 'none',
+                  }}>
+                  {followingEmails.has(p.email) ? 'Following' : 'Follow'}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Profile Page ─────────────────────────────────────────────────────────────
+
+export default function ProfilePage() {
+  const params   = useParams()
+  const username = params?.username as string
+  const { user, openAuthModal } = useAuth()
+
+  const [profile, setProfile]                   = useState<Profile | null>(null)
+  const [usedVendors, setUsedVendors]           = useState<Vendor[]>([])
+  const [recVendors, setRecVendors]             = useState<Vendor[]>([])
+  const [followers, setFollowers]               = useState<FollowEntry[]>([])
+  const [following, setFollowing]               = useState<FollowEntry[]>([])
+  const [followingEmails, setFollowingEmails]   = useState<Set<string>>(new Set())
+  const [activeTab, setActiveTab]               = useState<'used' | 'recommended'>('used')
+  const [sheet, setSheet]                       = useState<'followers' | 'following' | null>(null)
+  const [loading, setLoading]                   = useState(true)
+  const [notFound, setNotFound]                 = useState(false)
+
+  const isOwner = user?.email === profile?.email
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+
+      // Find profile by username or email-prefix match
+      const { data: byUsername } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', username)
+        .maybeSingle()
+
+      const profileData = byUsername
+
+      if (!profileData) {
+        setNotFound(true)
+        setLoading(false)
+        return
+      }
+
+      setProfile(profileData)
+
+      // Used vendors — look up reviews marked __used__ by this user's email
+      const { data: usedRows } = await supabase
+        .from('reviews')
+        .select('vendor_id')
+        .eq('comment', '__used__')
+        .eq('reviewer_name', profileData.display_name)
+
+      if (usedRows && usedRows.length > 0) {
+        const ids = [...new Set(usedRows.map(r => r.vendor_id))]
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id, name, category, location, instagram, price_from, verified')
+          .in('id', ids)
+        if (vendorData) setUsedVendors(vendorData)
+      }
+
+      // Recommended vendors
+      const { data: recRows } = await supabase
+        .from('vendor_recommendations')
+        .select('vendor_id')
+        .eq('user_id', profileData.email)
+
+      if (recRows && recRows.length > 0) {
+        const ids = recRows.map(r => r.vendor_id)
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id, name, category, location, instagram, price_from, verified')
+          .in('id', ids)
+        if (vendorData) setRecVendors(vendorData)
+      }
+
+      // Followers
+      const { data: followerRows } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('following_id', profileData.email)
+
+      if (followerRows?.length) {
+        const emails = followerRows.map(r => r.follower_id)
+        const { data: fp } = await supabase
+          .from('profiles')
+          .select('email, display_name, username')
+          .in('email', emails)
+        if (fp) setFollowers(fp)
+      }
+
+      // Following
+      const { data: followingRows } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', profileData.email)
+
+      if (followingRows?.length) {
+        const emails = followingRows.map(r => r.following_id)
+        const { data: fp } = await supabase
+          .from('profiles')
+          .select('email, display_name, username')
+          .in('email', emails)
+        if (fp) setFollowing(fp)
+      }
+
+      // Current user's following list (for follow buttons)
+      if (user?.email) {
+        const { data: myFollowing } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', user.email)
+        if (myFollowing) setFollowingEmails(new Set(myFollowing.map(r => r.following_id)))
+      }
+
+      setLoading(false)
+    }
+
+    load()
+  }, [username, user])
+
+  const handleToggleFollow = useCallback(async (targetEmail: string) => {
+    if (!user?.email) { openAuthModal(); return }
+
+    const isFollowing = followingEmails.has(targetEmail)
+
+    setFollowingEmails(prev => {
+      const next = new Set(prev)
+      isFollowing ? next.delete(targetEmail) : next.add(targetEmail)
+      return next
+    })
+
+    if (isFollowing) {
+      await supabase.from('follows').delete()
+        .eq('follower_id', user.email).eq('following_id', targetEmail)
+      if (targetEmail === profile?.email) {
+        setFollowers(prev => prev.filter(f => f.email !== user.email))
+      }
+    } else {
+      await supabase.from('follows').insert({ follower_id: user.email, following_id: targetEmail })
+      if (targetEmail === profile?.email) {
+        const { data } = await supabase
+          .from('profiles').select('email, display_name, username')
+          .eq('email', user.email).maybeSingle()
+        if (data) setFollowers(prev => [...prev, data])
+      }
+    }
+  }, [user, followingEmails, profile, openAuthModal])
+
+  // ── Loading skeleton ────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <main style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', background: '#FDF8F4', minHeight: '100vh' }}>
+        <div style={{ height: 100, background: 'linear-gradient(160deg, #3D1515 0%, #7A2A2A 45%, #B85C3A 100%)' }} />
+        <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
+          <div style={{ background: 'white', borderRadius: 20, padding: 20, marginTop: -8,
+            boxShadow: '0 4px 24px rgba(44,26,18,0.10)' }}>
+            {[70, 40, 50].map((h, i) => (
+              <div key={i} style={{ height: h, background: '#F0E8E2', borderRadius: 10, marginBottom: 12, opacity: 0.5 }} />
+            ))}
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (notFound) {
+    return (
+      <main style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', background: '#FDF8F4', minHeight: '100vh',
+        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
+          <h2 style={{ fontSize: 18, color: '#2C1A12', fontWeight: 700, margin: '0 0 8px' }}>Profile not found</h2>
+          <Link href="/" style={{ color: '#C45C7A', fontSize: 13, textDecoration: 'none' }}>← Back to directory</Link>
+        </div>
+      </main>
+    )
+  }
+
+  const displayName        = profile?.display_name || 'Unknown'
+  const handle             = profile?.username || profile?.email?.split('@')[0] || ''
+  const isFollowingProfile = followingEmails.has(profile?.email ?? '')
+  const activeVendors      = activeTab === 'used' ? usedVendors : recVendors
+
+  return (
+    <main style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', background: '#FDF8F4', minHeight: '100vh' }}>
+
+      {/* Hero */}
+      <div style={{
+        background: 'linear-gradient(160deg, #3D1515 0%, #7A2A2A 45%, #B85C3A 100%)',
+        padding: '32px 20px 16px',
+      }}>
+        <Link href="/" style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          fontSize: 11, color: 'rgba(232,200,122,0.7)', textDecoration: 'none', letterSpacing: 0.3,
+        }}>
+          ← Back to directory
+        </Link>
+      </div>
+
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
+
+        {/* Profile card */}
+        <div style={{
+          background: 'white', borderRadius: 20, padding: '20px 20px 0',
+          boxShadow: '0 4px 24px rgba(44,26,18,0.10)',
+          border: '1px solid #F0E8E2',
+          position: 'relative', top: -12,
+        }}>
+
+          {/* Top row */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
+            <Avatar name={displayName} size={68} />
+
+            {/* Stats */}
+            <div style={{ flex: 1, display: 'flex', gap: 24, paddingTop: 8 }}>
+              <button onClick={() => setSheet('followers')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', padding: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A12' }}>{followers.length}</div>
+                <div style={{ fontSize: 11, color: '#9A8070' }}>Followers</div>
+              </button>
+              <button onClick={() => setSheet('following')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', padding: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A12' }}>{following.length}</div>
+                <div style={{ fontSize: 11, color: '#9A8070' }}>Following</div>
+              </button>
+            </div>
+
+            {/* Action */}
+            {isOwner ? (
+              <button style={{
+                padding: '7px 16px', borderRadius: 20,
+                border: '1px solid #EDE4DC', background: 'white',
+                fontSize: 12, fontWeight: 600, color: '#2C1A12', cursor: 'pointer',
+              }}>
+                Edit profile
+              </button>
+            ) : (
+              <button
+                onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.email) }}
+                style={{
+                  padding: '7px 16px', borderRadius: 20,
+                  border: isFollowingProfile ? '1px solid #EDE4DC' : 'none',
+                  background: isFollowingProfile ? 'white' : '#C45C7A',
+                  fontSize: 12, fontWeight: 700,
+                  color: isFollowingProfile ? '#9A8070' : 'white',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}>
+                {isFollowingProfile ? 'Following' : 'Follow'}
+              </button>
+            )}
+          </div>
+
+          {/* Name */}
+          <div style={{ marginBottom: 16, paddingLeft: 2 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#2C1A12', marginBottom: 2 }}>{displayName}</div>
+            <div style={{ fontSize: 12, color: '#B09080' }}>@{handle}</div>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: 'flex', borderTop: '1px solid #F0E8E2', marginLeft: -20, marginRight: -20 }}>
+            {[
+              { key: 'used',        label: '✓ Used',  count: usedVendors.length },
+              { key: 'recommended', label: '⭐ Recs', count: recVendors.length  },
+            ].map(tab => (
+              <button key={tab.key}
+                onClick={() => setActiveTab(tab.key as 'used' | 'recommended')}
+                style={{
+                  flex: 1, padding: '13px 8px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  borderBottom: activeTab === tab.key ? '2px solid #C45C7A' : '2px solid transparent',
+                  color: activeTab === tab.key ? '#C45C7A' : '#9A8070',
+                  fontSize: 12, fontWeight: activeTab === tab.key ? 700 : 500,
+                  transition: 'all 0.15s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}>
+                {tab.label}
+                <span style={{
+                  background: activeTab === tab.key ? '#C45C7A15' : '#F0E8E2',
+                  color: activeTab === tab.key ? '#C45C7A' : '#B09080',
+                  borderRadius: 20, padding: '1px 7px', fontSize: 10, fontWeight: 700,
+                }}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Vendor list */}
+        <div style={{ marginTop: 8, paddingBottom: 60 }}>
+          {activeVendors.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 20px', color: '#C4A898', fontSize: 13 }}>
+              {activeTab === 'used'
+                ? (isOwner
+                    ? "You haven't marked any vendors as used yet."
+                    : `${displayName.split(' ')[0]} hasn't marked any vendors yet.`)
+                : (isOwner
+                    ? "You haven't recommended any vendors yet."
+                    : `${displayName.split(' ')[0]} hasn't recommended any vendors yet.`)}
+            </div>
+          ) : (
+            <GroupedVendorList vendors={activeVendors} />
+          )}
+        </div>
+      </div>
+
+      {/* People sheet */}
+      {sheet && (
+        <PeopleSheet
+          title={sheet === 'followers' ? `Followers · ${followers.length}` : `Following · ${following.length}`}
+          people={sheet === 'followers' ? followers : following}
+          onClose={() => setSheet(null)}
+          currentUserEmail={user?.email}
+          onToggleFollow={handleToggleFollow}
+          followingEmails={followingEmails}
+        />
+      )}
+
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid #EDE4DC', color: '#C4A898', fontSize: 13 }}>
+        Made with ♥ for Nigerian brides
+      </footer>
+    </main>
+  )
+}

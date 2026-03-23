@@ -1,9 +1,19 @@
 import type { Metadata } from 'next'
-import { DM_Sans } from 'next/font/google'
+import { Playfair_Display, Jost } from 'next/font/google'
 import { AuthProvider } from '@/hooks/useAuth'
 import AuthModal from '@/components/AuthModal'
 
-const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans' })
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  weight: ['400', '600', '700'],
+})
+
+const jost = Jost({
+  subsets: ['latin'],
+  variable: '--font-jost',
+  weight: ['300', '400', '500', '600'],
+})
 
 export const metadata: Metadata = {
   title: 'Jaiye Directory',
@@ -13,7 +23,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={dmSans.variable} style={{ margin: 0, padding: 0 }}>
+      <body
+        className={`${playfair.variable} ${jost.variable}`}
+        style={{ margin: 0, padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}
+      >
         <AuthProvider>
           {children}
           <AuthModal />

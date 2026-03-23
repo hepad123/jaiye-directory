@@ -55,7 +55,6 @@ const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Fashion (Traditional)':   { emoji: '🪘', colour: '#B5540A' },
 }
 
-// Fashion vendors split by subcategory
 const FASHION_WHITE = [
   'Mazelle Bridal', 'Airvy Studio', 'Scholtz Ruberto', 'Wealth Atelier',
   'Ovems', 'House of Vieve', 'Horllard Fashion', 'Style by JC',
@@ -67,11 +66,16 @@ const FASHION_TRAD = [
 
 const LOCATION_ORDER = ['All', '🇳🇬 Nigeria', '🟢 Abuja', '🟢 Lagos', '🏙️ Lekki (Lagos)']
 const DB_LOCATION_MAP: Record<string, string> = {
-  'Nigeria': '🇳🇬 Nigeria',
-  'Abuja': '🟢 Abuja',
-  'Lagos': '🟢 Lagos',
+  'Nigeria':       '🇳🇬 Nigeria',
+  'Abuja':         '🟢 Abuja',
+  'Lagos':         '🟢 Lagos',
   'Lekki (Lagos)': '🏙️ Lekki (Lagos)',
 }
+
+const CATEGORY_ORDER = [
+  'All', 'Event Planning', 'Fashion (White Wedding)', 'Fashion (Traditional)',
+  'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content',
+]
 
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#B5294E'
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
@@ -150,7 +154,7 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
   }
 
   const realReviews = reviews.filter(r => r.comment !== '__used__')
-  const usedCount = reviews.filter(r => r.comment === '__used__').length
+  const usedCount   = reviews.filter(r => r.comment === '__used__').length
 
   return (
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4' }}>
@@ -161,7 +165,7 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
             display: 'inline-flex', alignItems: 'center', gap: 5,
             padding: '5px 12px', borderRadius: 20,
             border: '1px solid #E8DDD5', background: '#FDF8F4',
-            cursor: 'pointer', fontSize: 11, color: '#9A7060', fontWeight: 500
+            cursor: 'pointer', fontSize: 11, color: '#9A7060', fontWeight: 500,
           }}>
             👋 I used this vendor {usedCount > 0 && <span style={{ color: '#C45C7A', fontWeight: 700 }}>· {usedCount}</span>}
           </button>
@@ -177,7 +181,7 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
         )}
       </div>
 
-      {/* Reviews */}
+      {/* Reviews list */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 10, color: '#C4A898', letterSpacing: 0.5 }}>
           {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
@@ -208,7 +212,9 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
             <span style={{ fontSize: 10, fontWeight: 600, color: '#7A5A4A' }}>{r.reviewer_name}</span>
             <StarRating rating={r.rating} />
           </div>
-          {r.comment && r.comment !== '__used__' && <p style={{ fontSize: 10, color: '#9A7A6A', margin: '3px 0 0', lineHeight: 1.4 }}>{r.comment}</p>}
+          {r.comment && r.comment !== '__used__' && (
+            <p style={{ fontSize: 10, color: '#9A7A6A', margin: '3px 0 0', lineHeight: 1.4 }}>{r.comment}</p>
+          )}
         </div>
       ))}
     </div>
@@ -221,8 +227,9 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
   const [copied, setCopied] = useState(false)
   const [avgRating, setAvgRating] = useState<number | null>(null)
   const [usedCount, setUsedCount] = useState(0)
-  const colour    = getColour(v.category)
-  const igHandle  = v.instagram?.replace('@', '').trim()
+
+  const colour     = getColour(v.category)
+  const igHandle   = v.instagram?.replace('@', '').trim()
   const isFeatured = FEATURED_VENDORS.includes(v.name)
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
 
@@ -247,7 +254,7 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
   }
 
   const whatsappNumber = v.phone?.replace(/\D/g, '')
-  const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null
+  const whatsappUrl    = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null
 
   return (
     <div style={{
@@ -259,33 +266,27 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
     }}>
       <div style={{ height: 4, background: `linear-gradient(90deg, ${colour}CC, ${colour}55)` }} />
 
-      {/* Badges row */}
+      {/* Badges */}
       <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
         {isFeatured && (
-          <div style={{
-            background: '#FFF8E7', border: '1px solid #E8C87A',
-            borderRadius: 20, padding: '2px 8px',
-            fontSize: 9, fontWeight: 700, color: '#B8860B',
-          }}>⭐ Top pick</div>
+          <div style={{ background: '#FFF8E7', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#B8860B' }}>
+            ⭐ Top pick
+          </div>
         )}
         {v.verified && (
-          <div style={{
-            background: '#F0F7FF', border: '1px solid #AAD0FF',
-            borderRadius: 20, padding: '2px 8px',
-            fontSize: 9, fontWeight: 700, color: '#3A7BD5',
-          }}>✓ Verified</div>
+          <div style={{ background: '#F0F7FF', border: '1px solid #AAD0FF', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#3A7BD5' }}>
+            ✓ Verified
+          </div>
         )}
         {isNew && (
-          <div style={{
-            background: '#F0FFF4', border: '1px solid #9AE6B4',
-            borderRadius: 20, padding: '2px 8px',
-            fontSize: 9, fontWeight: 700, color: '#276749',
-          }}>🆕 New</div>
+          <div style={{ background: '#F0FFF4', border: '1px solid #9AE6B4', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#276749' }}>
+            🆕 New
+          </div>
         )}
       </div>
 
       <div style={{ padding: '12px 14px' }}>
-        {/* Category */}
+        {/* Category label */}
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3, opacity: 0.9 }}>
           {getEmoji(v.category)} {v.category}
         </div>
@@ -295,34 +296,26 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
           {v.name}
         </div>
 
-        {/* Social proof row — avg rating + used count */}
+        {/* Social proof */}
         {(avgRating !== null || usedCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
             {avgRating !== null && (
-              <span style={{ fontSize: 11, color: '#B8860B', display: 'flex', alignItems: 'center', gap: 3 }}>
-                ★ {avgRating}
-              </span>
+              <span style={{ fontSize: 11, color: '#B8860B', display: 'flex', alignItems: 'center', gap: 3 }}>★ {avgRating}</span>
             )}
             {usedCount > 0 && (
-              <span style={{ fontSize: 11, color: '#9A7060' }}>
-                👋 {usedCount} bride{usedCount !== 1 ? 's' : ''} used this
-              </span>
+              <span style={{ fontSize: 11, color: '#9A7060' }}>👋 {usedCount} bride{usedCount !== 1 ? 's' : ''} used this</span>
             )}
           </div>
         )}
 
         {/* Location */}
         {v.location && (
-          <div style={{ fontSize: 11, color: '#9A8070', marginBottom: 4 }}>
-            📍 {v.location}
-          </div>
+          <div style={{ fontSize: 11, color: '#9A8070', marginBottom: 4 }}>📍 {v.location}</div>
         )}
 
         {/* Price */}
         {v.price_from && (
-          <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 4 }}>
-            💰 From ₦{v.price_from}
-          </div>
+          <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 4 }}>💰 From ₦{v.price_from}</div>
         )}
 
         {/* Instagram */}
@@ -333,35 +326,27 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
           </a>
         )}
 
-        {/* WhatsApp button */}
+        {/* WhatsApp */}
         {whatsappUrl && (
           <div style={{ marginBottom: 4 }}>
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '4px 11px', borderRadius: 20,
-                background: '#25D366', color: 'white',
-                fontSize: 10, fontWeight: 700, textDecoration: 'none',
-              }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: '#25D366', color: 'white', fontSize: 10, fontWeight: 700, textDecoration: 'none' }}>
               <WhatsAppIcon /> WhatsApp
             </a>
           </div>
         )}
 
-        {/* Discount code with copy button */}
+        {/* Discount code */}
         {v.discount_code && (
           <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '4px 11px', borderRadius: 20,
-              background: '#2C1A12', color: '#F5E6C8',
-              fontSize: 10, fontWeight: 700, letterSpacing: 0.8
-            }}>🏷️ {v.discount_code}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: '#2C1A12', color: '#F5E6C8', fontSize: 10, fontWeight: 700, letterSpacing: 0.8 }}>
+              🏷️ {v.discount_code}
+            </span>
             <button onClick={copyCode} style={{
               padding: '4px 10px', borderRadius: 20,
               border: '1px solid #EDE4DC', background: copied ? '#F0FFF4' : 'white',
               fontSize: 10, color: copied ? '#276749' : '#9A7060',
-              cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s'
+              cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s',
             }}>
               {copied ? '✓ Copied!' : 'Copy'}
             </button>
@@ -371,10 +356,10 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
         {/* Expanded details */}
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4', display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {v.services  && <p style={{ fontSize: 11, color: '#6A4A38', margin: 0, lineHeight: 1.55 }}>{v.services}</p>}
-            {v.phone     && <p style={{ fontSize: 11, color: '#8A7060', margin: 0 }}>📞 {v.phone}</p>}
-            {v.email     && <p style={{ fontSize: 11, color: '#8A7060', margin: 0 }}>✉️ {v.email}</p>}
-            {v.website   && (
+            {v.services && <p style={{ fontSize: 11, color: '#6A4A38', margin: 0, lineHeight: 1.55 }}>{v.services}</p>}
+            {v.phone    && <p style={{ fontSize: 11, color: '#8A7060', margin: 0 }}>📞 {v.phone}</p>}
+            {v.email    && <p style={{ fontSize: 11, color: '#8A7060', margin: 0 }}>✉️ {v.email}</p>}
+            {v.website  && (
               <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: 11, color: '#6A9BB5', textDecoration: 'none' }}>
@@ -386,7 +371,7 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
           </div>
         )}
 
-        {/* More info button */}
+        {/* More info toggle */}
         {hasDetails && (
           <button onClick={() => setExpanded(!expanded)} style={{
             marginTop: 10, width: '100%',
@@ -397,7 +382,7 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
             <span style={{
               width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #DDD0C8',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, color: '#B09080', lineHeight: 1
+              fontSize: 11, color: '#B09080', lineHeight: 1,
             }}>{expanded ? '−' : '+'}</span>
             {expanded ? 'Less info' : 'More info'}
           </button>
@@ -408,13 +393,14 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
 }
 
 export default function Home() {
-  const [vendors, setVendors]     = useState<Vendor[]>([])
-  const [search, setSearch]       = useState('')
-  const [category, setCategory]   = useState('All')
-  const [location, setLocation]   = useState('All')
+  const [vendors, setVendors]         = useState<Vendor[]>([])
+  const [search, setSearch]           = useState('')
+  const [category, setCategory]       = useState('All')
+  const [location, setLocation]       = useState('All')
   const [showNewOnly, setShowNewOnly] = useState(false)
   const [weddingType, setWeddingType] = useState('All')
-  const [loading, setLoading]     = useState(true)
+  const [loading, setLoading]         = useState(true)
+  const [cardResetKey, setCardResetKey] = useState(0)
 
   useEffect(() => {
     supabase.from('vendors').select('*').then(({ data, error }) => {
@@ -424,30 +410,20 @@ export default function Home() {
     })
   }, [])
 
-  // Reset card expansion key when category changes so all cards collapse
-  const [cardResetKey, setCardResetKey] = useState(0)
   useEffect(() => { setCardResetKey(k => k + 1) }, [category])
-
-  const CATEGORY_ORDER = ['All', 'Event Planning', 'Fashion (White Wedding)', 'Fashion (Traditional)', 'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content']
-  const allCats = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
-  const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
-  const categories = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
-
-  // getCategoryCount moved below vendorsWithSubcats
 
   // Remap fashion vendors into subcategories for display
   const vendorsWithSubcats = vendors.map(v => {
     if (v.category === 'Fashion') {
       if (FASHION_WHITE.includes(v.name)) return { ...v, category: 'Fashion (White Wedding)' }
-      if (FASHION_TRAD.includes(v.name)) return { ...v, category: 'Fashion (Traditional)' }
+      if (FASHION_TRAD.includes(v.name))  return { ...v, category: 'Fashion (Traditional)' }
     }
     return v
   })
 
-  const CATEGORY_ORDER = ['All', 'Event Planning', 'Fashion (White Wedding)', 'Fashion (Traditional)', 'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content']
-  const allCats = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
+  const allCats       = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
   const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
-  const categories = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
+  const categories    = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
 
   const getCategoryCount = (cat: string) =>
     cat === 'All' ? vendors.length : vendorsWithSubcats.filter(v => v.category === cat).length
@@ -464,7 +440,7 @@ export default function Home() {
     const matchCat = category === '__discounts__'
       ? !!v.discount_code
       : category === 'All' || v.category === category
-    const dbLoc = Object.entries(DB_LOCATION_MAP).find(([_, label]) => label === location)?.[0]
+    const dbLoc = Object.entries(DB_LOCATION_MAP).find(([, label]) => label === location)?.[0]
     const matchLocation = location === 'All' || v.location === dbLoc
     const matchNew = !showNewOnly || isNewVendor(v)
     const matchWeddingType = category !== 'Fashion' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
@@ -506,9 +482,9 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 11, scrollbarWidth: 'none' }}>
             {categories.map(cat => {
               const isActive = category === cat
-              const colour = cat === 'All' ? '#9A7060' : getColour(cat)
-              const emoji  = cat === 'All' ? '🌸' : getEmoji(cat)
-              const count  = getCategoryCount(cat)
+              const colour   = cat === 'All' ? '#9A7060' : getColour(cat)
+              const emoji    = cat === 'All' ? '🌸' : getEmoji(cat)
+              const count    = getCategoryCount(cat)
               return (
                 <button key={cat} onClick={() => { setCategory(cat); setWeddingType('All') }} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -525,7 +501,7 @@ export default function Home() {
                   <span style={{
                     background: isActive ? 'rgba(255,255,255,0.28)' : '#EDE4DC',
                     color: isActive ? 'white' : '#A08070',
-                    borderRadius: 10, padding: '1px 6px', fontSize: 9, fontWeight: 700
+                    borderRadius: 10, padding: '1px 6px', fontSize: 9, fontWeight: 700,
                   }}>{count}</span>
                 </button>
               )
@@ -556,7 +532,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Second row — Discounts + New this week */}
+        {/* Discounts + New this week row */}
         <div style={{ padding: '0 16px 8px', maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 7 }}>
           <button onClick={() => { setCategory(category === '__discounts__' ? 'All' : '__discounts__'); setWeddingType('All') }} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -595,7 +571,7 @@ export default function Home() {
             flex: 1, display: 'flex', alignItems: 'center', gap: 8,
             background: 'white', border: '1px solid #EDE4DC',
             borderRadius: 24, padding: '7px 16px',
-            boxShadow: '0 1px 4px rgba(180,130,110,0.08)'
+            boxShadow: '0 1px 4px rgba(180,130,110,0.08)',
           }}>
             <span style={{ color: '#C4A898', fontSize: 13 }}>🔍</span>
             <input type="text" placeholder="Search vendors…" value={search} onChange={e => setSearch(e.target.value)}
@@ -606,8 +582,7 @@ export default function Home() {
           </div>
           <select value={location} onChange={e => setLocation(e.target.value)} style={{
             padding: '7px 12px', borderRadius: 24, border: '1px solid #EDE4DC',
-            background: 'white', fontSize: 11, color: '#8A6A58', cursor: 'pointer',
-            outline: 'none', flexShrink: 0,
+            background: 'white', fontSize: 11, color: '#8A6A58', cursor: 'pointer', outline: 'none', flexShrink: 0,
           }}>
             {LOCATION_ORDER.map(loc => (
               <option key={loc} value={loc}>{loc}</option>
@@ -616,12 +591,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Count */}
+      {/* Vendor count */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 18px 2px' }}>
         <p style={{ color: '#C4A898', fontSize: 11, margin: 0 }}>{sorted.length} vendors</p>
       </div>
 
-      {/* Grid */}
+      {/* Vendor grid */}
       <div style={{
         maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px',
         display: 'grid',
@@ -637,7 +612,8 @@ export default function Home() {
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
                 <div style={{ fontSize: 36 }}>🌸</div>
                 <p style={{ color: '#C4A898', marginTop: 10, fontSize: 13 }}>No vendors found.</p>
-                <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setShowNewOnly(false); setWeddingType('All') }}
+                <button
+                  onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setShowNewOnly(false); setWeddingType('All') }}
                   style={{ marginTop: 8, padding: '6px 18px', background: '#C45C7A', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11 }}>
                   Show all
                 </button>

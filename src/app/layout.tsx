@@ -1,33 +1,23 @@
-import type { Metadata, Viewport } from 'next'
+import type { Metadata } from 'next'
 import { DM_Sans } from 'next/font/google'
-import './globals.css'
+import { AuthProvider } from '@/hooks/useAuth'
+import AuthModal from '@/components/AuthModal'
 
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-dm-sans',
-  display: 'swap',
-})
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans' })
 
 export const metadata: Metadata = {
-  title: 'Jaiye Directory – Nigerian Wedding & Event Vendors',
-  description: 'Your guide to the best Nigerian wedding and event vendors. 200+ vendors including makeup artists, photographers, event planners, fashion designers and more.',
+  title: 'Jaiye Directory',
+  description: 'Nigerian wedding & event vendor directory',
 }
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={dmSans.variable}>
-      <body style={{ margin: 0, padding: 0, fontFamily: 'var(--font-dm-sans, sans-serif)' }}>
-        {children}
+    <html lang="en">
+      <body className={dmSans.variable} style={{ margin: 0, padding: 0 }}>
+        <AuthProvider>
+          {children}
+          <AuthModal />
+        </AuthProvider>
       </body>
     </html>
   )

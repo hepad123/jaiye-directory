@@ -466,6 +466,7 @@ export default function Home() {
 
         {/* Category pills */}
         <div style={{ padding: '12px 16px 0', maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ position: 'relative' }}>
           <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 11, scrollbarWidth: 'none' }}>
             {categories.map(cat => {
               const isActive = category === cat
@@ -494,13 +495,23 @@ export default function Home() {
               )
             })}
           </div>
+          {/* Fade + more indicator */}
+          <div style={{
+            position: 'absolute', right: 0, top: 0, bottom: 11,
+            width: 52, pointerEvents: 'none',
+            background: 'linear-gradient(to right, transparent, #FDF8F4 70%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+          }}>
+            <span style={{ fontSize: 11, color: '#C4A898', fontWeight: 700, paddingRight: 2, paddingBottom: 11 }}>+</span>
+          </div>
+          </div>
         </div>
 
         {/* Fashion sub-filter pills */}
         {category === 'Outfits' && (
           <div style={{ padding: '0 16px 8px', maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ display: 'flex', gap: 7 }}>
-              {['All', 'White Wedding', 'Traditional', 'Both'].map(type => (
+              {['All', 'White Wedding', 'Traditional'].map(type => (
                 <button key={type} onClick={() => setWeddingType(type)} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
                   padding: '5px 12px', borderRadius: 20, flexShrink: 0,
@@ -512,7 +523,7 @@ export default function Home() {
                   boxShadow: weddingType === type ? '0 2px 10px #C4922A44' : 'none',
                   transition: 'all 0.15s ease',
                 }}>
-                  {type === 'White Wedding' ? '🤍' : type === 'Traditional' ? '👘' : type === 'Both' ? '✨' : '🌸'} {type}
+                  {type === 'White Wedding' ? '🤍' : type === 'Traditional' ? '👘' : '🌸'} {type}
                 </button>
               ))}
             </div>

@@ -10,6 +10,8 @@ const supabase = createBrowserClient(
 )
 
 type Mode = 'login' | 'signup'
+type Step = 'auth' | 'type' | 'profile'
+type ProfileType = 'customer' | 'vendor'
 
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal } = useAuth()
@@ -20,7 +22,8 @@ export default function AuthModal() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [username, setUsername]       = useState('')
-  const [step, setStep]               = useState<'auth' | 'profile'>('auth')
+  const [profileType, setProfileType] = useState<ProfileType | null>(null)
+  const [step, setStep]               = useState<Step>('auth')
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState('')
   const [usernameOk, setUsernameOk]   = useState<boolean | null>(null)
@@ -34,12 +37,10 @@ export default function AuthModal() {
   async function handleLogin() {
     if (!email.trim() || !password.trim()) { setError('Please fill in all fields.'); return }
     setLoading(true); setError('')
-
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
     })
-
     if (authError) {
       setError('Incorrect email or password.')
       setLoading(false)
@@ -53,19 +54,17 @@ export default function AuthModal() {
   async function handleSignUp() {
     if (!email.trim() || !password.trim()) { setError('Please fill in all fields.'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
-    if (password !== confirmPassword) { setError('Passwords don\'t match.'); return }
+    if (password !== confirmPassword) { setError("Passwords don't match."); return }
     setLoading(true); setError('')
-
     const { error: authError } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
     })
-
     if (authError) {
       setError(authError.message)
       setLoading(false)
     } else {
-      setStep('profile')
+      setStep('type')   // ← go to type picker first
       setLoading(false)
     }
   }
@@ -79,10 +78,7 @@ export default function AuthModal() {
     if (cleaned.length < 3) return
     setCheckingUsername(true)
     const { data } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('username', cleaned)
-      .maybeSingle()
+      .from('profiles').select('username').eq('username', cleaned).maybeSingle()
     setUsernameOk(!data)
     setCheckingUsername(false)
   }
@@ -105,6 +101,7 @@ export default function AuthModal() {
         email: user.email,
         display_name: displayName.trim(),
         username: username.trim(),
+        profile_type: profileType,   // ← save type to profiles table
       })
 
     if (profileError) {
@@ -112,7 +109,11 @@ export default function AuthModal() {
       setLoading(false)
     } else {
       await supabase.auth.updateUser({
-        data: { display_name: displayName.trim(), username: username.trim() }
+        data: {
+          display_name: displayName.trim(),
+          username: username.trim(),
+          profile_type: profileType,
+        }
       })
       handleClose()
     }
@@ -123,7 +124,7 @@ export default function AuthModal() {
     setEmail(''); setPassword(''); setConfirmPassword('')
     setDisplayName(''); setUsername('')
     setStep('auth'); setError(''); setUsernameOk(null)
-    setMode('login')
+    setMode('login'); setProfileType(null)
   }
 
   function switchMode(m: Mode) {
@@ -139,19 +140,19 @@ export default function AuthModal() {
     borderRadius: 12, fontSize: 14, color: '#2C1A12',
     background: 'white', outline: 'none',
     boxSizing: 'border-box',
-    fontFamily: 'var(--font-dm-sans, sans-serif)',
+    fontFamily: 'var(--font-jost, sans-serif)',
     transition: 'border-color 0.2s',
   })
 
   const btnStyle = (disabled: boolean): React.CSSProperties => ({
     width: '100%', padding: '13px 16px',
-    background: disabled ? '#E8DDD5' : '#C45C7A',
+    background: disabled ? '#E8DDD5' : '#8B6E9A',
     color: disabled ? '#B09080' : 'white',
     border: 'none', borderRadius: 12,
     fontSize: 14, fontWeight: 700,
     cursor: disabled ? 'default' : 'pointer',
     transition: 'all 0.2s',
-    fontFamily: 'var(--font-dm-sans, sans-serif)',
+    fontFamily: 'var(--font-jost, sans-serif)',
   })
 
   return (
@@ -173,7 +174,7 @@ export default function AuthModal() {
         padding: '28px 24px 44px',
         boxShadow: '0 -8px 40px rgba(44,26,18,0.18)',
         maxWidth: 480, margin: '0 auto',
-        fontFamily: 'var(--font-dm-sans, sans-serif)',
+        fontFamily: 'var(--font-jost, sans-serif)',
       }}>
         <div style={{ width: 36, height: 4, background: '#E8DDD5', borderRadius: 2, margin: '0 auto 24px' }} />
         <button onClick={handleClose} style={{
@@ -182,15 +183,15 @@ export default function AuthModal() {
           fontSize: 22, color: '#B09080', lineHeight: 1, padding: 4,
         }}>×</button>
 
-        {/* ── Auth step (login or signup) ── */}
+        {/* ── Step 1: Auth (login / signup) ── */}
         {step === 'auth' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{ fontSize: 30, marginBottom: 10 }}>✨</div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px', fontFamily: 'var(--font-jost, sans-serif)' }}>
                 {mode === 'login' ? 'Welcome back' : 'Join the Jaiye Directory'}
               </h2>
-              <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 {mode === 'login'
                   ? 'Sign in to see your saved vendors.'
                   : 'Save vendors, share recommendations\nand connect with other brides.'}
@@ -198,10 +199,7 @@ export default function AuthModal() {
             </div>
 
             {/* Mode toggle */}
-            <div style={{
-              display: 'flex', background: '#F0E8E2', borderRadius: 12,
-              padding: 4, marginBottom: 20,
-            }}>
+            <div style={{ display: 'flex', background: '#F0E8E2', borderRadius: 12, padding: 4, marginBottom: 20 }}>
               {(['login', 'signup'] as Mode[]).map(m => (
                 <button key={m} onClick={() => switchMode(m)} style={{
                   flex: 1, padding: '8px',
@@ -211,13 +209,13 @@ export default function AuthModal() {
                   color: mode === m ? '#2C1A12' : '#9A8070',
                   cursor: 'pointer', transition: 'all 0.15s',
                   boxShadow: mode === m ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                  fontFamily: 'var(--font-jost, sans-serif)',
                 }}>
                   {m === 'login' ? 'Sign in' : 'Sign up'}
                 </button>
               ))}
             </div>
 
-            {/* Fields */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input
                 type="email" placeholder="Email address" value={email} autoFocus
@@ -225,12 +223,10 @@ export default function AuthModal() {
                 style={inputStyle(false)}
               />
 
-              {/* Password with show/hide */}
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Password"
-                  value={password}
+                  placeholder="Password" value={password}
                   onChange={e => { setPassword(e.target.value); setError('') }}
                   onKeyDown={e => e.key === 'Enter' && mode === 'login' && handleLogin()}
                   style={{ ...inputStyle(false), paddingRight: 44 }}
@@ -247,8 +243,7 @@ export default function AuthModal() {
               {mode === 'signup' && (
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Confirm password"
-                  value={confirmPassword}
+                  placeholder="Confirm password" value={confirmPassword}
                   onChange={e => { setConfirmPassword(e.target.value); setError('') }}
                   style={inputStyle(false)}
                 />
@@ -266,10 +261,10 @@ export default function AuthModal() {
             </div>
 
             {mode === 'login' && (
-              <p style={{ fontSize: 11, color: '#C4A898', textAlign: 'center', margin: '14px 0 0' }}>
+              <p style={{ fontSize: 11, color: '#C4A898', textAlign: 'center', margin: '14px 0 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
                 Don't have an account?{' '}
                 <button onClick={() => switchMode('signup')} style={{
-                  background: 'none', border: 'none', color: '#C45C7A',
+                  background: 'none', border: 'none', color: '#8B6E9A',
                   fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: 0,
                 }}>Sign up free</button>
               </p>
@@ -277,33 +272,135 @@ export default function AuthModal() {
           </>
         )}
 
-        {/* ── Profile setup step (new users only) ── */}
+        {/* ── Step 2: Profile type picker ── */}
+        {step === 'type' && (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>🌸</div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px', fontFamily: 'var(--font-jost, sans-serif)' }}>
+                What kind of account?
+              </h2>
+              <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6, fontFamily: 'var(--font-jost, sans-serif)' }}>
+                Choose how you'll use the Jaiye Directory
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+
+              {/* Customer card */}
+              <button
+                onClick={() => setProfileType('customer')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 16,
+                  padding: '18px 20px', borderRadius: 16, cursor: 'pointer',
+                  border: profileType === 'customer' ? '2px solid #8B6E9A' : '2px solid #EDE4DC',
+                  background: profileType === 'customer' ? '#F5F0F8' : 'white',
+                  transition: 'all 0.15s', textAlign: 'left',
+                }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                  background: profileType === 'customer' ? '#8B6E9A' : '#F0E8E2',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22, transition: 'all 0.15s',
+                }}>
+                  👰🏾
+                </div>
+                <div>
+                  <div style={{
+                    fontSize: 15, fontWeight: 700,
+                    color: profileType === 'customer' ? '#8B6E9A' : '#2C1A12',
+                    marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)',
+                  }}>
+                    I'm planning a wedding / event
+                  </div>
+                  <div style={{ fontSize: 12, color: '#9A8070', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
+                    Save vendors, leave reviews, share recommendations
+                  </div>
+                </div>
+                {profileType === 'customer' && (
+                  <div style={{ marginLeft: 'auto', color: '#8B6E9A', fontSize: 18, flexShrink: 0 }}>✓</div>
+                )}
+              </button>
+
+              {/* Vendor card */}
+              <button
+                onClick={() => setProfileType('vendor')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 16,
+                  padding: '18px 20px', borderRadius: 16, cursor: 'pointer',
+                  border: profileType === 'vendor' ? '2px solid #C0A060' : '2px solid #EDE4DC',
+                  background: profileType === 'vendor' ? '#FDF8EE' : 'white',
+                  transition: 'all 0.15s', textAlign: 'left',
+                }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                  background: profileType === 'vendor' ? '#C0A060' : '#F0E8E2',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22, transition: 'all 0.15s',
+                }}>
+                  🎀
+                </div>
+                <div>
+                  <div style={{
+                    fontSize: 15, fontWeight: 700,
+                    color: profileType === 'vendor' ? '#C0A060' : '#2C1A12',
+                    marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)',
+                  }}>
+                    I'm a wedding / event vendor
+                  </div>
+                  <div style={{ fontSize: 12, color: '#9A8070', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
+                    Manage your listing, respond to reviews, grow your bookings
+                  </div>
+                </div>
+                {profileType === 'vendor' && (
+                  <div style={{ marginLeft: 'auto', color: '#C0A060', fontSize: 18, flexShrink: 0 }}>✓</div>
+                )}
+              </button>
+            </div>
+
+            <button
+              onClick={() => { if (profileType) setStep('profile') }}
+              disabled={!profileType}
+              style={btnStyle(!profileType)}
+            >
+              Continue →
+            </button>
+          </>
+        )}
+
+        {/* ── Step 3: Profile setup ── */}
         {step === 'profile' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <div style={{ fontSize: 30, marginBottom: 10 }}>🌸</div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px' }}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>
+                {profileType === 'vendor' ? '🎀' : '🌸'}
+              </div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px', fontFamily: 'var(--font-jost, sans-serif)' }}>
                 Set up your profile
               </h2>
-              <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6 }}>
-                Just two quick things and you're in!
+              <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6, fontFamily: 'var(--font-jost, sans-serif)' }}>
+                {profileType === 'vendor'
+                  ? 'How should brides find you on Jaiye?'
+                  : 'Just two quick things and you\'re in!'}
               </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#9A8070', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
-                  YOUR NAME
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#9A8070', letterSpacing: 0.5, display: 'block', marginBottom: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>
+                  {profileType === 'vendor' ? 'BUSINESS NAME' : 'YOUR NAME'}
                 </label>
                 <input
-                  type="text" placeholder="e.g. Temi Adeyemi" value={displayName} autoFocus
+                  type="text"
+                  placeholder={profileType === 'vendor' ? 'e.g. Glam by Omoye' : 'e.g. Temi Adeyemi'}
+                  value={displayName} autoFocus
                   onChange={e => { setDisplayName(e.target.value); setError('') }}
                   style={inputStyle(false)}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#9A8070', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#9A8070', letterSpacing: 0.5, display: 'block', marginBottom: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>
                   YOUR @HANDLE
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -312,7 +409,9 @@ export default function AuthModal() {
                     fontSize: 14, color: '#C4A898', fontWeight: 600,
                   }}>@</span>
                   <input
-                    type="text" placeholder="temi_adeye" value={username}
+                    type="text"
+                    placeholder={profileType === 'vendor' ? 'glambyomoye' : 'temi_adeye'}
+                    value={username}
                     onChange={e => checkUsername(e.target.value)}
                     style={{
                       ...inputStyle(usernameOk === false),
@@ -329,7 +428,7 @@ export default function AuthModal() {
                     </span>
                   )}
                 </div>
-                <p style={{ fontSize: 11, color: '#C4A898', margin: '6px 0 0 4px' }}>
+                <p style={{ fontSize: 11, color: '#C4A898', margin: '6px 0 0 4px', fontFamily: 'var(--font-jost, sans-serif)' }}>
                   Letters, numbers and underscores only. Min 3 characters.
                 </p>
               </div>
@@ -342,6 +441,17 @@ export default function AuthModal() {
                 style={btnStyle(loading || !displayName.trim() || username.length < 3 || usernameOk !== true)}
               >
                 {loading ? 'Saving…' : 'Create my profile →'}
+              </button>
+
+              {/* Back link */}
+              <button
+                onClick={() => setStep('type')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 12, color: '#B09080', textAlign: 'center',
+                  padding: '4px 0', fontFamily: 'var(--font-jost, sans-serif)',
+                }}>
+                ← Change account type
               </button>
             </div>
           </>

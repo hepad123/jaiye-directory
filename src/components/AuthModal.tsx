@@ -9,118 +9,91 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+type Mode = 'login' | 'signup'
+
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal } = useAuth()
 
-  const [email, setEmail]         = useState('')
-  const [otp, setOtp]             = useState('')
+  const [mode, setMode]               = useState<Mode>('login')
+  const [email, setEmail]             = useState('')
+  const [password, setPassword]       = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
-  const [username, setUsername]   = useState('')
-  const [step, setStep]           = useState<'email' | 'otp' | 'profile'>('email')
-  const [loading, setLoading]     = useState(false)
-  const [error, setError]         = useState('')
-  const [usernameOk, setUsernameOk] = useState<boolean | null>(null)
+  const [username, setUsername]       = useState('')
+  const [step, setStep]               = useState<'auth' | 'profile'>('auth')
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState('')
+  const [usernameOk, setUsernameOk]   = useState<boolean | null>(null)
   const [checkingUsername, setCheckingUsername] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   if (!isAuthModalOpen) return null
 
-  // ── Step 1: Send OTP ────────────────────────────────────────────────────────
+  // ── Login ───────────────────────────────────────────────────────────────────
 
-  async function handleSendOtp() {
-    if (!email.trim() || !email.includes('@')) {
-      setError('Please enter a valid email address.')
-      return
-    }
-    setLoading(true)
-    setError('')
+  async function handleLogin() {
+    if (!email.trim() || !password.trim()) { setError('Please fill in all fields.'); return }
+    setLoading(true); setError('')
 
-    const { error: authError } = await supabase.auth.signInWithOtp({
+    const { error: authError } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: true },
+      password,
+    })
+
+    if (authError) {
+      setError('Incorrect email or password.')
+      setLoading(false)
+    } else {
+      handleClose()
+    }
+  }
+
+  // ── Sign up ─────────────────────────────────────────────────────────────────
+
+  async function handleSignUp() {
+    if (!email.trim() || !password.trim()) { setError('Please fill in all fields.'); return }
+    if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
+    if (password !== confirmPassword) { setError('Passwords don\'t match.'); return }
+    setLoading(true); setError('')
+
+    const { error: authError } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
     })
 
     if (authError) {
       setError(authError.message)
       setLoading(false)
     } else {
-      setStep('otp')
+      setStep('profile')
       setLoading(false)
     }
   }
 
-  // ── Step 2: Verify OTP ──────────────────────────────────────────────────────
-
-  async function handleVerifyOtp() {
-    if (otp.trim().length < 6) {
-      setError('Please enter the 6-digit code.')
-      return
-    }
-    setLoading(true)
-    setError('')
-
-    const { data, error: authError } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token: otp.trim(),
-      type: 'email',
-    })
-
-    if (authError) {
-      setError('Invalid or expired code. Please try again.')
-      setLoading(false)
-      return
-    }
-
-    // Check if this user already has a profile with a username
-    const userId = data.user?.id
-    if (userId) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('username, display_name')
-        .eq('id', userId)
-        .maybeSingle()
-
-      if (profile?.username) {
-        // Returning user — already has a handle, close and done
-        handleClose()
-      } else {
-        // New user or no username yet — show profile setup
-        if (profile?.display_name) setDisplayName(profile.display_name)
-        setStep('profile')
-        setLoading(false)
-      }
-    } else {
-      handleClose()
-    }
-  }
-
-  // ── Username availability check ─────────────────────────────────────────────
+  // ── Username check ──────────────────────────────────────────────────────────
 
   async function checkUsername(val: string) {
     const cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '')
     setUsername(cleaned)
     setUsernameOk(null)
     if (cleaned.length < 3) return
-
     setCheckingUsername(true)
     const { data } = await supabase
       .from('profiles')
       .select('username')
       .eq('username', cleaned)
       .maybeSingle()
-
     setUsernameOk(!data)
     setCheckingUsername(false)
   }
 
-  // ── Step 3: Save profile ────────────────────────────────────────────────────
+  // ── Save profile ────────────────────────────────────────────────────────────
 
   async function handleSaveProfile() {
     if (!displayName.trim()) { setError('Please enter your name.'); return }
-    if (!username.trim() || username.length < 3) { setError('Username must be at least 3 characters.'); return }
+    if (username.length < 3) { setError('Username must be at least 3 characters.'); return }
     if (usernameOk === false) { setError('That username is taken.'); return }
-
-    setLoading(true)
-    setError('')
+    setLoading(true); setError('')
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
@@ -138,7 +111,6 @@ export default function AuthModal() {
       setError(profileError.message)
       setLoading(false)
     } else {
-      // Update auth metadata too so useAuth can read display_name
       await supabase.auth.updateUser({
         data: { display_name: displayName.trim(), username: username.trim() }
       })
@@ -148,20 +120,27 @@ export default function AuthModal() {
 
   function handleClose() {
     closeAuthModal()
-    setEmail(''); setOtp(''); setDisplayName(''); setUsername('')
-    setStep('email'); setError(''); setUsernameOk(null)
+    setEmail(''); setPassword(''); setConfirmPassword('')
+    setDisplayName(''); setUsername('')
+    setStep('auth'); setError(''); setUsernameOk(null)
+    setMode('login')
   }
 
-  // ── Shared styles ───────────────────────────────────────────────────────────
+  function switchMode(m: Mode) {
+    setMode(m); setError('')
+    setPassword(''); setConfirmPassword('')
+  }
+
+  // ── Styles ──────────────────────────────────────────────────────────────────
 
   const inputStyle = (hasError = false): React.CSSProperties => ({
-    width: '100%', padding: '13px 16px',
+    width: '100%', padding: '12px 16px',
     border: `1.5px solid ${hasError ? '#C45C7A' : '#EDE4DC'}`,
     borderRadius: 12, fontSize: 14, color: '#2C1A12',
     background: 'white', outline: 'none',
-    boxSizing: 'border-box', marginBottom: 12,
-    transition: 'border-color 0.2s',
+    boxSizing: 'border-box',
     fontFamily: 'var(--font-dm-sans, sans-serif)',
+    transition: 'border-color 0.2s',
   })
 
   const btnStyle = (disabled: boolean): React.CSSProperties => ({
@@ -203,82 +182,102 @@ export default function AuthModal() {
           fontSize: 22, color: '#B09080', lineHeight: 1, padding: 4,
         }}>×</button>
 
-        {/* ── Step 1: Email ── */}
-        {step === 'email' && (
+        {/* ── Auth step (login or signup) ── */}
+        {step === 'auth' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{ fontSize: 30, marginBottom: 10 }}>✨</div>
               <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px' }}>
-                Join the Jaiye Directory
+                {mode === 'login' ? 'Welcome back' : 'Join the Jaiye Directory'}
               </h2>
               <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6 }}>
-                Save vendors, share recommendations<br />and connect with other brides.
+                {mode === 'login'
+                  ? 'Sign in to see your saved vendors.'
+                  : 'Save vendors, share recommendations\nand connect with other brides.'}
               </p>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-              <div style={{ flex: 1, height: 1, background: '#EDE4DC' }} />
-              <span style={{ fontSize: 10, color: '#C4A898', letterSpacing: 1 }}>SIGN IN WITH EMAIL</span>
-              <div style={{ flex: 1, height: 1, background: '#EDE4DC' }} />
-            </div>
-
-            <input
-              type="email" placeholder="your@email.com" value={email} autoFocus
-              onChange={e => { setEmail(e.target.value); setError('') }}
-              onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
-              style={{ ...inputStyle(!!error), marginBottom: error ? 6 : 14 }}
-            />
-            {error && <p style={{ fontSize: 11, color: '#C45C7A', margin: '0 0 12px 4px' }}>{error}</p>}
-
-            <button onClick={handleSendOtp} disabled={loading || !email.trim()} style={btnStyle(loading || !email.trim())}>
-              {loading ? 'Sending…' : 'Send code →'}
-            </button>
-            <p style={{ fontSize: 11, color: '#C4A898', textAlign: 'center', margin: '14px 0 0' }}>
-              We'll send a 6-digit code to your email.
-            </p>
-          </>
-        )}
-
-        {/* ── Step 2: OTP ── */}
-        {step === 'otp' && (
-          <>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <div style={{ fontSize: 30, marginBottom: 10 }}>📬</div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px' }}>
-                Check your email
-              </h2>
-              <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6 }}>
-                We sent a 6-digit code to<br />
-                <span style={{ fontWeight: 700, color: '#C45C7A' }}>{email}</span>
-              </p>
-            </div>
-
-            <input
-              type="text" inputMode="numeric" placeholder="000000" value={otp} autoFocus
-              onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError('') }}
-              onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
-              style={{
-                ...inputStyle(!!error),
-                fontSize: 22, textAlign: 'center', letterSpacing: 8, fontWeight: 700,
-                marginBottom: error ? 6 : 14,
-              }}
-            />
-            {error && <p style={{ fontSize: 11, color: '#C45C7A', margin: '0 0 12px', textAlign: 'center' }}>{error}</p>}
-
-            <button onClick={handleVerifyOtp} disabled={loading || otp.length < 6} style={btnStyle(loading || otp.length < 6)}>
-              {loading ? 'Verifying…' : 'Verify code →'}
-            </button>
-            <button onClick={() => { setStep('email'); setOtp(''); setError('') }} style={{
-              width: '100%', marginTop: 10, padding: '10px',
-              background: 'none', border: 'none',
-              fontSize: 12, color: '#B09080', cursor: 'pointer',
+            {/* Mode toggle */}
+            <div style={{
+              display: 'flex', background: '#F0E8E2', borderRadius: 12,
+              padding: 4, marginBottom: 20,
             }}>
-              ← Use a different email
-            </button>
+              {(['login', 'signup'] as Mode[]).map(m => (
+                <button key={m} onClick={() => switchMode(m)} style={{
+                  flex: 1, padding: '8px',
+                  background: mode === m ? 'white' : 'transparent',
+                  border: 'none', borderRadius: 9,
+                  fontSize: 13, fontWeight: mode === m ? 700 : 500,
+                  color: mode === m ? '#2C1A12' : '#9A8070',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                  boxShadow: mode === m ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                }}>
+                  {m === 'login' ? 'Sign in' : 'Sign up'}
+                </button>
+              ))}
+            </div>
+
+            {/* Fields */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input
+                type="email" placeholder="Email address" value={email} autoFocus
+                onChange={e => { setEmail(e.target.value); setError('') }}
+                style={inputStyle(false)}
+              />
+
+              {/* Password with show/hide */}
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  value={password}
+                  onChange={e => { setPassword(e.target.value); setError('') }}
+                  onKeyDown={e => e.key === 'Enter' && mode === 'login' && handleLogin()}
+                  style={{ ...inputStyle(false), paddingRight: 44 }}
+                />
+                <button onClick={() => setShowPassword(!showPassword)} style={{
+                  position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, color: '#B09080', padding: 0,
+                }}>
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              {mode === 'signup' && (
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={e => { setConfirmPassword(e.target.value); setError('') }}
+                  style={inputStyle(false)}
+                />
+              )}
+
+              {error && <p style={{ fontSize: 11, color: '#C45C7A', margin: '0 0 2px 4px' }}>{error}</p>}
+
+              <button
+                onClick={mode === 'login' ? handleLogin : handleSignUp}
+                disabled={loading || !email.trim() || !password.trim()}
+                style={btnStyle(loading || !email.trim() || !password.trim())}
+              >
+                {loading ? '…' : mode === 'login' ? 'Sign in →' : 'Create account →'}
+              </button>
+            </div>
+
+            {mode === 'login' && (
+              <p style={{ fontSize: 11, color: '#C4A898', textAlign: 'center', margin: '14px 0 0' }}>
+                Don't have an account?{' '}
+                <button onClick={() => switchMode('signup')} style={{
+                  background: 'none', border: 'none', color: '#C45C7A',
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: 0,
+                }}>Sign up free</button>
+              </p>
+            )}
           </>
         )}
 
-        {/* ── Step 3: Profile setup ── */}
+        {/* ── Profile setup step (new users only) ── */}
         {step === 'profile' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -291,61 +290,60 @@ export default function AuthModal() {
               </p>
             </div>
 
-            {/* Display name */}
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#9A8070', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
-              YOUR NAME
-            </label>
-            <input
-              type="text" placeholder="e.g. Temi Adeyemi" value={displayName} autoFocus
-              onChange={e => { setDisplayName(e.target.value); setError('') }}
-              style={inputStyle(false)}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#9A8070', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
+                  YOUR NAME
+                </label>
+                <input
+                  type="text" placeholder="e.g. Temi Adeyemi" value={displayName} autoFocus
+                  onChange={e => { setDisplayName(e.target.value); setError('') }}
+                  style={inputStyle(false)}
+                />
+              </div>
 
-            {/* Username */}
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#9A8070', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
-              YOUR @HANDLE
-            </label>
-            <div style={{ position: 'relative', marginBottom: 6 }}>
-              <span style={{
-                position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
-                fontSize: 14, color: '#C4A898', fontWeight: 600,
-              }}>@</span>
-              <input
-                type="text" placeholder="temi_adeye" value={username}
-                onChange={e => checkUsername(e.target.value)}
-                style={{
-                  width: '100%', padding: '13px 16px 13px 28px',
-                  border: `1.5px solid ${usernameOk === false ? '#C45C7A' : usernameOk === true ? '#5A8A72' : '#EDE4DC'}`,
-                  borderRadius: 12, fontSize: 14, color: '#2C1A12',
-                  background: 'white', outline: 'none',
-                  boxSizing: 'border-box',
-                  transition: 'border-color 0.2s',
-                }}
-              />
-              {/* Availability indicator */}
-              {username.length >= 3 && (
-                <span style={{
-                  position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                  fontSize: 13,
-                }}>
-                  {checkingUsername ? '…' : usernameOk === true ? '✓' : usernameOk === false ? '✗' : ''}
-                </span>
-              )}
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#9A8070', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
+                  YOUR @HANDLE
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{
+                    position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
+                    fontSize: 14, color: '#C4A898', fontWeight: 600,
+                  }}>@</span>
+                  <input
+                    type="text" placeholder="temi_adeye" value={username}
+                    onChange={e => checkUsername(e.target.value)}
+                    style={{
+                      ...inputStyle(usernameOk === false),
+                      paddingLeft: 28,
+                      borderColor: usernameOk === true ? '#5A8A72' : usernameOk === false ? '#C45C7A' : '#EDE4DC',
+                    }}
+                  />
+                  {username.length >= 3 && (
+                    <span style={{
+                      position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+                      fontSize: 13, color: usernameOk === true ? '#5A8A72' : '#C45C7A',
+                    }}>
+                      {checkingUsername ? '…' : usernameOk === true ? '✓' : usernameOk === false ? '✗' : ''}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: 11, color: '#C4A898', margin: '6px 0 0 4px' }}>
+                  Letters, numbers and underscores only. Min 3 characters.
+                </p>
+              </div>
+
+              {error && <p style={{ fontSize: 11, color: '#C45C7A', margin: '0 0 2px 4px' }}>{error}</p>}
+
+              <button
+                onClick={handleSaveProfile}
+                disabled={loading || !displayName.trim() || username.length < 3 || usernameOk !== true}
+                style={btnStyle(loading || !displayName.trim() || username.length < 3 || usernameOk !== true)}
+              >
+                {loading ? 'Saving…' : 'Create my profile →'}
+              </button>
             </div>
-
-            <p style={{ fontSize: 11, color: '#C4A898', margin: '0 0 16px 4px' }}>
-              Letters, numbers and underscores only. Min 3 characters.
-            </p>
-
-            {error && <p style={{ fontSize: 11, color: '#C45C7A', margin: '0 0 12px 4px' }}>{error}</p>}
-
-            <button
-              onClick={handleSaveProfile}
-              disabled={loading || !displayName.trim() || username.length < 3 || usernameOk !== true}
-              style={btnStyle(loading || !displayName.trim() || username.length < 3 || usernameOk !== true)}
-            >
-              {loading ? 'Saving…' : 'Create my profile →'}
-            </button>
           </>
         )}
       </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
@@ -215,14 +215,109 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
   )
 }
 
-// ─── Vendor Card (Saved Page version) ────────────────────────────────────────
+// ─── My Notes ────────────────────────────────────────────────────────────────
+
+function MyNotes({
+  vendorId,
+  userId,
+  initialNote,
+}: {
+  vendorId: string
+  userId: string
+  initialNote: string
+}) {
+  const [note, setNote] = useState(initialNote)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [isEditing, setIsEditing] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Debounced auto-save — fires 800ms after user stops typing
+  function handleChange(val: string) {
+    setNote(val)
+    setSaveStatus('saving')
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      await supabase
+        .from('saved_vendors')
+        .update({ notes: val })
+        .eq('user_id', userId)
+        .eq('vendor_id', vendorId)
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 1800)
+    }, 800)
+  }
+
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+  }, [])
+
+  return (
+    <div style={{
+      marginTop: 10,
+      background: '#FFFBF5',
+      border: '1px dashed #E8C87A',
+      borderRadius: 10,
+      padding: '8px 10px',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#B8860B', letterSpacing: 0.4 }}>
+          📝 My notes
+        </span>
+        <span style={{
+          fontSize: 9, fontWeight: 600, transition: 'color 0.2s',
+          color: saveStatus === 'saving' ? '#C4A898' : saveStatus === 'saved' ? '#5A8A72' : 'transparent',
+        }}>
+          {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? '✓ Saved' : '·'}
+        </span>
+      </div>
+
+      {/* Prompt to start typing (no note yet, not focused) */}
+      {!isEditing && !note && (
+        <button
+          onClick={() => setIsEditing(true)}
+          style={{
+            width: '100%', padding: '4px 0', background: 'none',
+            border: 'none', cursor: 'text', textAlign: 'left',
+            fontSize: 11, color: '#C4A898', fontStyle: 'italic',
+            fontFamily: 'var(--font-dm-sans, sans-serif)',
+          }}>
+          + Add a private note about this vendor…
+        </button>
+      )}
+
+      {/* Textarea — shown when editing or when there's an existing note */}
+      {(isEditing || !!note) && (
+        <textarea
+          autoFocus={isEditing && !note}
+          placeholder="e.g. Quoted ₦250k for aso-ebi, follow up in March…"
+          value={note}
+          onChange={e => handleChange(e.target.value)}
+          onFocus={() => setIsEditing(true)}
+          rows={3}
+          style={{
+            width: '100%', border: 'none', background: 'transparent',
+            fontSize: 11, color: '#4A2A1A', lineHeight: 1.6,
+            resize: 'vertical', outline: 'none', boxSizing: 'border-box',
+            fontFamily: 'var(--font-dm-sans, sans-serif)',
+            padding: 0,
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Vendor Card (Saved Page) ─────────────────────────────────────────────────
 
 function VendorCard({
-  v, savedIds, onToggleSave,
+  v, savedIds, onToggleSave, userId, savedNote,
 }: {
   v: Vendor
   savedIds: Set<string>
   onToggleSave: (vendorId: string) => void
+  userId: string
+  savedNote: string
 }) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -268,7 +363,6 @@ function VendorCard({
     }}>
       <div style={{ height: 4, background: `linear-gradient(90deg, ${colour}CC, ${colour}55)` }} />
 
-      {/* Featured badge */}
       {isFeatured && (
         <div style={{ position: 'absolute', top: 10, right: 10 }}>
           <div style={{ background: '#FFF8E7', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#B8860B' }}>
@@ -277,10 +371,9 @@ function VendorCard({
         </div>
       )}
 
-      {/* Heart / unsave button */}
       <button
         onClick={() => onToggleSave(v.id)}
-        title={isSaved ? 'Remove from saved' : 'Save vendor'}
+        title="Remove from saved"
         style={{
           position: 'absolute', top: isFeatured ? 34 : 10, right: 10,
           background: isSaved ? '#FFF0F4' : 'white',
@@ -354,6 +447,10 @@ function VendorCard({
           </div>
         )}
 
+        {/* ── Notes — always visible on the saved page ── */}
+        <MyNotes vendorId={v.id} userId={userId} initialNote={savedNote} />
+
+        {/* Expanded vendor details */}
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {v.services && <p style={{ fontSize: 11, color: '#6A4A38', margin: 0, lineHeight: 1.55 }}>{v.services}</p>}
@@ -397,6 +494,7 @@ export default function SavedPage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [savedVendors, setSavedVendors] = useState<Vendor[]>([])
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  const [savedNotes, setSavedNotes] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -418,15 +516,17 @@ export default function SavedPage() {
 
     async function loadSaved() {
       setLoading(true)
-      // Get saved vendor IDs
+
+      // Fetch saved rows including notes
       const { data: savedRows } = await supabase
         .from('saved_vendors')
-        .select('vendor_id')
+        .select('vendor_id, notes')
         .eq('user_id', currentUser!.email)
 
       if (!savedRows || savedRows.length === 0) {
         setSavedVendors([])
         setSavedIds(new Set())
+        setSavedNotes({})
         setLoading(false)
         return
       }
@@ -434,14 +534,17 @@ export default function SavedPage() {
       const ids = savedRows.map(r => r.vendor_id)
       setSavedIds(new Set(ids))
 
-      // Fetch full vendor data
+      // Build notes map: vendorId → note text
+      const notesMap: Record<string, string> = {}
+      savedRows.forEach(r => { notesMap[r.vendor_id] = r.notes ?? '' })
+      setSavedNotes(notesMap)
+
       const { data: vendorData } = await supabase
         .from('vendors')
         .select('*')
         .in('id', ids)
 
       if (vendorData) {
-        // Remap Fashion → Outfits
         const remapped = vendorData.map(v =>
           v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v
         )
@@ -457,7 +560,6 @@ export default function SavedPage() {
     if (!currentUser) return
     const isSaved = savedIds.has(vendorId)
 
-    // Optimistic update
     setSavedIds(prev => {
       const next = new Set(prev)
       if (isSaved) next.delete(vendorId)
@@ -466,6 +568,7 @@ export default function SavedPage() {
     })
     if (isSaved) {
       setSavedVendors(prev => prev.filter(v => v.id !== vendorId))
+      setSavedNotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
     }
 
     if (isSaved) {
@@ -479,13 +582,12 @@ export default function SavedPage() {
     }
   }, [currentUser, savedIds])
 
-  // Group saved vendors by category, in canonical order
+  // Group by category in canonical order
   const grouped = CATEGORY_ORDER.reduce<Record<string, Vendor[]>>((acc, cat) => {
     const inCat = savedVendors.filter(v => v.category === cat)
     if (inCat.length > 0) acc[cat] = inCat
     return acc
   }, {})
-  // Any categories not in CATEGORY_ORDER
   savedVendors.forEach(v => {
     if (!CATEGORY_ORDER.includes(v.category)) {
       if (!grouped[v.category]) grouped[v.category] = []
@@ -520,10 +622,8 @@ export default function SavedPage() {
         </p>
       </div>
 
-      {/* Content */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 60px' }}>
 
-        {/* Not signed in */}
         {!currentUser && !loading && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
@@ -539,20 +639,14 @@ export default function SavedPage() {
           </div>
         )}
 
-        {/* Loading skeleton */}
         {loading && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))',
-            gap: 12, marginTop: 8,
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12, marginTop: 8 }}>
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} style={{ background: 'white', borderRadius: 16, height: 120, opacity: 0.3, border: '1px solid #EDE4DC' }} />
             ))}
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && currentUser && totalSaved === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
@@ -568,12 +662,10 @@ export default function SavedPage() {
           </div>
         )}
 
-        {/* Grouped vendor lists */}
         {!loading && currentUser && totalSaved > 0 && (
           <div>
             {Object.entries(grouped).map(([cat, vendors]) => (
               <div key={cat} style={{ marginBottom: 32 }}>
-                {/* Category header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -588,7 +680,6 @@ export default function SavedPage() {
                   </span>
                 </div>
 
-                {/* Cards grid */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))',
@@ -600,13 +691,14 @@ export default function SavedPage() {
                       v={v}
                       savedIds={savedIds}
                       onToggleSave={handleToggleSave}
+                      userId={currentUser.email}
+                      savedNote={savedNotes[v.id] ?? ''}
                     />
                   ))}
                 </div>
               </div>
             ))}
 
-            {/* Back link at bottom */}
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <Link href="/" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,

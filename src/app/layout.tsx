@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
 
@@ -9,17 +9,24 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Jaiye Directory — Nigerian Wedding Vendors',
-  description: 'Your guide to the best Nigerian wedding and event vendors',
+  title: 'Jaiye Directory – Nigerian Wedding & Event Vendors',
+  description: 'Your guide to the best Nigerian wedding and event vendors. 200+ vendors including makeup artists, photographers, event planners, fashion designers and more.',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-      </head>
-      <body className={`${dmSans.variable}`} style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', margin: 0, padding: 0 }}>
+    <html lang="en" className={dmSans.variable}>
+      <body style={{ margin: 0, padding: 0, fontFamily: 'var(--font-dm-sans, sans-serif)' }}>
         {children}
       </body>
     </html>

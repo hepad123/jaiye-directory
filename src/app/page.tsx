@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -37,6 +38,11 @@ type Review = {
   created_at: string
 }
 
+type CurrentUser = {
+  name: string
+  email: string
+}
+
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
@@ -52,7 +58,6 @@ const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Entertainment':         { emoji: '🎤', colour: '#7A6A9A' },
   'Other':                 { emoji: '✦',  colour: '#8A8A8A' },
 }
-
 
 const LOCATION_ORDER = ['All', '🇳🇬 Nigeria', '🟢 Abuja', '🟢 Lagos', '🏙️ Lekki (Lagos)']
 const DB_LOCATION_MAP: Record<string, string> = {
@@ -78,6 +83,8 @@ const isNewVendor = (v: Vendor) => {
   return created > weekAgo
 }
 
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
 const InstagramIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -90,6 +97,20 @@ const WhatsAppIcon = () => (
   </svg>
 )
 
+// ─── Heart Icon ───────────────────────────────────────────────────────────────
+
+function HeartIcon({ filled, colour }: { filled: boolean; colour: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? colour : 'none'}
+      stroke={filled ? colour : '#C4A898'} strokeWidth="2"
+      style={{ flexShrink: 0, transition: 'all 0.15s ease' }}>
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+  )
+}
+
+// ─── Star Rating ──────────────────────────────────────────────────────────────
+
 function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) => void }) {
   return (
     <div style={{ display: 'flex', gap: 1 }}>
@@ -100,6 +121,8 @@ function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) =
     </div>
   )
 }
+
+// ─── Review Section ───────────────────────────────────────────────────────────
 
 function ReviewSection({ vendor }: { vendor: Vendor }) {
   const [reviews, setReviews] = useState<Review[]>([])
@@ -148,7 +171,6 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
 
   return (
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2EAE4' }}>
-      {/* I used this vendor */}
       <div style={{ marginBottom: 8 }}>
         {!usedVendor ? (
           <button onClick={() => setUsedVendor(true)} style={{
@@ -171,7 +193,6 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
         )}
       </div>
 
-      {/* Reviews list */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 10, color: '#C4A898', letterSpacing: 0.5 }}>
           {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
@@ -211,7 +232,18 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
   )
 }
 
-function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKey: number }) {
+// ─── Vendor Card ──────────────────────────────────────────────────────────────
+
+function VendorCard({
+  v, isNew, resetKey, currentUser, savedIds, onToggleSave,
+}: {
+  v: Vendor
+  isNew: boolean
+  resetKey: number
+  currentUser: CurrentUser | null
+  savedIds: Set<string>
+  onToggleSave: (vendorId: string) => void
+}) {
   const [expanded, setExpanded] = useState(false)
   useEffect(() => { setExpanded(false) }, [resetKey])
   const [copied, setCopied] = useState(false)
@@ -222,6 +254,7 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
   const igHandle   = v.instagram?.replace('@', '').trim()
   const isFeatured = FEATURED_VENDORS.includes(v.name)
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
+  const isSaved    = savedIds.has(v.id)
 
   useEffect(() => {
     supabase.from('reviews').select('rating, comment').eq('vendor_id', v.id)
@@ -275,6 +308,30 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
         )}
       </div>
 
+      {/* Save / Heart button */}
+      <button
+        onClick={() => {
+          if (!currentUser) {
+            document.getElementById('signin-banner')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            document.getElementById('signin-email-input')?.focus()
+            return
+          }
+          onToggleSave(v.id)
+        }}
+        title={currentUser ? (isSaved ? 'Remove from saved' : 'Save vendor') : 'Sign in to save vendors'}
+        style={{
+          position: 'absolute', top: 34, right: 10,
+          background: isSaved ? '#FFF0F4' : 'white',
+          border: `1px solid ${isSaved ? '#F4C0CC' : '#EDE4DC'}`,
+          borderRadius: '50%', width: 28, height: 28,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', padding: 0,
+          boxShadow: isSaved ? '0 2px 8px rgba(196,92,122,0.2)' : '0 1px 4px rgba(0,0,0,0.06)',
+          transition: 'all 0.15s ease',
+        }}>
+        <HeartIcon filled={isSaved} colour="#C45C7A" />
+      </button>
+
       <div style={{ padding: '12px 14px' }}>
         {/* Category label */}
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3, opacity: 0.9 }}>
@@ -282,7 +339,7 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
         </div>
 
         {/* Name */}
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#2C1A12', lineHeight: 1.25, marginBottom: 6 }}>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#2C1A12', lineHeight: 1.25, marginBottom: 6, paddingRight: 36 }}>
           {v.name}
         </div>
 
@@ -382,6 +439,79 @@ function VendorCard({ v, isNew, resetKey }: { v: Vendor; isNew: boolean; resetKe
   )
 }
 
+// ─── Sign In Modal ─────────────────────────────────────────────────────────────
+
+function SignInModal({ onClose, onSignIn }: { onClose: () => void; onSignIn: (user: CurrentUser) => void }) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
+
+  function handleSubmit() {
+    if (!name.trim()) { setError('Please enter your name'); return }
+    if (!email.trim() || !email.includes('@')) { setError('Please enter a valid email'); return }
+    onSignIn({ name: name.trim(), email: email.toLowerCase().trim() })
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 100,
+      background: 'rgba(44,26,18,0.55)', backdropFilter: 'blur(3px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+    }} onClick={onClose}>
+      <div style={{
+        background: '#FDF8F4', borderRadius: 20, padding: 28, width: '100%', maxWidth: 360,
+        boxShadow: '0 20px 60px rgba(44,26,18,0.25)',
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>♡</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px' }}>Save your favourites</h2>
+          <p style={{ fontSize: 12, color: '#9A8070', margin: 0 }}>Enter your name and email to create your saved list</p>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <input
+            placeholder="Your name *"
+            value={name}
+            onChange={e => { setName(e.target.value); setError('') }}
+            style={{
+              padding: '10px 14px', border: '1px solid #EDE4DC', borderRadius: 12,
+              fontSize: 13, background: 'white', color: '#2C1A12', outline: 'none',
+            }}
+          />
+          <input
+            id="signin-email-input"
+            type="email"
+            placeholder="Email address *"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setError('') }}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            style={{
+              padding: '10px 14px', border: '1px solid #EDE4DC', borderRadius: 12,
+              fontSize: 13, background: 'white', color: '#2C1A12', outline: 'none',
+            }}
+          />
+          {error && <p style={{ color: '#C45C7A', fontSize: 11, margin: 0 }}>{error}</p>}
+          <button onClick={handleSubmit} style={{
+            padding: '11px', background: '#C45C7A', color: 'white',
+            border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700,
+            cursor: 'pointer', marginTop: 4,
+          }}>
+            Save vendors ♡
+          </button>
+          <button onClick={onClose} style={{
+            padding: '8px', background: 'none', color: '#9A8070',
+            border: 'none', fontSize: 12, cursor: 'pointer',
+          }}>
+            Maybe later
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
 export default function Home() {
   const [vendors, setVendors]         = useState<Vendor[]>([])
   const [search, setSearch]           = useState('')
@@ -392,6 +522,35 @@ export default function Home() {
   const [loading, setLoading]         = useState(true)
   const [cardResetKey, setCardResetKey] = useState(0)
 
+  // Auth + save state
+  const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
+  const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
+  const [showSignIn, setShowSignIn]     = useState(false)
+
+  // Load user from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('jaiye_user')
+      if (stored) {
+        const user = JSON.parse(stored) as CurrentUser
+        setCurrentUser(user)
+      }
+    } catch {}
+  }, [])
+
+  // Load saved vendor IDs whenever user changes
+  useEffect(() => {
+    if (!currentUser) { setSavedIds(new Set()); return }
+    supabase
+      .from('saved_vendors')
+      .select('vendor_id')
+      .eq('user_id', currentUser.email)
+      .then(({ data }) => {
+        if (data) setSavedIds(new Set(data.map(r => r.vendor_id)))
+      })
+  }, [currentUser])
+
+  // Load vendors
   useEffect(() => {
     supabase.from('vendors').select('*').then(({ data, error }) => {
       if (error) console.error(error)
@@ -402,7 +561,42 @@ export default function Home() {
 
   useEffect(() => { setCardResetKey(k => k + 1) }, [category])
 
-  // Remap Fashion → Outfits for display
+  function handleSignIn(user: CurrentUser) {
+    localStorage.setItem('jaiye_user', JSON.stringify(user))
+    setCurrentUser(user)
+    setShowSignIn(false)
+  }
+
+  function handleSignOut() {
+    localStorage.removeItem('jaiye_user')
+    setCurrentUser(null)
+    setSavedIds(new Set())
+  }
+
+  const handleToggleSave = useCallback(async (vendorId: string) => {
+    if (!currentUser) return
+    const isSaved = savedIds.has(vendorId)
+
+    // Optimistic update
+    setSavedIds(prev => {
+      const next = new Set(prev)
+      if (isSaved) next.delete(vendorId)
+      else next.add(vendorId)
+      return next
+    })
+
+    if (isSaved) {
+      await supabase.from('saved_vendors')
+        .delete()
+        .eq('user_id', currentUser.email)
+        .eq('vendor_id', vendorId)
+    } else {
+      await supabase.from('saved_vendors')
+        .insert({ user_id: currentUser.email, vendor_id: vendorId })
+    }
+  }, [currentUser, savedIds])
+
+  // Remap Fashion → Outfits
   const vendorsWithSubcats = vendors.map(v => {
     if (v.category === 'Fashion') return { ...v, category: 'Outfits' }
     return v
@@ -443,6 +637,57 @@ export default function Home() {
   return (
     <main style={{ fontFamily: 'var(--font-dm-sans, sans-serif)', background: '#FDF8F4', minHeight: '100vh' }}>
 
+      {/* Sign in modal */}
+      {showSignIn && (
+        <SignInModal onClose={() => setShowSignIn(false)} onSignIn={handleSignIn} />
+      )}
+
+      {/* Sign-in banner (shown when not signed in) */}
+      {!currentUser && (
+        <div id="signin-banner" style={{
+          background: 'linear-gradient(90deg, #2C1A12, #4A2018)',
+          padding: '10px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,240,225,0.85)' }}>♡ Sign in to save your favourite vendors</span>
+          <button onClick={() => setShowSignIn(true)} style={{
+            padding: '5px 14px', background: '#C45C7A', color: 'white',
+            border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+          }}>
+            Sign in free
+          </button>
+        </div>
+      )}
+
+      {/* Signed-in bar */}
+      {currentUser && (
+        <div style={{
+          background: '#2C1A12', padding: '8px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: 11, color: '#E8C87A' }}>
+            👋 Hi {currentUser.name.split(' ')[0]}!
+            {savedIds.size > 0 && <span style={{ color: 'rgba(255,240,225,0.6)', marginLeft: 6 }}>· {savedIds.size} saved</span>}
+          </span>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {savedIds.size > 0 && (
+              <Link href="/saved" style={{
+                fontSize: 11, color: '#C45C7A', fontWeight: 700, textDecoration: 'none',
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}>
+                ♡ View saved
+              </Link>
+            )}
+            <button onClick={handleSignOut} style={{
+              fontSize: 10, color: 'rgba(255,240,225,0.45)', background: 'none',
+              border: 'none', cursor: 'pointer', padding: 0,
+            }}>
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <div style={{
         background: 'linear-gradient(160deg, #3D1515 0%, #7A2A2A 45%, #B85C3A 100%)',
@@ -459,6 +704,31 @@ export default function Home() {
         <p style={{ color: '#E8C87A', fontSize: 13, margin: '10px 0 0', opacity: 0.8 }}>
           200+ vendors and counting
         </p>
+        {/* Saved link in hero */}
+        {currentUser && savedIds.size > 0 && (
+          <Link href="/saved" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            marginTop: 16, padding: '8px 20px',
+            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(232,200,122,0.4)', borderRadius: 24,
+            color: '#E8C87A', fontSize: 12, fontWeight: 600, textDecoration: 'none',
+            transition: 'all 0.15s ease',
+          }}>
+            ♡ My saved vendors ({savedIds.size})
+          </Link>
+        )}
+        {!currentUser && (
+          <button onClick={() => setShowSignIn(true)} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            marginTop: 16, padding: '8px 20px',
+            background: 'rgba(255,255,255,0.10)',
+            border: '1px solid rgba(232,200,122,0.3)', borderRadius: 24,
+            color: 'rgba(232,200,122,0.8)', fontSize: 12, cursor: 'pointer',
+            fontFamily: 'var(--font-dm-sans, sans-serif)',
+          }}>
+            ♡ Save your favourites
+          </button>
+        )}
       </div>
 
       {/* Sticky filters */}
@@ -495,7 +765,6 @@ export default function Home() {
               )
             })}
           </div>
-          {/* Fade + more indicator */}
           <div style={{
             position: 'absolute', right: 0, top: 0, bottom: 11,
             width: 52, pointerEvents: 'none',
@@ -617,7 +886,17 @@ export default function Home() {
                 </button>
               </div>
             )
-            : sorted.map(v => <VendorCard key={v.id} v={v} isNew={isNewVendor(v)} resetKey={cardResetKey} />)
+            : sorted.map(v => (
+              <VendorCard
+                key={v.id}
+                v={v}
+                isNew={isNewVendor(v)}
+                resetKey={cardResetKey}
+                currentUser={currentUser}
+                savedIds={savedIds}
+                onToggleSave={handleToggleSave}
+              />
+            ))
         }
       </div>
 

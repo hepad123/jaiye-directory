@@ -13,13 +13,14 @@ export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal } = useAuth()
 
   const [email, setEmail]     = useState('')
-  const [sent, setSent]       = useState(false)
+  const [otp, setOtp]         = useState('')
+  const [step, setStep]       = useState<'email' | 'otp'>('email')
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
 
   if (!isAuthModalOpen) return null
 
-  async function handleSendLink() {
+  async function handleSendOtp() {
     if (!email.trim() || !email.includes('@')) {
       setError('Please enter a valid email address.')
       return
@@ -29,39 +30,57 @@ export default function AuthModal() {
 
     const { error: authError } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { shouldCreateUser: true },
     })
 
     if (authError) {
       setError(authError.message)
       setLoading(false)
     } else {
-      setSent(true)
+      setStep('otp')
       setLoading(false)
+    }
+  }
+
+  async function handleVerifyOtp() {
+    if (otp.trim().length < 6) {
+      setError('Please enter the 6-digit code.')
+      return
+    }
+    setLoading(true)
+    setError('')
+
+    const { error: authError } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: otp.trim(),
+      type: 'email',
+    })
+
+    if (authError) {
+      setError('Invalid or expired code. Please try again.')
+      setLoading(false)
+    } else {
+      handleClose()
     }
   }
 
   function handleClose() {
     closeAuthModal()
     setEmail('')
-    setSent(false)
+    setOtp('')
+    setStep('email')
     setError('')
   }
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        onClick={handleClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 999,
-          background: 'rgba(44, 26, 18, 0.45)',
-          backdropFilter: 'blur(3px)',
-          WebkitBackdropFilter: 'blur(3px)',
-        }}
-      />
+      <div onClick={handleClose} style={{
+        position: 'fixed', inset: 0, zIndex: 999,
+        background: 'rgba(44, 26, 18, 0.45)',
+        backdropFilter: 'blur(3px)',
+        WebkitBackdropFilter: 'blur(3px)',
+      }} />
 
       {/* Sheet */}
       <div style={{
@@ -75,7 +94,6 @@ export default function AuthModal() {
         margin: '0 auto',
         fontFamily: 'var(--font-dm-sans, sans-serif)',
       }}>
-
         {/* Handle */}
         <div style={{ width: 36, height: 4, background: '#E8DDD5', borderRadius: 2, margin: '0 auto 24px' }} />
 
@@ -86,7 +104,7 @@ export default function AuthModal() {
           fontSize: 22, color: '#B09080', lineHeight: 1, padding: 4,
         }}>×</button>
 
-        {!sent ? (
+        {step === 'email' ? (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{ fontSize: 30, marginBottom: 10 }}>✨</div>
@@ -109,7 +127,7 @@ export default function AuthModal() {
               placeholder="your@email.com"
               value={email}
               onChange={e => { setEmail(e.target.value); setError('') }}
-              onKeyDown={e => e.key === 'Enter' && handleSendLink()}
+              onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
               autoFocus
               style={{
                 width: '100%', padding: '13px 16px',
@@ -122,12 +140,10 @@ export default function AuthModal() {
               }}
             />
 
-            {error && (
-              <p style={{ fontSize: 11, color: '#C45C7A', margin: '0 0 12px 4px' }}>{error}</p>
-            )}
+            {error && <p style={{ fontSize: 11, color: '#C45C7A', margin: '0 0 12px 4px' }}>{error}</p>}
 
             <button
-              onClick={handleSendLink}
+              onClick={handleSendOtp}
               disabled={loading || !email.trim()}
               style={{
                 width: '100%', padding: '13px 16px',
@@ -139,37 +155,75 @@ export default function AuthModal() {
                 transition: 'all 0.2s',
               }}
             >
-              {loading ? 'Sending…' : 'Send magic link →'}
+              {loading ? 'Sending…' : 'Send code →'}
             </button>
 
             <p style={{ fontSize: 11, color: '#C4A898', textAlign: 'center', margin: '14px 0 0' }}>
-              No password needed — we'll email you a sign-in link.
+              We'll send a 6-digit code to your email.
             </p>
           </>
         ) : (
-          <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <div style={{ fontSize: 40, marginBottom: 14 }}>📬</div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 8px' }}>
-              Check your inbox
-            </h2>
-            <p style={{ fontSize: 13, color: '#9A8070', margin: '0 0 4px', lineHeight: 1.6 }}>
-              We sent a sign-in link to
-            </p>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#C45C7A', margin: '0 0 20px' }}>
-              {email}
-            </p>
-            <p style={{ fontSize: 12, color: '#C4A898', lineHeight: 1.6 }}>
-              Click the link in the email to sign in.<br />You can close this window.
-            </p>
-            <button onClick={handleClose} style={{
-              marginTop: 20, padding: '10px 28px',
-              background: 'white', border: '1px solid #EDE4DC',
-              borderRadius: 24, fontSize: 13, color: '#9A8070',
-              cursor: 'pointer', fontWeight: 500,
-            }}>
-              Done
+          <>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>📬</div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px' }}>
+                Check your email
+              </h2>
+              <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6 }}>
+                We sent a 6-digit code to<br />
+                <span style={{ fontWeight: 700, color: '#C45C7A' }}>{email}</span>
+              </p>
+            </div>
+
+            {/* OTP input */}
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="000000"
+              value={otp}
+              onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError('') }}
+              onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
+              autoFocus
+              style={{
+                width: '100%', padding: '13px 16px',
+                border: `1.5px solid ${error ? '#C45C7A' : '#EDE4DC'}`,
+                borderRadius: 12, fontSize: 22, color: '#2C1A12',
+                background: 'white', outline: 'none',
+                boxSizing: 'border-box',
+                marginBottom: error ? 6 : 14,
+                textAlign: 'center', letterSpacing: 8, fontWeight: 700,
+              }}
+            />
+
+            {error && <p style={{ fontSize: 11, color: '#C45C7A', margin: '0 0 12px 4px', textAlign: 'center' }}>{error}</p>}
+
+            <button
+              onClick={handleVerifyOtp}
+              disabled={loading || otp.length < 6}
+              style={{
+                width: '100%', padding: '13px 16px',
+                background: loading || otp.length < 6 ? '#E8DDD5' : '#C45C7A',
+                color: loading || otp.length < 6 ? '#B09080' : 'white',
+                border: 'none', borderRadius: 12,
+                fontSize: 14, fontWeight: 700,
+                cursor: loading || otp.length < 6 ? 'default' : 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              {loading ? 'Verifying…' : 'Verify code →'}
             </button>
-          </div>
+
+            <button
+              onClick={() => { setStep('email'); setOtp(''); setError('') }}
+              style={{
+                width: '100%', marginTop: 10, padding: '10px',
+                background: 'none', border: 'none',
+                fontSize: 12, color: '#B09080', cursor: 'pointer',
+              }}
+            >
+              ← Use a different email
+            </button>
+          </>
         )}
       </div>
     </>

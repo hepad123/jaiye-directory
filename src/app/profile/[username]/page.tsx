@@ -226,19 +226,20 @@ export default function ProfilePage() {
       if (!byUsername) { setNotFound(true); setLoading(false); return }
       setProfile(byUsername)
 
-      // ── Used vendors: look up by user_id (profile.id = auth.uid) ──
-      // Fall back to reviewer_name for any legacy rows that predate user_id
-      const { data: usedRows } = await supabase
-        .from('reviews')
-        .select('vendor_id')
-        .eq('comment', '__used__')
-        .eq('user_id', byUsername.id)   // ← now uses uuid, not display_name
-      if (usedRows?.length) {
-        const ids = [...new Set(usedRows.map(r => r.vendor_id))]
+      // ── Used vendors: query by user_id first, then union any legacy rows by reviewer_name ──
+      const [{ data: usedByUid }, { data: usedByName }] = await Promise.all([
+        supabase.from('reviews').select('vendor_id').eq('comment', '__used__').eq('user_id', byUsername.id),
+        supabase.from('reviews').select('vendor_id').eq('comment', '__used__').eq('reviewer_name', byUsername.display_name),
+      ])
+      const allUsedIds = [...new Set([
+        ...(usedByUid ?? []).map(r => r.vendor_id),
+        ...(usedByName ?? []).map(r => r.vendor_id),
+      ])]
+      if (allUsedIds.length) {
         const { data: vendorData } = await supabase
           .from('vendors')
           .select('id, name, category, location, instagram, price_from, verified')
-          .in('id', ids)
+          .in('id', allUsedIds)
         if (vendorData) setUsedVendors(vendorData)
       }
 

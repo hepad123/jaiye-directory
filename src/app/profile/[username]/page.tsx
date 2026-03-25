@@ -11,14 +11,11 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// ── Palette B ──────────────────────────────────────────────────────────────────
-const ACCENT    = '#8B6E9A'
-const DARK      = '#2A1A2A'
-const BG        = '#FAFAFA'
-const GOLD      = '#C0A060'
-const MUTED     = '#9A8A9A'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+const ACCENT = '#8B6E9A'
+const DARK   = '#2A1A2A'
+const BG     = '#FAFAFA'
+const GOLD   = '#C0A060'
+const MUTED  = '#9A8A9A'
 
 type Profile = {
   id: string
@@ -38,13 +35,11 @@ type Vendor = {
   verified?: boolean
 }
 
-type FollowEntry = {
-  email: string
+type FollowProfile = {
+  id: string
   display_name: string
   username?: string
 }
-
-// ─── Category meta ─────────────────────────────────────────────────────────────
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Event Planning':        { emoji: '📋', colour: '#7B68C8' },
@@ -69,7 +64,7 @@ const CATEGORY_ORDER = [
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? ACCENT
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
-// ─── Avatar ────────────────────────────────────────────────────────────────────
+// ─── Avatar ───────────────────────────────────────────────────────────────────
 
 function Avatar({ name, size = 64 }: { name: string; size?: number }) {
   const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
@@ -88,7 +83,7 @@ function Avatar({ name, size = 64 }: { name: string; size?: number }) {
   )
 }
 
-// ─── Vendor Row ────────────────────────────────────────────────────────────────
+// ─── Vendor Row ───────────────────────────────────────────────────────────────
 
 function VendorRow({ vendor }: { vendor: Vendor }) {
   const colour   = getColour(vendor.category)
@@ -115,7 +110,7 @@ function VendorRow({ vendor }: { vendor: Vendor }) {
   )
 }
 
-// ─── Grouped vendor list ───────────────────────────────────────────────────────
+// ─── Grouped vendor list ──────────────────────────────────────────────────────
 
 function GroupedVendorList({ vendors }: { vendors: Vendor[] }) {
   if (vendors.length === 0) return null
@@ -150,11 +145,15 @@ function GroupedVendorList({ vendors }: { vendors: Vendor[] }) {
   )
 }
 
-// ─── People sheet ──────────────────────────────────────────────────────────────
+// ─── People sheet ─────────────────────────────────────────────────────────────
 
-function PeopleSheet({ title, people, onClose, currentUserEmail, onToggleFollow, followingEmails }: {
-  title: string; people: FollowEntry[]; onClose: () => void
-  currentUserEmail?: string; onToggleFollow: (email: string) => void; followingEmails: Set<string>
+function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, followingIds }: {
+  title: string
+  people: FollowProfile[]
+  onClose: () => void
+  currentUserId?: string
+  onToggleFollow: (id: string) => void
+  followingIds: Set<string>
 }) {
   return (
     <>
@@ -171,21 +170,26 @@ function PeopleSheet({ title, people, onClose, currentUserEmail, onToggleFollow,
           {people.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', color: MUTED, fontSize: 13 }}>No one here yet</div>
           ) : people.map(p => (
-            <div key={p.email} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: '1px solid #F0EBF4' }}>
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: '1px solid #F0EBF4' }}>
               <Avatar name={p.display_name} size={38} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: DARK, fontFamily: 'var(--font-jost, sans-serif)' }}>{p.display_name}</div>
-                {p.username && <div style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>@{p.username}</div>}
+                {p.username && (
+                  <Link href={`/profile/${p.username}`} onClick={onClose}
+                    style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)', textDecoration: 'none' }}>
+                    @{p.username}
+                  </Link>
+                )}
               </div>
-              {currentUserEmail && p.email !== currentUserEmail && (
-                <button onClick={() => onToggleFollow(p.email)} style={{
+              {currentUserId && p.id !== currentUserId && (
+                <button onClick={() => onToggleFollow(p.id)} style={{
                   padding: '5px 14px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                  background: followingEmails.has(p.email) ? 'white' : ACCENT,
-                  color: followingEmails.has(p.email) ? MUTED : 'white',
-                  border: followingEmails.has(p.email) ? '1px solid #E8E0E8' : 'none',
+                  background: followingIds.has(p.id) ? 'white' : ACCENT,
+                  color: followingIds.has(p.id) ? MUTED : 'white',
+                  border: followingIds.has(p.id) ? '1px solid #E8E0E8' : 'none',
                   fontFamily: 'var(--font-jost, sans-serif)',
                 }}>
-                  {followingEmails.has(p.email) ? 'Following' : 'Follow'}
+                  {followingIds.has(p.id) ? 'Following' : 'Follow'}
                 </button>
               )}
             </div>
@@ -196,77 +200,61 @@ function PeopleSheet({ title, people, onClose, currentUserEmail, onToggleFollow,
   )
 }
 
-// ─── Profile Page ──────────────────────────────────────────────────────────────
+// ─── Profile Page ─────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
   const params   = useParams()
   const username = params?.username as string
   const { user, openAuthModal } = useAuth()
 
-  const [profile, setProfile]                 = useState<Profile | null>(null)
-  const [usedVendors, setUsedVendors]         = useState<Vendor[]>([])
-  const [recVendors, setRecVendors]           = useState<Vendor[]>([])
-  const [followers, setFollowers]             = useState<FollowEntry[]>([])
-  const [following, setFollowing]             = useState<FollowEntry[]>([])
-  const [followingEmails, setFollowingEmails] = useState<Set<string>>(new Set())
-  const [activeTab, setActiveTab]             = useState<'used' | 'recommended'>('used')
-  const [sheet, setSheet]                     = useState<'followers' | 'following' | null>(null)
-  const [loading, setLoading]                 = useState(true)
-  const [notFound, setNotFound]               = useState(false)
+  const [profile, setProfile]               = useState<Profile | null>(null)
+  const [usedVendors, setUsedVendors]       = useState<Vendor[]>([])
+  const [recVendors, setRecVendors]         = useState<Vendor[]>([])
+  const [followers, setFollowers]           = useState<FollowProfile[]>([])
+  const [following, setFollowing]           = useState<FollowProfile[]>([])
+  const [followingIds, setFollowingIds]     = useState<Set<string>>(new Set())
+  const [activeTab, setActiveTab]           = useState<'used' | 'recommended'>('used')
+  const [sheet, setSheet]                   = useState<'followers' | 'following' | null>(null)
+  const [loading, setLoading]               = useState(true)
+  const [notFound, setNotFound]             = useState(false)
 
-  const isOwner = user?.email === profile?.email
+  const isOwner = user?.id === profile?.id
 
   useEffect(() => {
     async function load() {
       setLoading(true)
 
       // Load profile by username
-      const { data: byUsername } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles').select('*').eq('username', username).maybeSingle()
-      if (!byUsername) { setNotFound(true); setLoading(false); return }
-      setProfile(byUsername)
+      if (!profileData) { setNotFound(true); setLoading(false); return }
+      setProfile(profileData)
 
-      // ── Used vendors: fetch ALL __used__ rows then filter client-side ──
-      // (avoids UUID casting issues with eq() filter on uuid columns)
-      const profileId    = String(byUsername.id).trim()
-      const profileName  = String(byUsername.display_name).trim()
-      const profileEmail = String(byUsername.email).trim()
-      const emailPrefix  = profileEmail.split('@')[0]
+      const profileId = profileData.id
 
-      const { data: allReviewRows } = await supabase
+      // ── Used vendors ──────────────────────────────────────────────────────
+      const { data: usedRows } = await supabase
         .from('reviews')
-        .select('vendor_id, user_id, reviewer_name')
+        .select('vendor_id')
+        .eq('user_id', profileId)
         .eq('comment', '__used__')
 
-      const allUsedIds = [...new Set(
-        (allReviewRows ?? [])
-          .filter((r: any) =>
-            String(r.user_id).trim() === profileId ||
-            String(r.reviewer_name).trim() === profileName ||
-            String(r.reviewer_name).trim() === emailPrefix
-          )
-          .map((r: any) => r.vendor_id)
-      )]
-
-      if (allUsedIds.length) {
+      const usedIds = [...new Set((usedRows ?? []).map(r => r.vendor_id))]
+      if (usedIds.length) {
         const { data: vendorData } = await supabase
           .from('vendors')
           .select('id, name, category, location, instagram, price_from, verified')
-          .in('id', allUsedIds)
+          .in('id', usedIds)
         if (vendorData) setUsedVendors(vendorData)
       }
 
-      // ── Recommended vendors: fetch all then filter client-side ──
-      const { data: allRecRows } = await supabase
+      // ── Recommended vendors ───────────────────────────────────────────────
+      const { data: recRows } = await supabase
         .from('vendor_recommendations')
-        .select('vendor_id, user_id')
+        .select('vendor_id')
+        .eq('user_id', profileId)
 
-      const recIds = [...new Set(
-        (allRecRows ?? [])
-          .filter((r: any) => String(r.user_id).trim() === profileId)
-          .map((r: any) => r.vendor_id)
-      )]
-
+      const recIds = [...new Set((recRows ?? []).map(r => r.vendor_id))]
       if (recIds.length) {
         const { data: vendorData } = await supabase
           .from('vendors')
@@ -275,30 +263,37 @@ export default function ProfilePage() {
         if (vendorData) setRecVendors(vendorData)
       }
 
-      // Followers / following
+      // ── Followers (people who follow this profile) ────────────────────────
       const { data: followerRows } = await supabase
-        .from('follows').select('follower_id').eq('following_id', byUsername.email)
+        .from('follows')
+        .select('follower_id')
+        .eq('following_id', profileId)
+
       if (followerRows?.length) {
-        const emails = followerRows.map(r => r.follower_id)
+        const ids = followerRows.map(r => r.follower_id)
         const { data: fp } = await supabase
-          .from('profiles').select('email, display_name, username').in('email', emails)
+          .from('profiles').select('id, display_name, username').in('id', ids)
         if (fp) setFollowers(fp)
       }
 
+      // ── Following (people this profile follows) ───────────────────────────
       const { data: followingRows } = await supabase
-        .from('follows').select('following_id').eq('follower_id', byUsername.email)
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', profileId)
+
       if (followingRows?.length) {
-        const emails = followingRows.map(r => r.following_id)
+        const ids = followingRows.map(r => r.following_id)
         const { data: fp } = await supabase
-          .from('profiles').select('email, display_name, username').in('email', emails)
+          .from('profiles').select('id, display_name, username').in('id', ids)
         if (fp) setFollowing(fp)
       }
 
-      // Current viewer's following list (for follow/unfollow button state)
-      if (user?.email) {
+      // ── Current viewer's following list ───────────────────────────────────
+      if (user?.id) {
         const { data: myFollowing } = await supabase
-          .from('follows').select('following_id').eq('follower_id', user.email)
-        if (myFollowing) setFollowingEmails(new Set(myFollowing.map(r => r.following_id)))
+          .from('follows').select('following_id').eq('follower_id', user.id)
+        if (myFollowing) setFollowingIds(new Set(myFollowing.map(r => r.following_id)))
       }
 
       setLoading(false)
@@ -306,27 +301,46 @@ export default function ProfilePage() {
     load()
   }, [username, user])
 
-  const handleToggleFollow = useCallback(async (targetEmail: string) => {
-    if (!user?.email) { openAuthModal(); return }
-    const isFollowing = followingEmails.has(targetEmail)
-    setFollowingEmails(prev => { const n = new Set(prev); isFollowing ? n.delete(targetEmail) : n.add(targetEmail); return n })
+  const handleToggleFollow = useCallback(async (targetId: string) => {
+    if (!user?.id) { openAuthModal(); return }
+    const isFollowing = followingIds.has(targetId)
+
+    // Optimistic update
+    setFollowingIds(prev => {
+      const n = new Set(prev)
+      isFollowing ? n.delete(targetId) : n.add(targetId)
+      return n
+    })
+
     if (isFollowing) {
-      await supabase.from('follows').delete().eq('follower_id', user.email).eq('following_id', targetEmail)
-      if (targetEmail === profile?.email) setFollowers(prev => prev.filter(f => f.email !== user.email))
+      await supabase.from('follows')
+        .delete()
+        .eq('follower_id', user.id)
+        .eq('following_id', targetId)
+
+      // Remove from followers list if viewing this profile's followers
+      if (targetId === profile?.id) {
+        setFollowers(prev => prev.filter(f => f.id !== user.id))
+      }
     } else {
-      await supabase.from('follows').insert({ follower_id: user.email, following_id: targetEmail })
-      if (targetEmail === profile?.email) {
-        const { data } = await supabase.from('profiles').select('email, display_name, username').eq('email', user.email).maybeSingle()
+      await supabase.from('follows')
+        .insert({ follower_id: user.id, following_id: targetId })
+
+      // Add to followers list if viewing this profile's followers
+      if (targetId === profile?.id) {
+        const { data } = await supabase
+          .from('profiles').select('id, display_name, username').eq('id', user.id).maybeSingle()
         if (data) setFollowers(prev => [...prev, data])
       }
     }
-  }, [user, followingEmails, profile, openAuthModal])
+  }, [user, followingIds, profile, openAuthModal])
 
-  // Loading skeleton
+  // ── Loading skeleton ──────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
-        <div style={{ background: '#fff', borderBottom: '1px solid #E8E0E8', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: '#fff', borderBottom: '1px solid #E8E0E8', padding: '14px 32px' }}>
           <Link href="/" style={{ fontSize: 13, color: DARK, textDecoration: 'none', fontWeight: 500 }}>← Directory</Link>
         </div>
         <div style={{ height: 180, background: 'linear-gradient(180deg, #DDD0E4 0%, #EDE4F0 40%, #FAFAFA 100%)' }} />
@@ -354,8 +368,8 @@ export default function ProfilePage() {
   }
 
   const displayName        = profile?.display_name || 'Unknown'
-  const handle             = profile?.username || profile?.email?.split('@')[0] || ''
-  const isFollowingProfile = followingEmails.has(profile?.email ?? '')
+  const handle             = profile?.username || ''
+  const isFollowingProfile = followingIds.has(profile?.id ?? '')
   const activeVendors      = activeTab === 'used' ? usedVendors : recVendors
 
   return (
@@ -405,8 +419,17 @@ export default function ProfilePage() {
                 Edit profile
               </button>
             ) : (
-              <button onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.email) }}
-                style={{ padding: '7px 16px', borderRadius: 20, border: isFollowingProfile ? '1px solid #E8E0E8' : 'none', background: isFollowingProfile ? 'white' : ACCENT, fontSize: 12, fontWeight: 700, color: isFollowingProfile ? MUTED : 'white', cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'var(--font-jost, sans-serif)' }}>
+              <button
+                onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.id) }}
+                style={{
+                  padding: '7px 16px', borderRadius: 20,
+                  border: isFollowingProfile ? '1px solid #E8E0E8' : 'none',
+                  background: isFollowingProfile ? 'white' : ACCENT,
+                  fontSize: 12, fontWeight: 700,
+                  color: isFollowingProfile ? MUTED : 'white',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                  fontFamily: 'var(--font-jost, sans-serif)',
+                }}>
                 {isFollowingProfile ? 'Following' : 'Follow'}
               </button>
             )}
@@ -416,7 +439,9 @@ export default function ProfilePage() {
           <div style={{ marginBottom: 16, paddingLeft: 2 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: DARK, marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{displayName}</div>
             <div style={{ fontSize: 12, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>@{handle}</div>
-            {profile?.bio && <div style={{ fontSize: 13, color: DARK, marginTop: 6, lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{profile.bio}</div>}
+            {profile?.bio && (
+              <div style={{ fontSize: 13, color: DARK, marginTop: 6, lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{profile.bio}</div>
+            )}
           </div>
 
           {/* Tabs */}
@@ -426,7 +451,14 @@ export default function ProfilePage() {
               { key: 'recommended', label: '⭐ Recs', count: recVendors.length  },
             ].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key as 'used' | 'recommended')}
-                style={{ flex: 1, padding: '13px 8px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: activeTab === tab.key ? `2px solid ${ACCENT}` : '2px solid transparent', color: activeTab === tab.key ? ACCENT : MUTED, fontSize: 12, fontWeight: activeTab === tab.key ? 700 : 500, transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>
+                style={{
+                  flex: 1, padding: '13px 8px', background: 'none', border: 'none', cursor: 'pointer',
+                  borderBottom: activeTab === tab.key ? `2px solid ${ACCENT}` : '2px solid transparent',
+                  color: activeTab === tab.key ? ACCENT : MUTED,
+                  fontSize: 12, fontWeight: activeTab === tab.key ? 700 : 500,
+                  transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  fontFamily: 'var(--font-jost, sans-serif)',
+                }}>
                 {tab.label}
                 <span style={{ background: activeTab === tab.key ? `${ACCENT}18` : '#F0EBF4', color: activeTab === tab.key ? ACCENT : MUTED, borderRadius: 20, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>
                   {tab.count}
@@ -455,9 +487,9 @@ export default function ProfilePage() {
           title={sheet === 'followers' ? `Followers · ${followers.length}` : `Following · ${following.length}`}
           people={sheet === 'followers' ? followers : following}
           onClose={() => setSheet(null)}
-          currentUserEmail={user?.email}
+          currentUserId={user?.id}
           onToggleFollow={handleToggleFollow}
-          followingEmails={followingEmails}
+          followingIds={followingIds}
         />
       )}
 

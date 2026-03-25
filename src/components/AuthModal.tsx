@@ -13,26 +13,52 @@ type Mode = 'login' | 'signup'
 type Step = 'auth' | 'type' | 'profile'
 type ProfileType = 'customer' | 'vendor'
 
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const inputStyle = (hasError = false): React.CSSProperties => ({
+  width: '100%', padding: '12px 16px',
+  border: `1.5px solid ${hasError ? '#C45C7A' : '#EDE4DC'}`,
+  borderRadius: 12, fontSize: 14, color: '#2C1A12',
+  background: 'white', outline: 'none',
+  boxSizing: 'border-box',
+  fontFamily: 'var(--font-jost, sans-serif)',
+  transition: 'border-color 0.2s',
+})
+
+const btnStyle = (disabled: boolean): React.CSSProperties => ({
+  width: '100%', padding: '13px 16px',
+  background: disabled ? '#E8DDD5' : '#8B6E9A',
+  color: disabled ? '#B09080' : 'white',
+  border: 'none', borderRadius: 12,
+  fontSize: 14, fontWeight: 700,
+  cursor: disabled ? 'default' : 'pointer',
+  transition: 'all 0.2s',
+  fontFamily: 'var(--font-jost, sans-serif)',
+})
+
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal } = useAuth()
 
-  const [mode, setMode]               = useState<Mode>('login')
-  const [email, setEmail]             = useState('')
-  const [password, setPassword]       = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [username, setUsername]       = useState('')
-  const [profileType, setProfileType] = useState<ProfileType | null>(null)
-  const [step, setStep]               = useState<Step>('auth')
-  const [loading, setLoading]         = useState(false)
-  const [error, setError]             = useState('')
-  const [usernameOk, setUsernameOk]   = useState<boolean | null>(null)
-  const [checkingUsername, setCheckingUsername] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [mode, setMode]                           = useState<Mode>('login')
+  const [email, setEmail]                         = useState('')
+  const [password, setPassword]                   = useState('')
+  const [confirmPassword, setConfirmPassword]     = useState('')
+  const [displayName, setDisplayName]             = useState('')
+  const [username, setUsername]                   = useState('')
+  const [profileType, setProfileType]             = useState<ProfileType | null>(null)
+  const [step, setStep]                           = useState<Step>('auth')
+  const [loading, setLoading]                     = useState(false)
+  const [error, setError]                         = useState('')
+  const [usernameOk, setUsernameOk]               = useState<boolean | null>(null)
+  const [checkingUsername, setCheckingUsername]   = useState(false)
+  const [showPassword, setShowPassword]           = useState(false)
 
   if (!isAuthModalOpen) return null
 
-  // ── Login ───────────────────────────────────────────────────────────────────
+  // During profile setup steps, user cannot dismiss the modal
+  const isLocked = step === 'type' || step === 'profile'
+
+  // ── Login ──────────────────────────────────────────────────────────────────
 
   async function handleLogin() {
     if (!email.trim() || !password.trim()) { setError('Please fill in all fields.'); return }
@@ -49,7 +75,7 @@ export default function AuthModal() {
     }
   }
 
-  // ── Sign up ─────────────────────────────────────────────────────────────────
+  // ── Sign up ────────────────────────────────────────────────────────────────
 
   async function handleSignUp() {
     if (!email.trim() || !password.trim()) { setError('Please fill in all fields.'); return }
@@ -64,12 +90,12 @@ export default function AuthModal() {
       setError(authError.message)
       setLoading(false)
     } else {
-      setStep('type')   // ← go to type picker first
+      setStep('type')
       setLoading(false)
     }
   }
 
-  // ── Username check ──────────────────────────────────────────────────────────
+  // ── Username check ─────────────────────────────────────────────────────────
 
   async function checkUsername(val: string) {
     const cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '')
@@ -83,7 +109,7 @@ export default function AuthModal() {
     setCheckingUsername(false)
   }
 
-  // ── Save profile ────────────────────────────────────────────────────────────
+  // ── Save profile ───────────────────────────────────────────────────────────
 
   async function handleSaveProfile() {
     if (!displayName.trim()) { setError('Please enter your name.'); return }
@@ -101,7 +127,7 @@ export default function AuthModal() {
         email: user.email,
         display_name: displayName.trim(),
         username: username.trim(),
-        profile_type: profileType,   // ← save type to profiles table
+        profile_type: profileType,
       })
 
     if (profileError) {
@@ -113,6 +139,7 @@ export default function AuthModal() {
           display_name: displayName.trim(),
           username: username.trim(),
           profile_type: profileType,
+          onboarding_complete: true,
         }
       })
       handleClose()
@@ -120,6 +147,8 @@ export default function AuthModal() {
   }
 
   function handleClose() {
+    // Don't allow close if user is mid-onboarding
+    if (isLocked) return
     closeAuthModal()
     setEmail(''); setPassword(''); setConfirmPassword('')
     setDisplayName(''); setUsername('')
@@ -132,38 +161,19 @@ export default function AuthModal() {
     setPassword(''); setConfirmPassword('')
   }
 
-  // ── Styles ──────────────────────────────────────────────────────────────────
-
-  const inputStyle = (hasError = false): React.CSSProperties => ({
-    width: '100%', padding: '12px 16px',
-    border: `1.5px solid ${hasError ? '#C45C7A' : '#EDE4DC'}`,
-    borderRadius: 12, fontSize: 14, color: '#2C1A12',
-    background: 'white', outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'var(--font-jost, sans-serif)',
-    transition: 'border-color 0.2s',
-  })
-
-  const btnStyle = (disabled: boolean): React.CSSProperties => ({
-    width: '100%', padding: '13px 16px',
-    background: disabled ? '#E8DDD5' : '#8B6E9A',
-    color: disabled ? '#B09080' : 'white',
-    border: 'none', borderRadius: 12,
-    fontSize: 14, fontWeight: 700,
-    cursor: disabled ? 'default' : 'pointer',
-    transition: 'all 0.2s',
-    fontFamily: 'var(--font-jost, sans-serif)',
-  })
-
   return (
     <>
-      {/* Backdrop */}
-      <div onClick={handleClose} style={{
-        position: 'fixed', inset: 0, zIndex: 999,
-        background: 'rgba(44, 26, 18, 0.45)',
-        backdropFilter: 'blur(3px)',
-        WebkitBackdropFilter: 'blur(3px)',
-      }} />
+      {/* Backdrop — not clickable during onboarding */}
+      <div
+        onClick={isLocked ? undefined : handleClose}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 999,
+          background: 'rgba(44, 26, 18, 0.45)',
+          backdropFilter: 'blur(3px)',
+          WebkitBackdropFilter: 'blur(3px)',
+          cursor: isLocked ? 'default' : 'pointer',
+        }}
+      />
 
       {/* Sheet */}
       <div style={{
@@ -177,13 +187,17 @@ export default function AuthModal() {
         fontFamily: 'var(--font-jost, sans-serif)',
       }}>
         <div style={{ width: 36, height: 4, background: '#E8DDD5', borderRadius: 2, margin: '0 auto 24px' }} />
-        <button onClick={handleClose} style={{
-          position: 'absolute', top: 20, right: 20,
-          background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: 22, color: '#B09080', lineHeight: 1, padding: 4,
-        }}>×</button>
 
-        {/* ── Step 1: Auth (login / signup) ── */}
+        {/* Only show close button on auth step */}
+        {!isLocked && (
+          <button onClick={handleClose} style={{
+            position: 'absolute', top: 20, right: 20,
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 22, color: '#B09080', lineHeight: 1, padding: 4,
+          }}>×</button>
+        )}
+
+        {/* ── Step 1: Auth ── */}
         {step === 'auth' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -194,11 +208,10 @@ export default function AuthModal() {
               <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 {mode === 'login'
                   ? 'Sign in to see your saved vendors.'
-                  : 'Save vendors, share recommendations\nand connect with other brides.'}
+                  : 'Save vendors, share recommendations and connect with other brides.'}
               </p>
             </div>
 
-            {/* Mode toggle */}
             <div style={{ display: 'flex', background: '#F0E8E2', borderRadius: 12, padding: 4, marginBottom: 20 }}>
               {(['login', 'signup'] as Mode[]).map(m => (
                 <button key={m} onClick={() => switchMode(m)} style={{
@@ -272,22 +285,20 @@ export default function AuthModal() {
           </>
         )}
 
-        {/* ── Step 2: Profile type picker ── */}
+        {/* ── Step 2: Profile type ── */}
         {step === 'type' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <div style={{ fontSize: 30, marginBottom: 10 }}>🌸</div>
               <h2 style={{ fontSize: 20, fontWeight: 700, color: '#2C1A12', margin: '0 0 6px', fontFamily: 'var(--font-jost, sans-serif)' }}>
-                What kind of account?
+                One last thing!
               </h2>
               <p style={{ fontSize: 13, color: '#9A8070', margin: 0, lineHeight: 1.6, fontFamily: 'var(--font-jost, sans-serif)' }}>
-                Choose how you'll use the Jaiye Directory
+                Just set up your profile and you're in.
               </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
-
-              {/* Customer card */}
               <button
                 onClick={() => setProfileType('customer')}
                 style={{
@@ -300,29 +311,19 @@ export default function AuthModal() {
                 <div style={{
                   width: 48, height: 48, borderRadius: 14, flexShrink: 0,
                   background: profileType === 'customer' ? '#8B6E9A' : '#F0E8E2',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 22, transition: 'all 0.15s',
-                }}>
-                  👰🏾
-                </div>
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+                }}>👰🏾</div>
                 <div>
-                  <div style={{
-                    fontSize: 15, fontWeight: 700,
-                    color: profileType === 'customer' ? '#8B6E9A' : '#2C1A12',
-                    marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)',
-                  }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: profileType === 'customer' ? '#8B6E9A' : '#2C1A12', marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>
                     I'm planning a wedding / event
                   </div>
                   <div style={{ fontSize: 12, color: '#9A8070', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
                     Save vendors, leave reviews, share recommendations
                   </div>
                 </div>
-                {profileType === 'customer' && (
-                  <div style={{ marginLeft: 'auto', color: '#8B6E9A', fontSize: 18, flexShrink: 0 }}>✓</div>
-                )}
+                {profileType === 'customer' && <div style={{ marginLeft: 'auto', color: '#8B6E9A', fontSize: 18, flexShrink: 0 }}>✓</div>}
               </button>
 
-              {/* Vendor card */}
               <button
                 onClick={() => setProfileType('vendor')}
                 style={{
@@ -335,26 +336,17 @@ export default function AuthModal() {
                 <div style={{
                   width: 48, height: 48, borderRadius: 14, flexShrink: 0,
                   background: profileType === 'vendor' ? '#C0A060' : '#F0E8E2',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 22, transition: 'all 0.15s',
-                }}>
-                  🎀
-                </div>
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+                }}>🎀</div>
                 <div>
-                  <div style={{
-                    fontSize: 15, fontWeight: 700,
-                    color: profileType === 'vendor' ? '#C0A060' : '#2C1A12',
-                    marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)',
-                  }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: profileType === 'vendor' ? '#C0A060' : '#2C1A12', marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>
                     I'm a wedding / event vendor
                   </div>
                   <div style={{ fontSize: 12, color: '#9A8070', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
                     Manage your listing, respond to reviews, grow your bookings
                   </div>
                 </div>
-                {profileType === 'vendor' && (
-                  <div style={{ marginLeft: 'auto', color: '#C0A060', fontSize: 18, flexShrink: 0 }}>✓</div>
-                )}
+                {profileType === 'vendor' && <div style={{ marginLeft: 'auto', color: '#C0A060', fontSize: 18, flexShrink: 0 }}>✓</div>}
               </button>
             </div>
 
@@ -365,6 +357,10 @@ export default function AuthModal() {
             >
               Continue →
             </button>
+
+            <p style={{ fontSize: 11, color: '#C4A898', textAlign: 'center', margin: '12px 0 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
+              Step 2 of 3 — almost there!
+            </p>
           </>
         )}
 
@@ -443,7 +439,6 @@ export default function AuthModal() {
                 {loading ? 'Saving…' : 'Create my profile →'}
               </button>
 
-              {/* Back link */}
               <button
                 onClick={() => setStep('type')}
                 style={{
@@ -453,6 +448,10 @@ export default function AuthModal() {
                 }}>
                 ← Change account type
               </button>
+
+              <p style={{ fontSize: 11, color: '#C4A898', textAlign: 'center', margin: '4px 0 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
+                Step 3 of 3
+              </p>
             </div>
           </>
         )}

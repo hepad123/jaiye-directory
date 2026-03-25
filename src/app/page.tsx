@@ -47,9 +47,15 @@ type CurrentUser = {
   username: string
 }
 
+// follower profile info
+type FollowProfile = {
+  id: string
+  display_name: string
+  username: string
+}
+
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
 
-// ── Palette B ──────────────────────────────────────────────────────────────────
 const ACCENT    = '#8B6E9A'
 const DARK      = '#2A1A2A'
 const BG        = '#FAFAFA'
@@ -138,8 +144,6 @@ function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) =
 }
 
 // ─── Review Section ───────────────────────────────────────────────────────────
-// NOTE: No "I used this vendor" button here — that lives only in VendorCard's expanded section.
-// This component only handles written reviews (star rating + comment).
 
 function ReviewSection({ vendor, currentUser, onOpenAuth }: {
   vendor: Vendor
@@ -224,10 +228,16 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
 
 function VendorCard({
   v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth,
+  followSavers, // people you follow who saved this vendor
 }: {
-  v: Vendor; isNew: boolean; resetKey: number
-  currentUser: CurrentUser | null; savedIds: Set<string>
-  onToggleSave: (vendorId: string) => void; onOpenAuth: () => void
+  v: Vendor
+  isNew: boolean
+  resetKey: number
+  currentUser: CurrentUser | null
+  savedIds: Set<string>
+  onToggleSave: (vendorId: string) => void
+  onOpenAuth: () => void
+  followSavers: FollowProfile[]
 }) {
   const [expanded, setExpanded]             = useState(false)
   const [copied, setCopied]                 = useState(false)
@@ -247,7 +257,6 @@ function VendorCard({
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
   const isSaved    = savedIds.has(v.id)
 
-  // Load counts
   useEffect(() => {
     supabase.from('reviews').select('rating, comment').eq('vendor_id', v.id)
       .then(({ data }) => {
@@ -261,7 +270,6 @@ function VendorCard({
       .then(({ count }) => { if (count) setRecCount(count) })
   }, [v.id])
 
-  // Check if current user has already used / recommended — using user_id
   useEffect(() => {
     if (!currentUser?.id) return
     supabase.from('reviews')
@@ -272,7 +280,6 @@ function VendorCard({
       .then(({ data }) => { if (data?.length) setHasRec(true) })
   }, [v.id, currentUser])
 
-  // "I used this vendor" — no name input, uses signed-in user identity
   async function submitUsed() {
     if (!currentUser) { onOpenAuth(); return }
     if (hasUsed) return
@@ -314,6 +321,17 @@ function VendorCard({
   const whatsappNumber = v.phone?.replace(/\D/g, '')
   const whatsappUrl    = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null
 
+  // Build "X people you follow saved this" label
+  const followSaverLabel = () => {
+    if (followSavers.length === 0) return null
+    const names = followSavers.map(p => p.display_name.split(' ')[0])
+    if (names.length === 1) return `${names[0]} saved this`
+    if (names.length === 2) return `${names[0]} & ${names[1]} saved this`
+    return `${names[0]}, ${names[1]} +${names.length - 2} saved this`
+  }
+
+  const saverLabel = followSaverLabel()
+
   const btnBase: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,
     padding: '5px 12px', borderRadius: 20, fontSize: 11,
@@ -324,8 +342,35 @@ function VendorCard({
   return (
     <div style={{ background: 'white', borderRadius: 16, border: `1.5px solid ${colour}55`, overflow: 'hidden', position: 'relative' }}>
 
+      {/* "People you follow saved this" banner */}
+      {saverLabel && (
+        <div style={{
+          background: `${colour}10`, borderBottom: `1px solid ${colour}22`,
+          padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          {/* Mini avatars */}
+          <div style={{ display: 'flex' }}>
+            {followSavers.slice(0, 3).map((p, i) => (
+              <div key={p.id} style={{
+                width: 18, height: 18, borderRadius: '50%',
+                background: `${colour}30`, border: '1.5px solid white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 8, fontWeight: 700, color: colour,
+                marginLeft: i > 0 ? -5 : 0,
+                fontFamily: 'var(--font-jost, sans-serif)',
+              }}>
+                {p.display_name[0].toUpperCase()}
+              </div>
+            ))}
+          </div>
+          <span style={{ fontSize: 10, color: colour, fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            {saverLabel}
+          </span>
+        </div>
+      )}
+
       {/* Badges — top LEFT */}
-      <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
+      <div style={{ position: 'absolute', top: saverLabel ? 38 : 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
         {isFeatured && (
           <div style={{ background: '#FDF3E3', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#A07820', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>
         )}
@@ -342,7 +387,7 @@ function VendorCard({
         onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }}
         title={currentUser ? (isSaved ? 'Remove from saved' : 'Save vendor') : 'Sign in to save vendors'}
         style={{
-          position: 'absolute', top: 12, right: 12,
+          position: 'absolute', top: saverLabel ? 38 : 12, right: 12,
           background: isSaved ? '#F5F0F8' : 'white',
           border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`,
           borderRadius: '50%', width: 28, height: 28,
@@ -352,7 +397,12 @@ function VendorCard({
         <HeartIcon filled={isSaved} />
       </button>
 
-      <div style={{ padding: '14px 14px 12px', paddingTop: (isFeatured || v.verified || isNew) ? 36 : 14 }}>
+      <div style={{
+        padding: '14px 14px 12px',
+        paddingTop: (isFeatured || v.verified || isNew)
+          ? (saverLabel ? 52 : 36)
+          : (saverLabel ? 18 : 14),
+      }}>
         {/* Category */}
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {getEmoji(v.category)} {v.category}
@@ -411,23 +461,38 @@ function VendorCard({
             {v.website  && <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#7B68C8', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
             {v.notes    && <p style={{ fontSize: 10, color: '#B0A0B8', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
 
-            {/* ── "I used this vendor" — single instance, auth-gated, no name input ── */}
+            {/* Who from your circle saved this */}
+            {followSavers.length > 0 && (
+              <div style={{ marginTop: 4, padding: '8px 10px', background: '#F5F0F8', borderRadius: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: ACCENT, marginBottom: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>
+                  👯‍♀️ Saved by people you follow
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {followSavers.map(p => (
+                    <Link key={p.id} href={`/profile/${p.username}`}
+                      style={{ fontSize: 10, color: ACCENT, textDecoration: 'none', background: 'white', border: `1px solid ${ACCENT}33`, borderRadius: 20, padding: '3px 9px', fontFamily: 'var(--font-jost, sans-serif)' }}>
+                      @{p.username}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Used this vendor */}
             <div style={{ marginTop: 4 }}>
               {hasUsed ? (
                 <div style={{ ...btnBase, background: '#F5F0F8', border: `1px solid ${ACCENT}44`, color: ACCENT, cursor: 'default' }}>
                   👋 Used this · <span style={{ fontWeight: 700 }}>{usedCount}</span>
                 </div>
               ) : (
-                <button
-                  onClick={submitUsed}
-                  disabled={usedSubmitting}
+                <button onClick={submitUsed} disabled={usedSubmitting}
                   style={{ ...btnBase, background: 'white', color: MUTED, opacity: usedSubmitting ? 0.6 : 1 }}>
                   👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
                 </button>
               )}
             </div>
 
-            {/* ── "I recommend this vendor" ── */}
+            {/* Recommend */}
             <div style={{ marginTop: 4 }}>
               <button onClick={toggleRecommend} disabled={recSubmitting}
                 style={{
@@ -441,7 +506,6 @@ function VendorCard({
               </button>
             </div>
 
-            {/* Reviews — no duplicate used button here */}
             <ReviewSection vendor={v} currentUser={currentUser} onOpenAuth={onOpenAuth} />
           </div>
         )}
@@ -479,7 +543,10 @@ export default function Home() {
   const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
 
-  // Derive currentUser: pull display_name + username from profiles table (source of truth)
+  // Map of vendor_id -> list of follow profiles who saved it
+  const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
+
+  // Derive currentUser from profiles table
   useEffect(() => {
     if (!authUser?.id || !authUser?.email) { setCurrentUser(null); return }
     supabase.from('profiles').select('username, display_name').eq('id', authUser.id).maybeSingle()
@@ -490,12 +557,63 @@ export default function Home() {
       })
   }, [authUser])
 
+  // Load saved vendor IDs using UUID
   useEffect(() => {
-    if (!currentUser) { setSavedIds(new Set()); return }
-    supabase.from('saved_vendors').select('vendor_id').eq('user_id', currentUser.email)
+    if (!authUser?.id) { setSavedIds(new Set()); return }
+    supabase.from('saved_vendors').select('vendor_id').eq('user_id', authUser.id)
       .then(({ data }) => { if (data) setSavedIds(new Set(data.map(r => r.vendor_id))) })
-  }, [currentUser])
+  }, [authUser])
 
+  // Load follow social context: who you follow + what they saved
+  useEffect(() => {
+    if (!authUser?.id) { setFollowSaverMap({}); return }
+    async function loadFollowContext() {
+      // Get UUIDs of people this user follows
+      const { data: followRows } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', authUser!.id)
+
+      if (!followRows || followRows.length === 0) { setFollowSaverMap({}); return }
+
+      const followingIds = followRows.map(r => r.following_id)
+
+      // Get their profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, username')
+        .in('id', followingIds)
+
+      if (!profiles || profiles.length === 0) { setFollowSaverMap({}); return }
+
+      const profileMap: Record<string, FollowProfile> = {}
+      profiles.forEach(p => { profileMap[p.id] = p })
+
+      // Get vendors they've saved
+      const { data: savedRows } = await supabase
+        .from('saved_vendors')
+        .select('vendor_id, user_id')
+        .in('user_id', followingIds)
+
+      if (!savedRows || savedRows.length === 0) { setFollowSaverMap({}); return }
+
+      // Build map: vendor_id -> FollowProfile[]
+      const map: Record<string, FollowProfile[]> = {}
+      savedRows.forEach(row => {
+        const profile = profileMap[row.user_id]
+        if (!profile) return
+        if (!map[row.vendor_id]) map[row.vendor_id] = []
+        if (!map[row.vendor_id].find(p => p.id === profile.id)) {
+          map[row.vendor_id].push(profile)
+        }
+      })
+
+      setFollowSaverMap(map)
+    }
+    loadFollowContext()
+  }, [authUser])
+
+  // Load all vendors
   useEffect(() => {
     supabase.from('vendors').select('*').then(({ data, error }) => {
       if (error) console.error(error)
@@ -507,15 +625,15 @@ export default function Home() {
   useEffect(() => { setCardResetKey(k => k + 1) }, [category])
 
   const handleToggleSave = useCallback(async (vendorId: string) => {
-    if (!currentUser) return
+    if (!authUser?.id) return
     const isSaved = savedIds.has(vendorId)
     setSavedIds(prev => { const n = new Set(prev); if (isSaved) n.delete(vendorId); else n.add(vendorId); return n })
     if (isSaved) {
-      await supabase.from('saved_vendors').delete().eq('user_id', currentUser.email).eq('vendor_id', vendorId)
+      await supabase.from('saved_vendors').delete().eq('user_id', authUser.id).eq('vendor_id', vendorId)
     } else {
-      await supabase.from('saved_vendors').insert({ user_id: currentUser.email, vendor_id: vendorId })
+      await supabase.from('saved_vendors').insert({ user_id: authUser.id, vendor_id: vendorId })
     }
-  }, [currentUser, savedIds])
+  }, [authUser, savedIds])
 
   const vendorsWithSubcats = vendors.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
   const allCats            = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
@@ -525,13 +643,13 @@ export default function Home() {
   const newVendors         = vendorsWithSubcats.filter(isNewVendor)
 
   const filtered = vendorsWithSubcats.filter(v => {
-    const q            = search.toLowerCase()
-    const matchSearch  = !q || v.name?.toLowerCase().includes(q) || v.services?.toLowerCase().includes(q) || v.instagram?.toLowerCase().includes(q) || v.notes?.toLowerCase().includes(q)
-    const matchCat     = category === '__discounts__' ? !!v.discount_code : category === 'All' || v.category === category
-    const dbLoc        = Object.entries(DB_LOCATION_MAP).find(([, label]) => label === location)?.[0]
-    const matchLoc     = location === 'All' || v.location === dbLoc
-    const matchNew     = !showNewOnly || isNewVendor(v)
-    const matchType    = category !== 'Outfits' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
+    const q           = search.toLowerCase()
+    const matchSearch = !q || v.name?.toLowerCase().includes(q) || v.services?.toLowerCase().includes(q) || v.instagram?.toLowerCase().includes(q) || v.notes?.toLowerCase().includes(q)
+    const matchCat    = category === '__discounts__' ? !!v.discount_code : category === 'All' || v.category === category
+    const dbLoc       = Object.entries(DB_LOCATION_MAP).find(([, label]) => label === location)?.[0]
+    const matchLoc    = location === 'All' || v.location === dbLoc
+    const matchNew    = !showNewOnly || isNewVendor(v)
+    const matchType   = category !== 'Outfits' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
     return matchSearch && matchCat && matchLoc && matchNew && matchType
   })
 
@@ -574,7 +692,7 @@ export default function Home() {
               const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
               const sb = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
               await sb.auth.signOut()
-              setCurrentUser(null); setSavedIds(new Set())
+              setCurrentUser(null); setSavedIds(new Set()); setFollowSaverMap({})
             }}
             style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
             Sign out
@@ -636,9 +754,7 @@ export default function Home() {
                 )
               })}
             </div>
-            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 12, width: 52, pointerEvents: 'none', background: `linear-gradient(to right, transparent, ${BG} 70%)`, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: 11, color: '#B0A0B8', fontWeight: 700, paddingRight: 2, paddingBottom: 12 }}>+</span>
-            </div>
+            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 12, width: 52, pointerEvents: 'none', background: `linear-gradient(to right, transparent, ${BG} 70%)` }} />
           </div>
         </div>
 
@@ -730,9 +846,12 @@ export default function Home() {
               </div>
             )
             : sorted.map(v => (
-              <VendorCard key={v.id} v={v} isNew={isNewVendor(v)} resetKey={cardResetKey}
+              <VendorCard
+                key={v.id} v={v} isNew={isNewVendor(v)} resetKey={cardResetKey}
                 currentUser={currentUser} savedIds={savedIds}
-                onToggleSave={handleToggleSave} onOpenAuth={openAuthModal} />
+                onToggleSave={handleToggleSave} onOpenAuth={openAuthModal}
+                followSavers={followSaverMap[v.id] || []}
+              />
             ))
         }
       </div>

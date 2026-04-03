@@ -5,16 +5,6 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 
-const ACCENT    = '#D97706'
-const DARK      = '#1C1917'
-const BG        = '#F5F5F4'
-const CARD_BG   = '#FFFFFF'
-const BORDER    = '#E8E3DC'
-const PILL_BG   = '#EEE8E0'
-const PILL_TEXT = '#57534E'
-const MUTED     = '#A8A29E'
-const GOLD      = '#B45309'
-
 type Vendor = {
   id: string
   category: string
@@ -66,13 +56,14 @@ const CATEGORY_ORDER = [
   'Decor & Venue', 'Catering', 'Entertainment', 'Other',
 ]
 
-const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? ACCENT
+const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
 function HeartIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24"
-      fill={filled ? ACCENT : 'none'} stroke={filled ? ACCENT : BORDER} strokeWidth="2"
+      fill={filled ? 'var(--accent)' : 'none'}
+      stroke={filled ? 'var(--accent)' : 'var(--border)'} strokeWidth="2"
       style={{ flexShrink: 0, transition: 'all 0.15s ease' }}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
     </svg>
@@ -83,7 +74,7 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <div style={{ display: 'flex', gap: 1 }}>
       {[1,2,3,4,5].map(s => (
-        <span key={s} style={{ color: s <= rating ? ACCENT : BORDER, fontSize: 13 }}>★</span>
+        <span key={s} style={{ color: s <= rating ? 'var(--accent)' : 'var(--border)', fontSize: 13 }}>★</span>
       ))}
     </div>
   )
@@ -108,15 +99,15 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
   return (
-    <div style={{ marginTop: 10, background: PILL_BG, border: `1px dashed ${BORDER}`, borderRadius: 10, padding: '8px 10px' }}>
+    <div style={{ marginTop: 10, background: 'var(--bg-pill)', border: '1px dashed var(--border)', borderRadius: 10, padding: '8px 10px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: 0.4, fontFamily: 'var(--font-jost, sans-serif)' }}>📝 My notes</span>
-        <span style={{ fontSize: 9, fontWeight: 600, transition: 'color 0.2s', fontFamily: 'var(--font-jost, sans-serif)', color: saveStatus === 'saving' ? MUTED : saveStatus === 'saved' ? '#16A34A' : 'transparent' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gold)', letterSpacing: 0.4, fontFamily: 'var(--font-jost, sans-serif)' }}>📝 My notes</span>
+        <span style={{ fontSize: 9, fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)', color: saveStatus === 'saving' ? 'var(--text-muted)' : saveStatus === 'saved' ? '#16A34A' : 'transparent' }}>
           {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? '✓ Saved' : '·'}
         </span>
       </div>
       {!isEditing && !note && (
-        <button onClick={() => setIsEditing(true)} style={{ width: '100%', padding: '4px 0', background: 'none', border: 'none', cursor: 'text', textAlign: 'left', fontSize: 11, color: MUTED, fontStyle: 'italic', fontFamily: 'var(--font-jost, sans-serif)' }}>
+        <button onClick={() => setIsEditing(true)} style={{ width: '100%', padding: '4px 0', background: 'none', border: 'none', cursor: 'text', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic', fontFamily: 'var(--font-jost, sans-serif)' }}>
           + Add a private note about this vendor…
         </button>
       )}
@@ -124,7 +115,7 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
         <textarea autoFocus={isEditing && !note}
           placeholder="e.g. Quoted ₦250k for aso-ebi, follow up in March…"
           value={note} onChange={e => handleChange(e.target.value)} onFocus={() => setIsEditing(true)} rows={3}
-          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: DARK, lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'var(--font-jost, sans-serif)', padding: 0 }} />
+          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: 'var(--text)', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'var(--font-jost, sans-serif)', padding: 0 }} />
       )}
     </div>
   )
@@ -142,18 +133,18 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
   const realReviews = reviews.filter(r => r.comment !== '__used__')
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${BORDER}` }}>
-      <span style={{ fontSize: 10, color: MUTED, letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+      <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
         {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
       </span>
       {realReviews.slice(0, 2).map(r => (
-        <div key={r.id} style={{ background: PILL_BG, borderRadius: 8, padding: '6px 8px', marginTop: 6 }}>
+        <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 8, padding: '6px 8px', marginTop: 6 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: DARK, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.reviewer_name}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-jost, sans-serif)' }}>{r.reviewer_name}</span>
             <StarRating rating={r.rating} />
           </div>
           {r.comment && r.comment !== '__used__' && (
-            <p style={{ fontSize: 10, color: PILL_TEXT, margin: '3px 0 0', lineHeight: 1.4, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.comment}</p>
+            <p style={{ fontSize: 10, color: 'var(--text-pill)', margin: '3px 0 0', lineHeight: 1.4, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.comment}</p>
           )}
         </div>
       ))}
@@ -162,7 +153,7 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
 }
 
 function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
-  v: Vendor; savedIds: Set<string>; onToggleSave: (vendorId: string) => void; userId: string; savedNote: string
+  v: Vendor; savedIds: Set<string>; onToggleSave: (id: string) => void; userId: string; savedNote: string
 }) {
   const [expanded, setExpanded]   = useState(false)
   const [copied, setCopied]       = useState(false)
@@ -187,47 +178,39 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
   }, [v.id])
 
   function copyCode() { navigator.clipboard.writeText(v.discount_code); setCopied(true); setTimeout(() => setCopied(false), 2000) }
-
-  const whatsappNumber = v.phone?.replace(/\D/g, '')
-  const whatsappUrl    = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null
+  const whatsappUrl = v.phone?.replace(/\D/g, '') ? `https://wa.me/${v.phone.replace(/\D/g, '')}` : null
 
   return (
-    <div style={{ background: CARD_BG, borderRadius: 14, border: `1px solid ${BORDER}`, overflow: 'hidden', position: 'relative', boxShadow: '0 1px 3px rgba(28,25,23,0.06)' }}>
+    <div style={{ background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: 'var(--shadow-card)' }}>
       <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
-        {isFeatured && <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#92400E', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>}
+        {isFeatured && <div style={{ background: 'var(--accent-light)', border: '1px solid var(--gold)', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: 'var(--gold)', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>}
         {v.verified  && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: 'var(--font-jost, sans-serif)' }}>✓ Verified</div>}
       </div>
-
       <button onClick={() => onToggleSave(v.id)}
-        style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? '#FEF3C7' : CARD_BG, border: `1px solid ${isSaved ? '#FCD34D' : BORDER}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
+        style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? 'var(--accent-light)' : 'var(--bg-card)', border: `1px solid ${isSaved ? 'var(--gold)' : 'var(--border)'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
         <HeartIcon filled={isSaved} />
       </button>
-
       <div style={{ padding: '14px 14px 12px', paddingTop: (isFeatured || v.verified) ? 36 : 14 }}>
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {getEmoji(v.category)} {v.category}
         </div>
-        <div style={{ fontSize: 17, fontWeight: 700, color: DARK, lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: 'var(--font-playfair, serif)' }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: 'var(--font-playfair, serif)' }}>
           {v.name}
         </div>
-
         {(avgRating !== null || usedCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-            {avgRating !== null && <span style={{ fontSize: 11, color: GOLD, fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
-            {usedCount > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} used</span>}
+            {avgRating !== null && <span style={{ fontSize: 11, color: 'var(--gold)', fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} used</span>}
           </div>
         )}
-
-        {v.location   && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
+        {v.location   && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>💰 From ₦{v.price_from}</div>}
-
         {igHandle && (
           <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: MUTED, textDecoration: 'none', marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
             @{igHandle}
           </a>
         )}
-
         {whatsappUrl && (
           <div style={{ marginBottom: 4 }}>
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
@@ -236,34 +219,30 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
             </a>
           </div>
         )}
-
         {v.discount_code && (
           <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: DARK, color: '#FEF3C7', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: 'var(--text)', color: 'var(--accent-light)', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: 'var(--font-jost, sans-serif)' }}>
               🏷️ {v.discount_code}
             </span>
-            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: `1px solid ${BORDER}`, background: copied ? '#FEF3C7' : CARD_BG, fontSize: 10, color: copied ? GOLD : MUTED, cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: 'var(--font-jost, sans-serif)' }}>
+            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)', background: copied ? 'var(--accent-light)' : 'var(--bg-card)', fontSize: 10, color: copied ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: 'var(--font-jost, sans-serif)' }}>
               {copied ? '✓ Copied!' : 'Copy'}
             </button>
           </div>
         )}
-
         <MyNotes vendorId={v.id} userId={userId} initialNote={savedNote} />
-
         {expanded && (
-          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {v.services && <p style={{ fontSize: 11, color: PILL_TEXT, margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
-            {v.phone    && <p style={{ fontSize: 11, color: MUTED, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
-            {v.email    && <p style={{ fontSize: 11, color: MUTED, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
+            {v.phone    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
+            {v.email    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
             {v.website  && <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
-            {v.notes    && <p style={{ fontSize: 10, color: MUTED, margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
+            {v.notes    && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
             <ReviewSection vendor={v} />
           </div>
         )}
-
         {hasDetails && (
-          <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: `1px solid ${BORDER}`, borderRadius: 20, cursor: 'pointer', fontSize: 10, color: MUTED, fontWeight: 500, padding: '6px 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
-            <span style={{ width: 14, height: 14, borderRadius: '50%', border: `1.5px solid ${BORDER}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: MUTED, lineHeight: 1 }}>{expanded ? '−' : '+'}</span>
+          <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, padding: '6px 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
+            <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1 }}>{expanded ? '−' : '+'}</span>
             {expanded ? 'Less info' : 'More info'}
           </button>
         )}
@@ -274,7 +253,6 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
 
 export default function SavedPage() {
   const { user, loading: authLoading, openAuthModal } = useAuth()
-
   const [displayName, setDisplayName]   = useState('')
   const [savedVendors, setSavedVendors] = useState<Vendor[]>([])
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
@@ -284,9 +262,7 @@ export default function SavedPage() {
   useEffect(() => {
     if (!user?.id) return
     supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
-      .then(({ data }) => {
-        setDisplayName(data?.display_name || user.email?.split('@')[0] || 'You')
-      })
+      .then(({ data }) => { setDisplayName(data?.display_name || user.email?.split('@')[0] || 'You') })
   }, [user])
 
   useEffect(() => {
@@ -295,10 +271,7 @@ export default function SavedPage() {
     async function loadSaved() {
       setLoading(true)
       const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, notes').eq('user_id', user!.id)
-      if (!savedRows || savedRows.length === 0) {
-        setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({})
-        setLoading(false); return
-      }
+      if (!savedRows || savedRows.length === 0) { setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({}); setLoading(false); return }
       const ids = savedRows.map(r => r.vendor_id)
       setSavedIds(new Set(ids))
       const notesMap: Record<string, string> = {}
@@ -341,60 +314,48 @@ export default function SavedPage() {
   const isLoading  = authLoading || loading
 
   return (
-    <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
-
-      <div style={{ background: 'linear-gradient(180deg, #E8E0D5 0%, #EDE8E0 40%, #F5F5F4 100%)', textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) 20px clamp(28px, 4vw, 36px)' }}>
+    <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh' }}>
+      <div style={{ background: 'var(--hero-grad)', textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) 20px clamp(28px, 4vw, 36px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 18 }}>
-          <div style={{ height: 1, width: 44, background: ACCENT, opacity: 0.4 }} />
-          <div style={{ width: 4, height: 4, borderRadius: '50%', background: ACCENT, opacity: 0.6 }} />
-          <div style={{ height: 1, width: 44, background: ACCENT, opacity: 0.4 }} />
+          <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
+          <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', opacity: 0.6 }} />
+          <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
         </div>
-        <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, fontWeight: 600, marginBottom: 10 }}>
-          Your Shortlist
-        </div>
-        <h1 style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: 700, color: DARK, letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1, margin: '0 0 6px' }}>
+        <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, marginBottom: 10 }}>Your Shortlist</div>
+        <h1 style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1, margin: '0 0 6px' }}>
           {firstName ? `${firstName}'s` : 'Saved'}
         </h1>
-        <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: PILL_TEXT, marginBottom: 16 }}>
-          Saved Vendors
-        </div>
-        <div style={{ fontSize: 11, color: ACCENT, fontWeight: 600 }}>
+        <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-pill)', marginBottom: 16 }}>Saved Vendors</div>
+        <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>
           {isLoading ? 'Loading…' : totalSaved > 0 ? `${totalSaved} vendor${totalSaved !== 1 ? 's' : ''} saved` : 'Your shortlist, all in one place'}
         </div>
-        <div style={{ marginTop: 26, height: 1, background: `linear-gradient(to right, transparent, ${ACCENT}60 30%, ${ACCENT}60 70%, transparent)` }} />
+        <div style={{ marginTop: 26, height: 1, background: 'linear-gradient(to right, transparent, var(--accent) 30%, var(--accent) 70%, transparent)', opacity: 0.4 }} />
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 60px' }}>
         {isLoading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12, marginTop: 8 }}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={{ background: CARD_BG, borderRadius: 14, height: 120, opacity: 0.3, border: `1px solid ${BORDER}` }} />
+              <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 14, height: 120, opacity: 0.3, border: '1px solid var(--border)' }} />
             ))}
           </div>
         )}
-
         {!isLoading && !user && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
-            <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Sign in to see your saved vendors</h2>
-            <p style={{ color: MUTED, fontSize: 13, margin: '0 0 20px' }}>Head back to the directory and sign in to start saving vendors.</p>
-            <button onClick={openAuthModal} style={{ padding: '10px 24px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>
-              Sign in
-            </button>
+            <h2 style={{ fontSize: 18, color: 'var(--text)', fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Sign in to see your saved vendors</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px' }}>Head back to the directory and sign in to start saving vendors.</p>
+            <button onClick={openAuthModal} style={{ padding: '10px 24px', background: 'var(--accent)', color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>Sign in</button>
           </div>
         )}
-
         {!isLoading && user && totalSaved === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>✦</div>
-            <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>No saved vendors yet</h2>
-            <p style={{ color: MUTED, fontSize: 13, margin: '0 0 20px' }}>Browse the directory and tap the ♡ on vendors you love.</p>
-            <Link href="/" style={{ display: 'inline-block', padding: '10px 24px', background: ACCENT, color: 'white', borderRadius: 24, textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>
-              Browse vendors
-            </Link>
+            <h2 style={{ fontSize: 18, color: 'var(--text)', fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>No saved vendors yet</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px' }}>Browse the directory and tap the ♡ on vendors you love.</p>
+            <Link href="/" style={{ display: 'inline-block', padding: '10px 24px', background: 'var(--accent)', color: 'white', borderRadius: 24, textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>Browse vendors</Link>
           </div>
         )}
-
         {!isLoading && user && totalSaved > 0 && (
           <div>
             {Object.entries(grouped).map(([cat, vendors]) => (
@@ -403,7 +364,7 @@ export default function SavedPage() {
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: getColour(cat), color: 'white', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
                     {getEmoji(cat)} {cat}
                   </span>
-                  <span style={{ fontSize: 12, color: MUTED }}>{vendors.length} vendor{vendors.length !== 1 ? 's' : ''}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{vendors.length} vendor{vendors.length !== 1 ? 's' : ''}</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12 }}>
                   {vendors.map(v => (
@@ -413,15 +374,14 @@ export default function SavedPage() {
               </div>
             ))}
             <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: `1px solid ${BORDER}`, background: CARD_BG, color: MUTED, fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
+              <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 ← Browse more vendors
               </Link>
             </div>
           </div>
         )}
       </div>
-
-      <footer style={{ textAlign: 'center', padding: '20px', borderTop: `1px solid ${BORDER}`, color: MUTED, fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
         Made with ♥ for Nigerian brides &amp; families
       </footer>
     </main>

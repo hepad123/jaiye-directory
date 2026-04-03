@@ -160,109 +160,135 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/')
 
-  const linkStyle = (active: boolean): React.CSSProperties => ({
-    display: 'inline-flex', alignItems: 'center', gap: 6,
-    fontSize: 13, fontWeight: active ? 600 : 500,
-    color: active ? ACCENT : DARK,
-    textDecoration: 'none',
-    fontFamily: 'var(--font-jost, sans-serif)',
-    padding: '4px 0',
-    borderBottom: active ? `2px solid ${ACCENT}` : '2px solid transparent',
-    transition: 'all 0.15s',
-  })
-
   return (
-    <div style={{
-      background: '#fff',
-      borderBottom: '1px solid #E8E0E8',
-      padding: '12px 24px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-    }}>
-      <Link href="/" style={{
-        fontFamily: 'var(--font-playfair, serif)',
-        fontSize: 16, fontWeight: 700,
-        color: DARK, textDecoration: 'none',
-        letterSpacing: '0.08em',
+    <>
+      <style>{`
+        @media (max-width: 640px) {
+          .nav-label { display: none !important; }
+        }
+      `}</style>
+
+      <div style={{
+        background: '#fff',
+        borderBottom: '1px solid #E8E0E8',
+        padding: '10px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
       }}>
-        Jaiye
-      </Link>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-
-        <Link href="/" style={linkStyle(pathname === '/')}>
-          🌸 Directory
+        {/* Logo */}
+        <Link href="/" style={{
+          fontFamily: 'var(--font-playfair, serif)',
+          fontSize: 16, fontWeight: 700,
+          color: DARK, textDecoration: 'none',
+          letterSpacing: '0.08em',
+          flexShrink: 0,
+        }}>
+          Jaiye
         </Link>
 
-        {user ? (
-          <Link href="/saved" style={linkStyle(isActive('/saved'))}>
-            ♡ Saved
-            {savedCount > 0 && (
-              <span style={{
-                width: 18, height: 18, borderRadius: '50%',
-                background: ACCENT, color: '#fff',
-                fontSize: 10, fontWeight: 700,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              }}>{savedCount}</span>
-            )}
-          </Link>
-        ) : (
-          <button onClick={openAuthModal} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            fontSize: 13, fontWeight: 500, color: DARK,
-            background: 'none', border: 'none',
-            borderBottom: '2px solid transparent',
-            cursor: 'pointer', padding: '4px 0',
+        {/* Right side */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+
+          {/* Directory */}
+          <Link href="/" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            padding: '6px 10px', borderRadius: 20,
+            background: pathname === '/' ? '#F0E8F0' : 'transparent',
+            textDecoration: 'none',
+            color: pathname === '/' ? ACCENT : DARK,
             fontFamily: 'var(--font-jost, sans-serif)',
-          }}>
-            ♡ Saved
-          </button>
-        )}
-
-        <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
-
-        <UserSearch />
-
-        <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
-
-        {user && username ? (
-          <Link href={`/profile/${username}`} title="My profile" style={{
-            width: 32, height: 32, borderRadius: '50%',
-            background: isActive('/profile') ? ACCENT : '#F0E8F0',
-            border: `1.5px solid ${isActive('/profile') ? ACCENT : '#D0C0D8'}`,
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            textDecoration: 'none', fontSize: 12, fontWeight: 700,
-            color: isActive('/profile') ? 'white' : DARK,
-            flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)',
+            fontSize: 13, fontWeight: pathname === '/' ? 600 : 500,
             transition: 'all 0.15s',
           }}>
-            {initials}
+            <span style={{ fontSize: 16 }}>🌸</span>
+            <span className="nav-label">Directory</span>
           </Link>
-        ) : (
-          <button onClick={openAuthModal} style={{
-            width: 32, height: 32, borderRadius: '50%',
-            background: '#F0E8F0', border: '1.5px solid #D0C0D8',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', padding: 0,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </svg>
-          </button>
-        )}
 
-        {user && (
-          <button
-            onClick={async () => { await supabase.auth.signOut() }}
-            style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            Sign out
-          </button>
-        )}
+          {/* Saved */}
+          {user ? (
+            <Link href="/saved" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '6px 10px', borderRadius: 20,
+              background: isActive('/saved') ? '#F0E8F0' : 'transparent',
+              textDecoration: 'none',
+              color: isActive('/saved') ? ACCENT : DARK,
+              fontFamily: 'var(--font-jost, sans-serif)',
+              fontSize: 13, fontWeight: isActive('/saved') ? 600 : 500,
+              transition: 'all 0.15s',
+              position: 'relative',
+            }}>
+              <span style={{ fontSize: 16 }}>♡</span>
+              <span className="nav-label">Saved</span>
+              {savedCount > 0 && (
+                <span style={{
+                  width: 16, height: 16, borderRadius: '50%',
+                  background: ACCENT, color: '#fff',
+                  fontSize: 9, fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                }}>{savedCount}</span>
+              )}
+            </Link>
+          ) : (
+            <button onClick={openAuthModal} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '6px 10px', borderRadius: 20,
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: DARK, fontFamily: 'var(--font-jost, sans-serif)',
+              fontSize: 13, fontWeight: 500,
+            }}>
+              <span style={{ fontSize: 16 }}>♡</span>
+              <span className="nav-label">Saved</span>
+            </button>
+          )}
+
+          {/* Separator */}
+          <div style={{ width: 1, height: 18, background: '#D8D0D8', margin: '0 4px' }} />
+
+          {/* User search */}
+          <UserSearch />
+
+          {/* Profile avatar */}
+          {user && username ? (
+            <Link href={`/profile/${username}`} title="My profile" style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: isActive('/profile') ? ACCENT : '#F0E8F0',
+              border: `1.5px solid ${isActive('/profile') ? ACCENT : '#D0C0D8'}`,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              textDecoration: 'none', fontSize: 12, fontWeight: 700,
+              color: isActive('/profile') ? 'white' : DARK,
+              flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)',
+              transition: 'all 0.15s',
+            }}>
+              {initials}
+            </Link>
+          ) : (
+            <button onClick={openAuthModal} style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: '#F0E8F0', border: '1.5px solid #D0C0D8',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0, flexShrink: 0,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </button>
+          )}
+
+          {/* Sign out — hidden on mobile */}
+          {user && (
+            <button
+              onClick={async () => { await supabase.auth.signOut() }}
+              className="nav-label"
+              style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 4px', fontFamily: 'var(--font-jost, sans-serif)' }}>
+              Sign out
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }

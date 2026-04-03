@@ -234,11 +234,11 @@ export default function ProfilePage() {
         followingIds.length ? supabase.from('profiles').select('id, display_name, username').in('id', followingIds) : Promise.resolve({ data: [] }),
       ])
 
-      if (usedVendorRes.data)      setUsedVendors(usedVendorRes.data)
-      if (recVendorRes.data)       setRecVendors(recVendorRes.data)
-      if (followerProfileRes.data) setFollowers(followerProfileRes.data)
+      if (usedVendorRes.data)       setUsedVendors(usedVendorRes.data)
+      if (recVendorRes.data)        setRecVendors(recVendorRes.data)
+      if (followerProfileRes.data)  setFollowers(followerProfileRes.data)
       if (followingProfileRes.data) setFollowing(followingProfileRes.data)
-      if (myFollowingRows.data)    setFollowingIds(new Set(myFollowingRows.data.map((r: {following_id: string}) => r.following_id)))
+      if (myFollowingRows.data)     setFollowingIds(new Set(myFollowingRows.data.map((r: {following_id: string}) => r.following_id)))
 
       setLoading(false)
     }
@@ -264,7 +264,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
-        <div style={{ height: 180, background: 'linear-gradient(180deg, #DDD0E4 0%, #EDE4F0 40%, #FAFAFA 100%)' }} />
+        <div style={{ height: 120, background: 'linear-gradient(180deg, #DDD0E4 0%, #EDE4F0 40%, #FAFAFA 100%)' }} />
         <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ background: 'white', borderRadius: 20, padding: 20, marginTop: -8, boxShadow: '0 4px 24px rgba(42,26,42,0.08)', border: '1px solid #E8E0E8' }}>
             {[70, 40, 50].map((h, i) => (
@@ -309,8 +309,6 @@ export default function ProfilePage() {
       </div>
 
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
-
-        {/* Profile card */}
         <div style={{ background: 'white', borderRadius: 20, padding: '20px 20px 0', boxShadow: '0 4px 24px rgba(42,26,42,0.08)', border: '1px solid #E8E0E8', position: 'relative', top: -12 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
             <Avatar name={displayName} size={68} />
@@ -354,7 +352,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Tabs */}
           <div style={{ display: 'flex', borderTop: '1px solid #E8E0E8', marginLeft: -20, marginRight: -20 }}>
             {[
               { key: 'used',        label: '✓ Used',  count: usedVendors.length },
@@ -378,7 +375,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Vendor list */}
         <div style={{ marginTop: 8, paddingBottom: 60 }}>
           {activeVendors.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 20px', color: MUTED, fontSize: 13, fontFamily: 'var(--font-jost, sans-serif)' }}>

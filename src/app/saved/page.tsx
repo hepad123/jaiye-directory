@@ -2,14 +2,15 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import { useAuth } from '@/hooks/useAuth'
 
-const supabase = createClient(
+const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// ── Palette B ──────────────────────────────────────────────────────────────────
+// ── Palette ───────────────────────────────────────────────────────────────────
 const ACCENT    = '#8B6E9A'
 const DARK      = '#2A1A2A'
 const BG        = '#FAFAFA'
@@ -46,11 +47,6 @@ type Review = {
   created_at: string
 }
 
-type CurrentUser = {
-  name: string
-  email: string
-}
-
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
@@ -76,7 +72,7 @@ const CATEGORY_ORDER = [
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? ACCENT
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
-// ─── Icons ─────────────────────────────────────────────────────────────────────
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
 const InstagramIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -105,101 +101,11 @@ function HeartIcon({ filled }: { filled: boolean }) {
   )
 }
 
-function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) => void }) {
+function StarRating({ rating }: { rating: number }) {
   return (
     <div style={{ display: 'flex', gap: 1 }}>
       {[1,2,3,4,5].map(s => (
-        <span key={s} onClick={() => onRate?.(s)}
-          style={{ cursor: onRate ? 'pointer' : 'default', color: s <= rating ? '#D4A853' : '#E0D8E8', fontSize: 13 }}>★</span>
-      ))}
-    </div>
-  )
-}
-
-// ─── Review Section ────────────────────────────────────────────────────────────
-
-function ReviewSection({ vendor }: { vendor: Vendor }) {
-  const [reviews, setReviews]       = useState<Review[]>([])
-  const [name, setName]             = useState('')
-  const [rating, setRating]         = useState(0)
-  const [comment, setComment]       = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [showForm, setShowForm]     = useState(false)
-  const [usedVendor, setUsedVendor] = useState(false)
-  const [usedName, setUsedName]     = useState('')
-  const [usedSubmitting, setUsedSubmitting] = useState(false)
-
-  useEffect(() => {
-    supabase.from('reviews').select('*').eq('vendor_id', vendor.id)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => { if (data) setReviews(data) })
-  }, [vendor.id])
-
-  async function submitUsed() {
-    if (!usedName.trim()) return
-    setUsedSubmitting(true)
-    const { data } = await supabase.from('reviews')
-      .insert({ vendor_id: vendor.id, reviewer_name: usedName, rating: 5, comment: '__used__' }).select()
-    if (data) setReviews(prev => [data[0], ...prev])
-    setUsedVendor(false); setUsedName(''); setUsedSubmitting(false)
-  }
-
-  async function submitReview() {
-    if (!name.trim() || rating === 0) return
-    setSubmitting(true)
-    const { data } = await supabase.from('reviews')
-      .insert({ vendor_id: vendor.id, reviewer_name: name, rating, comment }).select()
-    if (data) { setReviews(prev => [data[0], ...prev]); setName(''); setRating(0); setComment(''); setShowForm(false) }
-    setSubmitting(false)
-  }
-
-  const realReviews = reviews.filter(r => r.comment !== '__used__')
-  const usedCount   = reviews.filter(r => r.comment === '__used__').length
-  const inputStyle  = { border: '1px solid #DDD0E8', borderRadius: 8, fontSize: 11, background: 'white', fontFamily: 'var(--font-jost, sans-serif)' }
-
-  return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EDE8F0' }}>
-      <div style={{ marginBottom: 8 }}>
-        {!usedVendor ? (
-          <button onClick={() => setUsedVendor(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, border: '1px solid #DDD0E8', background: BG, cursor: 'pointer', fontSize: 11, color: '#7A6888', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
-          </button>
-        ) : (
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input placeholder="Your name *" value={usedName} onChange={e => setUsedName(e.target.value)} style={{ ...inputStyle, flex: 1, padding: '5px 8px' }} />
-            <button onClick={submitUsed} disabled={usedSubmitting || !usedName.trim()} style={{ padding: '5px 12px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: !usedName.trim() ? 0.5 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>✓</button>
-            <button onClick={() => setUsedVendor(false)} style={{ padding: '5px 8px', background: 'none', border: 'none', fontSize: 13, color: '#bbb', cursor: 'pointer' }}>×</button>
-          </div>
-        )}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontSize: 10, color: '#B0A0B8', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
-          {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
-        </span>
-        <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 10, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
-          {showForm ? 'Cancel' : '+ Add review'}
-        </button>
-      </div>
-      {showForm && (
-        <div style={{ background: '#F5F0F8', borderRadius: 10, padding: 10, marginBottom: 8 }}>
-          <input placeholder="Your name *" value={name} onChange={e => setName(e.target.value)} style={{ ...inputStyle, width: '100%', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const }} />
-          <div style={{ marginBottom: 6 }}><StarRating rating={rating} onRate={setRating} /></div>
-          <textarea placeholder="Share your experience..." value={comment} onChange={e => setComment(e.target.value)} rows={2} style={{ ...inputStyle, width: '100%', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const, resize: 'none' as const }} />
-          <button onClick={submitReview} disabled={submitting || !name.trim() || rating === 0} style={{ padding: '5px 14px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: (!name.trim() || rating === 0) ? 0.45 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            {submitting ? 'Submitting…' : 'Submit'}
-          </button>
-        </div>
-      )}
-      {realReviews.slice(0, 2).map(r => (
-        <div key={r.id} style={{ background: '#F5F0F8', borderRadius: 8, padding: '6px 8px', marginBottom: 4 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#5A4868', fontFamily: 'var(--font-jost, sans-serif)' }}>{r.reviewer_name}</span>
-            <StarRating rating={r.rating} />
-          </div>
-          {r.comment && r.comment !== '__used__' && (
-            <p style={{ fontSize: 10, color: '#7A6888', margin: '3px 0 0', lineHeight: 1.4, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.comment}</p>
-          )}
-        </div>
+        <span key={s} style={{ color: s <= rating ? '#D4A853' : '#E0D8E8', fontSize: 13 }}>★</span>
       ))}
     </div>
   )
@@ -208,17 +114,20 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
 // ─── My Notes ─────────────────────────────────────────────────────────────────
 
 function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: string; initialNote: string }) {
-  const [note, setNote]           = useState(initialNote)
+  const [note, setNote]             = useState(initialNote)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
-  const [isEditing, setIsEditing] = useState(false)
-  const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isEditing, setIsEditing]   = useState(false)
+  const debounceRef                 = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleChange(val: string) {
     setNote(val)
     setSaveStatus('saving')
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
-      await supabase.from('saved_vendors').update({ notes: val }).eq('user_id', userId).eq('vendor_id', vendorId)
+      await supabase.from('saved_vendors')
+        .update({ notes: val })
+        .eq('user_id', userId)
+        .eq('vendor_id', vendorId)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 1800)
     }, 800)
@@ -251,7 +160,40 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
   )
 }
 
-// ─── Vendor Card (Saved Page) ──────────────────────────────────────────────────
+// ─── Review Section ───────────────────────────────────────────────────────────
+
+function ReviewSection({ vendor }: { vendor: Vendor }) {
+  const [reviews, setReviews] = useState<Review[]>([])
+
+  useEffect(() => {
+    supabase.from('reviews').select('*').eq('vendor_id', vendor.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { if (data) setReviews(data) })
+  }, [vendor.id])
+
+  const realReviews = reviews.filter(r => r.comment !== '__used__')
+
+  return (
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EDE8F0' }}>
+      <span style={{ fontSize: 10, color: '#B0A0B8', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
+        {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
+      </span>
+      {realReviews.slice(0, 2).map(r => (
+        <div key={r.id} style={{ background: '#F5F0F8', borderRadius: 8, padding: '6px 8px', marginTop: 6 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: '#5A4868', fontFamily: 'var(--font-jost, sans-serif)' }}>{r.reviewer_name}</span>
+            <StarRating rating={r.rating} />
+          </div>
+          {r.comment && r.comment !== '__used__' && (
+            <p style={{ fontSize: 10, color: '#7A6888', margin: '3px 0 0', lineHeight: 1.4, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.comment}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Vendor Card ──────────────────────────────────────────────────────────────
 
 function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
   v: Vendor; savedIds: Set<string>; onToggleSave: (vendorId: string) => void; userId: string; savedNote: string
@@ -287,18 +229,18 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
     <div style={{ background: 'white', borderRadius: 16, border: `1.5px solid ${colour}55`, overflow: 'hidden', position: 'relative' }}>
 
       {/* Badges */}
-      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
+      <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
         {isFeatured && <div style={{ background: '#FDF3E3', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#A07820', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>}
         {v.verified && <div style={{ background: '#F0EEFF', border: '1px solid #C0A8E8', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#6050A8', fontFamily: 'var(--font-jost, sans-serif)' }}>✓ Verified</div>}
       </div>
 
       {/* Heart */}
       <button onClick={() => onToggleSave(v.id)} title="Remove from saved"
-        style={{ position: 'absolute', top: isFeatured ? 38 : 12, right: 12, background: isSaved ? '#F5F0F8' : 'white', border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
+        style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? '#F5F0F8' : 'white', border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
         <HeartIcon filled={isSaved} />
       </button>
 
-      <div style={{ padding: '14px 14px 12px' }}>
+      <div style={{ padding: '14px 14px 12px', paddingTop: (isFeatured || v.verified) ? 36 : 14 }}>
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {getEmoji(v.category)} {v.category}
         </div>
@@ -309,7 +251,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
         {(avgRating !== null || usedCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
             {avgRating !== null && <span style={{ fontSize: 11, color: '#B8860B', fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
-            {usedCount > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} bride{usedCount !== 1 ? 's' : ''} used this</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} used</span>}
           </div>
         )}
 
@@ -367,53 +309,72 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
   )
 }
 
-// ─── Saved Page ────────────────────────────────────────────────────────────────
+// ─── Saved Page ───────────────────────────────────────────────────────────────
 
 export default function SavedPage() {
-  const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
+  const { user, openAuthModal } = useAuth()
+
+  const [displayName, setDisplayName]   = useState('')
   const [savedVendors, setSavedVendors] = useState<Vendor[]>([])
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
   const [savedNotes, setSavedNotes]     = useState<Record<string, string>>({})
   const [loading, setLoading]           = useState(true)
 
+  // Load display name from profiles
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('jaiye_user')
-      if (stored) setCurrentUser(JSON.parse(stored) as CurrentUser)
-      else setLoading(false)
-    } catch { setLoading(false) }
-  }, [])
+    if (!user?.id) return
+    supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.display_name) setDisplayName(data.display_name)
+        else setDisplayName(user.email?.split('@')[0] || 'You')
+      })
+  }, [user])
 
+  // Load saved vendors using UUID
   useEffect(() => {
-    if (!currentUser) return
+    if (!user?.id) { setLoading(false); return }
     async function loadSaved() {
       setLoading(true)
-      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, notes').eq('user_id', currentUser!.email)
-      if (!savedRows || savedRows.length === 0) { setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({}); setLoading(false); return }
+      const { data: savedRows } = await supabase
+        .from('saved_vendors')
+        .select('vendor_id, notes')
+        .eq('user_id', user!.id)
+
+      if (!savedRows || savedRows.length === 0) {
+        setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({})
+        setLoading(false); return
+      }
+
       const ids = savedRows.map(r => r.vendor_id)
       setSavedIds(new Set(ids))
+
       const notesMap: Record<string, string> = {}
       savedRows.forEach(r => { notesMap[r.vendor_id] = r.notes ?? '' })
       setSavedNotes(notesMap)
-      const { data: vendorData } = await supabase.from('vendors').select('*').in('id', ids)
-      if (vendorData) setSavedVendors(vendorData.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v))
+
+      const { data: vendorData } = await supabase
+        .from('vendors').select('*').in('id', ids)
+      if (vendorData) setSavedVendors(
+        vendorData.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
+      )
       setLoading(false)
     }
     loadSaved()
-  }, [currentUser])
+  }, [user])
 
   const handleToggleSave = useCallback(async (vendorId: string) => {
-    if (!currentUser) return
+    if (!user?.id) return
     const isSaved = savedIds.has(vendorId)
     setSavedIds(prev => { const n = new Set(prev); if (isSaved) n.delete(vendorId); else n.add(vendorId); return n })
     if (isSaved) {
       setSavedVendors(prev => prev.filter(v => v.id !== vendorId))
       setSavedNotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
-      await supabase.from('saved_vendors').delete().eq('user_id', currentUser.email).eq('vendor_id', vendorId)
+      await supabase.from('saved_vendors').delete()
+        .eq('user_id', user.id).eq('vendor_id', vendorId)
     } else {
-      await supabase.from('saved_vendors').insert({ user_id: currentUser.email, vendor_id: vendorId })
+      await supabase.from('saved_vendors').insert({ user_id: user.id, vendor_id: vendorId })
     }
-  }, [currentUser, savedIds])
+  }, [user, savedIds])
 
   const grouped = CATEGORY_ORDER.reduce<Record<string, Vendor[]>>((acc, cat) => {
     const inCat = savedVendors.filter(v => v.category === cat)
@@ -427,7 +388,8 @@ export default function SavedPage() {
     }
   })
 
-  const totalSaved = savedVendors.length
+  const totalSaved  = savedVendors.length
+  const firstName   = displayName.split(' ')[0]
 
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
@@ -437,9 +399,9 @@ export default function SavedPage() {
         <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, textDecoration: 'none', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
           ← Directory
         </Link>
-        {currentUser && (
+        {user && (
           <div style={{ fontSize: 12, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            {currentUser.name.split(' ')[0]}'s saved vendors
+            {firstName}'s saved vendors
           </div>
         )}
       </div>
@@ -455,7 +417,7 @@ export default function SavedPage() {
           Your Shortlist
         </div>
         <h1 style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: 700, color: DARK, letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1, margin: '0 0 6px' }}>
-          {currentUser ? `${currentUser.name.split(' ')[0]}'s` : 'Saved'}
+          {firstName ? `${firstName}'s` : 'Saved'}
         </h1>
         <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#6A586A', marginBottom: 16 }}>
           Saved Vendors
@@ -469,14 +431,14 @@ export default function SavedPage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 60px' }}>
 
         {/* Not signed in */}
-        {!currentUser && !loading && (
+        {!user && !loading && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
             <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Sign in to see your saved vendors</h2>
             <p style={{ color: MUTED, fontSize: 13, margin: '0 0 20px', fontFamily: 'var(--font-jost, sans-serif)' }}>Head back to the directory and sign in to start saving vendors.</p>
-            <Link href="/" style={{ display: 'inline-block', padding: '10px 24px', background: ACCENT, color: 'white', borderRadius: 24, textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>
-              Go to directory
-            </Link>
+            <button onClick={openAuthModal} style={{ display: 'inline-block', padding: '10px 24px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>
+              Sign in
+            </button>
           </div>
         )}
 
@@ -490,7 +452,7 @@ export default function SavedPage() {
         )}
 
         {/* Empty */}
-        {!loading && currentUser && totalSaved === 0 && (
+        {!loading && user && totalSaved === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
             <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>No saved vendors yet</h2>
@@ -502,7 +464,7 @@ export default function SavedPage() {
         )}
 
         {/* Vendor groups */}
-        {!loading && currentUser && totalSaved > 0 && (
+        {!loading && user && totalSaved > 0 && (
           <div>
             {Object.entries(grouped).map(([cat, vendors]) => (
               <div key={cat} style={{ marginBottom: 32 }}>
@@ -516,7 +478,10 @@ export default function SavedPage() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12 }}>
                   {vendors.map(v => (
-                    <VendorCard key={v.id} v={v} savedIds={savedIds} onToggleSave={handleToggleSave} userId={currentUser.email} savedNote={savedNotes[v.id] ?? ''} />
+                    <VendorCard key={v.id} v={v} savedIds={savedIds}
+                      onToggleSave={handleToggleSave}
+                      userId={user.id}
+                      savedNote={savedNotes[v.id] ?? ''} />
                   ))}
                 </div>
               </div>

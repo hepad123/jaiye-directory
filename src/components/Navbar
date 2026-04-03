@@ -1,0 +1,133 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
+
+const ACCENT = '#8B6E9A'
+const DARK   = '#2A1A2A'
+const MUTED  = '#9A8A9A'
+
+export default function Navbar() {
+  const { user, openAuthModal } = useAuth()
+  const pathname = usePathname()
+  const [username, setUsername]   = useState('')
+  const [initials, setInitials]   = useState('')
+  const [savedCount, setSavedCount] = useState(0)
+
+  useEffect(() => {
+    if (!user?.id) { setUsername(''); setInitials(''); setSavedCount(0); return }
+    supabase.from('profiles').select('username, display_name').eq('id', user.id).maybeSingle()
+      .then(({ data }) => {
+        const name = data?.display_name || user.email?.split('@')[0] || ''
+        const uname = data?.username || user.email?.split('@')[0] || ''
+        setUsername(uname)
+        setInitials(name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase())
+      })
+    supabase.from('saved_vendors').select('vendor_id', { count: 'exact' }).eq('user_id', user.id)
+      .then(({ count }) => setSavedCount(count ?? 0))
+  }, [user])
+
+  const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/')
+
+  const linkStyle = (active: boolean): React.CSSProperties => ({
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    fontSize: 13, fontWeight: active ? 600 : 500,
+    color: active ? ACCENT : DARK,
+    textDecoration: 'none',
+    fontFamily: 'var(--font-jost, sans-serif)',
+    padding: '4px 0',
+    borderBottom: active ? `2px solid ${ACCENT}` : '2px solid transparent',
+    transition: 'all 0.15s',
+  })
+
+  return (
+    <div style={{
+      background: '#fff',
+      borderBottom: '1px solid #E8E0E8',
+      padding: '12px 24px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+    }}>
+      {/* Left — logo/directory link */}
+      <Link href="/" style={{
+        fontFamily: 'var(--font-playfair, serif)',
+        fontSize: 16, fontWeight: 700,
+        color: DARK, textDecoration: 'none',
+        letterSpacing: '0.08em',
+      }}>
+        Jaiye
+      </Link>
+
+      {/* Right — nav items */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+
+        <Link href="/" style={linkStyle(pathname === '/')}>
+          🌸 Directory
+        </Link>
+
+        {user ? (
+          <Link href="/saved" style={linkStyle(isActive('/saved'))}>
+            ♡ Saved
+            {savedCount > 0 && (
+              <span style={{
+                width: 18, height: 18, borderRadius: '50%',
+                background: ACCENT, color: '#fff',
+                fontSize: 10, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              }}>{savedCount}</span>
+            )}
+          </Link>
+        ) : (
+          <button onClick={openAuthModal} style={{
+            ...linkStyle(false), background: 'none', border: 'none',
+            borderBottom: '2px solid transparent', cursor: 'pointer',
+          }}>
+            ♡ Saved
+          </button>
+        )}
+
+        <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
+
+        {user && username ? (
+          <Link href={`/profile/${username}`} title="My profile" style={{
+            width: 32, height: 32, borderRadius: '50%',
+            background: isActive('/profile') ? ACCENT : '#F0E8F0',
+            border: `1.5px solid ${isActive('/profile') ? ACCENT : '#D0C0D8'}`,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            textDecoration: 'none', fontSize: 12, fontWeight: 700,
+            color: isActive('/profile') ? 'white' : DARK,
+            flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)',
+            transition: 'all 0.15s',
+          }}>
+            {initials}
+          </Link>
+        ) : (
+          <button onClick={openAuthModal} style={{
+            width: 32, height: 32, borderRadius: '50%',
+            background: '#F0E8F0', border: '1.5px solid #D0C0D8',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', padding: 0,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </button>
+        )}
+
+        {user && (
+          <button onClick={async () => { await supabase.auth.signOut() }}
+            style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            Sign out
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}

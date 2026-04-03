@@ -24,15 +24,15 @@ export default function Navbar() {
         const name  = data?.display_name || user.email?.split('@')[0] || ''
         const uname = data?.username     || user.email?.split('@')[0] || ''
         setUsername(uname)
-        setInitials(name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase())
+        setInitials(name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase())
       })
     supabase.from('saved_vendors').select('vendor_id', { count: 'exact' }).eq('user_id', user.id)
       .then(({ count }) => setSavedCount(count ?? 0))
   }, [user])
 
-  const isActive = (path) => pathname === path || pathname?.startsWith(path + '/')
+  const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/')
 
-  const linkStyle = (active) => ({
+  const linkStyle = (active: boolean): React.CSSProperties => ({
     display: 'inline-flex', alignItems: 'center', gap: 6,
     fontSize: 13, fontWeight: active ? 600 : 500,
     color: active ? ACCENT : DARK,

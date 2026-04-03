@@ -65,17 +65,6 @@ type VendorStats = {
 
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
 
-// ── Slate & Amber palette ─────────────────────────────────────────────────────
-const ACCENT    = '#D97706'   // amber
-const DARK      = '#1C1917'   // slate near-black
-const BG        = '#F5F5F4'   // warm off-white
-const CARD_BG   = '#FFFFFF'
-const BORDER    = '#E8E3DC'
-const PILL_BG   = '#EEE8E0'
-const PILL_TEXT = '#57534E'
-const MUTED     = '#A8A29E'
-const GOLD      = '#B45309'   // darker amber for accents
-
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Event Planning':        { emoji: '📋', colour: '#6366F1' },
   'Styling':               { emoji: '✨', colour: '#0D9488' },
@@ -103,7 +92,7 @@ const CATEGORY_ORDER = [
   'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content',
 ]
 
-const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? ACCENT
+const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
 const isNewVendor = (v: Vendor) => {
@@ -113,8 +102,6 @@ const isNewVendor = (v: Vendor) => {
   weekAgo.setDate(weekAgo.getDate() - 7)
   return created > weekAgo
 }
-
-// ─── User Search ──────────────────────────────────────────────────────────────
 
 function UserSearch() {
   const [open, setOpen]           = useState(false)
@@ -153,23 +140,20 @@ function UserSearch() {
     return () => clearTimeout(timer)
   }, [query])
 
-  const colours = [ACCENT, '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
-  const avatarColour = (name: string) => colours[name.charCodeAt(0) % colours.length]
+  const avatarColours = ['#D97706', '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
+  const avatarColour  = (name: string) => avatarColours[name.charCodeAt(0) % avatarColours.length]
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        title="Search people"
-        style={{
-          width: 32, height: 32, borderRadius: '50%',
-          background: open ? ACCENT : PILL_BG,
-          border: `1.5px solid ${open ? ACCENT : BORDER}`,
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', padding: 0, transition: 'all 0.15s',
-        }}>
+      <button onClick={() => setOpen(o => !o)} title="Search people" style={{
+        width: 32, height: 32, borderRadius: '50%',
+        background: open ? 'var(--accent)' : 'var(--bg-pill)',
+        border: `1.5px solid ${open ? 'var(--accent)' : 'var(--border)'}`,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', padding: 0, transition: 'all 0.15s',
+      }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-          stroke={open ? 'white' : MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          stroke={open ? 'white' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
           <circle cx="19" cy="19" r="3"/>
@@ -180,51 +164,46 @@ function UserSearch() {
       {open && (
         <div style={{
           position: 'absolute', top: 40, right: 0, zIndex: 200,
-          background: CARD_BG, borderRadius: 14,
+          background: 'var(--bg-card)', borderRadius: 14,
           boxShadow: '0 8px 32px rgba(28,25,23,0.12)',
-          border: `1px solid ${BORDER}`,
+          border: '1px solid var(--border)',
           width: 300, overflow: 'hidden',
           fontFamily: 'var(--font-jost, sans-serif)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: `1px solid ${BORDER}` }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Search by name or @username…"
-              value={query}
+            <input ref={inputRef} type="text" placeholder="Search by name or @username…" value={query}
               onChange={e => setQuery(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: DARK, background: 'transparent', fontFamily: 'var(--font-jost, sans-serif)' }}
-            />
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: 'var(--text)', background: 'transparent', fontFamily: 'var(--font-jost, sans-serif)' }} />
             {query && (
               <button onClick={() => { setQuery(''); setResults([]) }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
             )}
           </div>
           <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-            {!query && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>Type to search for people</div>}
-            {query && searching && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>Searching…</div>}
-            {query && !searching && results.length === 0 && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>No users found for "{query}"</div>}
+            {!query && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Type to search for people</div>}
+            {query && searching && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Searching…</div>}
+            {query && !searching && results.length === 0 && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>No users found for "{query}"</div>}
             {results.map(p => {
               const initials = (p.display_name || p.username || '?').split(' ').map((x: string) => x[0]).slice(0, 2).join('').toUpperCase()
               const colour   = avatarColour(p.display_name || p.username || 'a')
               return (
                 <Link key={p.id} href={`/profile/${p.username}`}
                   onClick={() => { setOpen(false); setQuery(''); setResults([]) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, textDecoration: 'none', transition: 'background 0.1s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = PILL_BG)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid var(--border)', textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: `${colour}20`, border: `2px solid ${colour}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: colour }}>
                     {initials}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name || p.username}</div>
-                    <div style={{ fontSize: 11, color: MUTED }}>@{p.username}</div>
-                    {p.bio && <div style={{ fontSize: 10, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{p.bio}</div>}
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name || p.username}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>@{p.username}</div>
+                    {p.bio && <div style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{p.bio}</div>}
                   </div>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <polyline points="9 18 15 12 9 6"/>
                   </svg>
                 </Link>
@@ -237,14 +216,12 @@ function UserSearch() {
   )
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
 const InstagramIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-    stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
     <circle cx="12" cy="12" r="4"/>
-    <circle cx="17.5" cy="6.5" r="1" fill={MUTED} stroke="none"/>
+    <circle cx="17.5" cy="6.5" r="1" fill="var(--text-muted)" stroke="none"/>
   </svg>
 )
 
@@ -257,7 +234,8 @@ const WhatsAppIcon = () => (
 function HeartIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24"
-      fill={filled ? ACCENT : 'none'} stroke={filled ? ACCENT : BORDER} strokeWidth="2"
+      fill={filled ? 'var(--accent)' : 'none'}
+      stroke={filled ? 'var(--accent)' : 'var(--border)'} strokeWidth="2"
       style={{ flexShrink: 0, transition: 'all 0.15s ease' }}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
     </svg>
@@ -269,18 +247,14 @@ function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) =
     <div style={{ display: 'flex', gap: 1 }}>
       {[1,2,3,4,5].map(s => (
         <span key={s} onClick={() => onRate?.(s)}
-          style={{ cursor: onRate ? 'pointer' : 'default', color: s <= rating ? ACCENT : BORDER, fontSize: 13 }}>★</span>
+          style={{ cursor: onRate ? 'pointer' : 'default', color: s <= rating ? 'var(--accent)' : 'var(--border)', fontSize: 13 }}>★</span>
       ))}
     </div>
   )
 }
 
-// ─── Review Section ───────────────────────────────────────────────────────────
-
 function ReviewSection({ vendor, currentUser, onOpenAuth }: {
-  vendor: Vendor
-  currentUser: CurrentUser | null
-  onOpenAuth: () => void
+  vendor: Vendor; currentUser: CurrentUser | null; onOpenAuth: () => void
 }) {
   const [reviews, setReviews]       = useState<Review[]>([])
   const [rating, setRating]         = useState(0)
@@ -296,11 +270,6 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
       .then(({ data }) => { if (data) setReviews(data) })
   }, [vendor.id, loaded])
 
-  function onExpand() {
-    setLoaded(true)
-    setShowForm(f => !f)
-  }
-
   async function submitReview() {
     if (!currentUser || rating === 0) return
     setSubmitting(true)
@@ -312,38 +281,37 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
   }
 
   const realReviews = reviews.filter(r => r.comment !== '__used__')
-  const inputStyle  = { border: `1px solid ${BORDER}`, borderRadius: 8, fontSize: 11, background: BG, fontFamily: 'var(--font-jost, sans-serif)' }
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${BORDER}` }}>
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontSize: 10, color: MUTED, letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {loaded ? (realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet') : 'Reviews'}
         </span>
-        <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; setLoaded(true); onExpand() }}
-          style={{ fontSize: 10, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
+        <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; setLoaded(true); setShowForm(f => !f) }}
+          style={{ fontSize: 10, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {showForm ? 'Cancel' : '+ Add review'}
         </button>
       </div>
       {showForm && (
-        <div style={{ background: PILL_BG, borderRadius: 10, padding: 10, marginBottom: 8 }}>
+        <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: 10, marginBottom: 8 }}>
           <div style={{ marginBottom: 6 }}><StarRating rating={rating} onRate={setRating} /></div>
           <textarea placeholder="Share your experience..." value={comment} onChange={e => setComment(e.target.value)} rows={2}
-            style={{ ...inputStyle, width: '100%', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const, resize: 'none' as const }} />
+            style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: 'var(--bg)', color: 'var(--text)', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const, resize: 'none' as const, fontFamily: 'var(--font-jost, sans-serif)', outline: 'none' }} />
           <button onClick={submitReview} disabled={submitting || rating === 0}
-            style={{ padding: '5px 14px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: rating === 0 ? 0.45 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            style={{ padding: '5px 14px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: rating === 0 ? 0.45 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>
             {submitting ? 'Submitting…' : 'Submit'}
           </button>
         </div>
       )}
       {loaded && realReviews.slice(0, 2).map(r => (
-        <div key={r.id} style={{ background: PILL_BG, borderRadius: 8, padding: '6px 8px', marginBottom: 4 }}>
+        <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 8, padding: '6px 8px', marginBottom: 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: DARK, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.reviewer_name}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-jost, sans-serif)' }}>{r.reviewer_name}</span>
             <StarRating rating={r.rating} />
           </div>
           {r.comment && r.comment !== '__used__' && (
-            <p style={{ fontSize: 10, color: PILL_TEXT, margin: '3px 0 0', lineHeight: 1.4, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.comment}</p>
+            <p style={{ fontSize: 10, color: 'var(--text-pill)', margin: '3px 0 0', lineHeight: 1.4, fontFamily: 'var(--font-jost, sans-serif)' }}>{r.comment}</p>
           )}
         </div>
       ))}
@@ -351,16 +319,13 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
   )
 }
 
-// ─── Vendor Card ──────────────────────────────────────────────────────────────
-
 function VendorCard({
   v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth, followSavers, stats, onStatChange,
 }: {
   v: Vendor; isNew: boolean; resetKey: number; currentUser: CurrentUser | null
   savedIds: Set<string>; onToggleSave: (vendorId: string) => void
   onOpenAuth: () => void; followSavers: FollowProfile[]
-  stats: VendorStats
-  onStatChange: (vendorId: string, patch: Partial<VendorStats>) => void
+  stats: VendorStats; onStatChange: (vendorId: string, patch: Partial<VendorStats>) => void
 }) {
   const [expanded, setExpanded]             = useState(false)
   const [copied, setCopied]                 = useState(false)
@@ -374,7 +339,6 @@ function VendorCard({
   const isFeatured = FEATURED_VENDORS.includes(v.name)
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
   const isSaved    = savedIds.has(v.id)
-
   const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
 
   async function submitUsed() {
@@ -418,16 +382,16 @@ function VendorCard({
     display: 'inline-flex', alignItems: 'center', gap: 5,
     padding: '5px 12px', borderRadius: 20, fontSize: 11,
     fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
-    fontFamily: 'var(--font-jost, sans-serif)', border: `1px solid ${BORDER}`,
+    fontFamily: 'var(--font-jost, sans-serif)', border: '1px solid var(--border)',
   }
 
   return (
-    <div style={{ background: CARD_BG, borderRadius: 14, border: `1px solid ${BORDER}`, overflow: 'hidden', position: 'relative', boxShadow: '0 1px 3px rgba(28,25,23,0.06)' }}>
+    <div style={{ background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: 'var(--shadow-card)' }}>
       {saverLabel && (
         <div style={{ background: `${colour}0D`, borderBottom: `1px solid ${colour}20`, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ display: 'flex' }}>
             {followSavers.slice(0, 3).map((p, i) => (
-              <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: `${colour}25`, border: '1.5px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
+              <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: `${colour}25`, border: '1.5px solid var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 {p.display_name[0].toUpperCase()}
               </div>
             ))}
@@ -437,13 +401,13 @@ function VendorCard({
       )}
 
       <div style={{ position: 'absolute', top: saverLabel ? 38 : 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
-        {isFeatured && <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#92400E', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>}
+        {isFeatured && <div style={{ background: 'var(--accent-light)', border: '1px solid var(--gold)', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: 'var(--gold)', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>}
         {v.verified  && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: 'var(--font-jost, sans-serif)' }}>✓ Verified</div>}
         {isNew       && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: 'var(--font-jost, sans-serif)' }}>🆕 New</div>}
       </div>
 
       <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }}
-        style={{ position: 'absolute', top: saverLabel ? 38 : 12, right: 12, background: isSaved ? '#FEF3C7' : CARD_BG, border: `1px solid ${isSaved ? '#FCD34D' : BORDER}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
+        style={{ position: 'absolute', top: saverLabel ? 38 : 12, right: 12, background: isSaved ? 'var(--accent-light)' : 'var(--bg-card)', border: `1px solid ${isSaved ? 'var(--gold)' : 'var(--border)'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
         <HeartIcon filled={isSaved} />
       </button>
 
@@ -451,24 +415,24 @@ function VendorCard({
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {getEmoji(v.category)} {v.category}
         </div>
-        <div style={{ fontSize: 17, fontWeight: 700, color: DARK, lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: 'var(--font-playfair, serif)' }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: 'var(--font-playfair, serif)' }}>
           {v.name}
         </div>
 
         {(avgRating !== null || usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-            {avgRating !== null && <span style={{ fontSize: 11, color: GOLD, fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
-            {usedCount > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} used</span>}
-            {recCount  > 0 && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ {recCount} rec</span>}
+            {avgRating !== null && <span style={{ fontSize: 11, color: 'var(--gold)', fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>👋 {usedCount} used</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ {recCount} rec</span>}
           </div>
         )}
 
-        {v.location   && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
+        {v.location   && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>💰 From ₦{v.price_from}</div>}
 
         {igHandle && (
           <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: MUTED, textDecoration: 'none', marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
             <InstagramIcon />@{igHandle}
           </a>
         )}
@@ -484,30 +448,30 @@ function VendorCard({
 
         {v.discount_code && (
           <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: DARK, color: '#FEF3C7', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: 'var(--font-jost, sans-serif)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: 'var(--text)', color: 'var(--accent-light)', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: 'var(--font-jost, sans-serif)' }}>
               🏷️ {v.discount_code}
             </span>
-            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: `1px solid ${BORDER}`, background: copied ? '#FEF3C7' : CARD_BG, fontSize: 10, color: copied ? GOLD : MUTED, cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: 'var(--font-jost, sans-serif)' }}>
+            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)', background: copied ? 'var(--accent-light)' : 'var(--bg-card)', fontSize: 10, color: copied ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: 'var(--font-jost, sans-serif)' }}>
               {copied ? '✓ Copied!' : 'Copy'}
             </button>
           </div>
         )}
 
         {expanded && (
-          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {v.services && <p style={{ fontSize: 11, color: PILL_TEXT, margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
-            {v.phone    && <p style={{ fontSize: 11, color: MUTED, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
-            {v.email    && <p style={{ fontSize: 11, color: MUTED, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
+            {v.phone    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
+            {v.email    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
             {v.website  && <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
-            {v.notes    && <p style={{ fontSize: 10, color: MUTED, margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
+            {v.notes    && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
 
             {followSavers.length > 0 && (
-              <div style={{ marginTop: 4, padding: '8px 10px', background: PILL_BG, borderRadius: 10 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: ACCENT, marginBottom: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>👯‍♀️ Saved by people you follow</div>
+              <div style={{ marginTop: 4, padding: '8px 10px', background: 'var(--bg-pill)', borderRadius: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginBottom: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>👯 Saved by people you follow</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {followSavers.map(p => (
                     <Link key={p.id} href={`/profile/${p.username}`}
-                      style={{ fontSize: 10, color: ACCENT, textDecoration: 'none', background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '3px 9px', fontFamily: 'var(--font-jost, sans-serif)' }}>
+                      style={{ fontSize: 10, color: 'var(--accent)', textDecoration: 'none', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 9px', fontFamily: 'var(--font-jost, sans-serif)' }}>
                       @{p.username}
                     </Link>
                   ))}
@@ -517,20 +481,20 @@ function VendorCard({
 
             <div style={{ marginTop: 4 }}>
               {hasUsed ? (
-                <div style={{ ...btnBase, background: '#FEF3C7', border: `1px solid #FCD34D`, color: GOLD, cursor: 'default' }}>
+                <div style={{ ...btnBase, background: 'var(--accent-light)', border: '1px solid var(--gold)', color: 'var(--gold)', cursor: 'default' }}>
                   👋 Used this · <span style={{ fontWeight: 700 }}>{usedCount}</span>
                 </div>
               ) : (
-                <button onClick={submitUsed} disabled={usedSubmitting} style={{ ...btnBase, background: CARD_BG, color: MUTED, opacity: usedSubmitting ? 0.6 : 1 }}>
-                  👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
+                <button onClick={submitUsed} disabled={usedSubmitting} style={{ ...btnBase, background: 'var(--bg-card)', color: 'var(--text-muted)', opacity: usedSubmitting ? 0.6 : 1 }}>
+                  👋 I used this vendor {usedCount > 0 && <span style={{ color: 'var(--accent)', fontWeight: 700 }}>· {usedCount}</span>}
                 </button>
               )}
             </div>
 
             <div style={{ marginTop: 4 }}>
               <button onClick={toggleRecommend} disabled={recSubmitting}
-                style={{ ...btnBase, background: hasRec ? '#FEF3C7' : CARD_BG, border: hasRec ? `1px solid #FCD34D` : `1px solid ${BORDER}`, color: hasRec ? GOLD : MUTED, opacity: recSubmitting ? 0.6 : 1 }}>
-                ⭐ {hasRec ? 'Recommended' : 'I recommend this'} {recCount > 0 && <span style={{ fontWeight: 700, color: ACCENT }}>· {recCount}</span>}
+                style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : 'var(--bg-card)', border: hasRec ? '1px solid var(--gold)' : '1px solid var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)', opacity: recSubmitting ? 0.6 : 1 }}>
+                ⭐ {hasRec ? 'Recommended' : 'I recommend this'} {recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}>· {recCount}</span>}
               </button>
             </div>
 
@@ -539,8 +503,8 @@ function VendorCard({
         )}
 
         {hasDetails && (
-          <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: `1px solid ${BORDER}`, borderRadius: 20, cursor: 'pointer', fontSize: 10, color: MUTED, fontWeight: 500, padding: '6px 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
-            <span style={{ width: 14, height: 14, borderRadius: '50%', border: `1.5px solid ${BORDER}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: MUTED, lineHeight: 1 }}>{expanded ? '−' : '+'}</span>
+          <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, padding: '6px 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
+            <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1 }}>{expanded ? '−' : '+'}</span>
             {expanded ? 'Less info' : 'More info'}
           </button>
         )}
@@ -549,23 +513,21 @@ function VendorCard({
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function Home() {
   const { user: authUser, openAuthModal } = useAuth()
 
-  const [vendors, setVendors]           = useState<Vendor[]>([])
-  const [search, setSearch]             = useState('')
-  const [category, setCategory]         = useState('All')
-  const [location, setLocation]         = useState('All')
-  const [showNewOnly, setShowNewOnly]   = useState(false)
-  const [weddingType, setWeddingType]   = useState('All')
-  const [loading, setLoading]           = useState(true)
-  const [cardResetKey, setCardResetKey] = useState(0)
-  const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
-  const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
+  const [vendors, setVendors]               = useState<Vendor[]>([])
+  const [search, setSearch]                 = useState('')
+  const [category, setCategory]             = useState('All')
+  const [location, setLocation]             = useState('All')
+  const [showNewOnly, setShowNewOnly]       = useState(false)
+  const [weddingType, setWeddingType]       = useState('All')
+  const [loading, setLoading]               = useState(true)
+  const [cardResetKey, setCardResetKey]     = useState(0)
+  const [currentUser, setCurrentUser]       = useState<CurrentUser | null>(null)
+  const [savedIds, setSavedIds]             = useState<Set<string>>(new Set())
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
-  const [vendorStats, setVendorStats]   = useState<Record<string, VendorStats>>({})
+  const [vendorStats, setVendorStats]       = useState<Record<string, VendorStats>>({})
 
   useEffect(() => {
     if (!authUser?.id || !authUser?.email) { setCurrentUser(null); return }
@@ -681,57 +643,54 @@ export default function Home() {
   const emptyStats: VendorStats = { avgRating: null, usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 
   return (
-    <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
+    <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh' }}>
 
-      {/* ── Hero ── */}
-      <div style={{ background: 'linear-gradient(180deg, #E8E0D5 0%, #EDE8E0 40%, #F5F5F4 100%)' }}>
+      {/* Hero */}
+      <div style={{ background: 'var(--hero-grad)' }}>
         <div style={{ textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) clamp(20px, 4vw, 40px) clamp(28px, 4vw, 36px)', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 18 }}>
-            <div style={{ height: 1, width: 44, background: ACCENT, opacity: 0.4 }} />
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: ACCENT, opacity: 0.6 }} />
-            <div style={{ height: 1, width: 44, background: ACCENT, opacity: 0.4 }} />
+            <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', opacity: 0.6 }} />
+            <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
           </div>
-          <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, fontWeight: 600, marginBottom: 10 }}>
+          <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, marginBottom: 10, fontFamily: 'var(--font-jost, sans-serif)' }}>
             Wedding &amp; Event Vendors
           </div>
-          <h1 style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 'clamp(36px, 6vw, 48px)', fontWeight: 700, color: DARK, letterSpacing: '0.14em', textTransform: 'uppercase', lineHeight: 1, margin: '0 0 6px' }}>
+          <h1 style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 'clamp(36px, 6vw, 48px)', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.14em', textTransform: 'uppercase', lineHeight: 1, margin: '0 0 6px' }}>
             Jaiye
           </h1>
-          <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: PILL_TEXT, marginBottom: 18 }}>
+          <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-pill)', marginBottom: 18, fontFamily: 'var(--font-jost, sans-serif)' }}>
             Directory
           </div>
-          <p style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 11, color: PILL_TEXT, letterSpacing: '0.04em', fontWeight: 400, margin: '0 0 5px' }}>
+          <p style={{ fontSize: 11, color: 'var(--text-pill)', letterSpacing: '0.04em', fontWeight: 400, margin: '0 0 5px', fontFamily: 'var(--font-jost, sans-serif)' }}>
             Your guide to the best Nigerian wedding and event vendors
           </p>
-          <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 11, color: ACCENT, letterSpacing: '0.06em', fontWeight: 600 }}>
+          <div style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.06em', fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
             200+ vendors
           </div>
-          <div style={{ marginTop: 26, height: 1, background: `linear-gradient(to right, transparent, ${ACCENT}60 30%, ${ACCENT}60 70%, transparent)` }} />
+          <div style={{ marginTop: 26, height: 1, background: `linear-gradient(to right, transparent, var(--accent) 30%, var(--accent) 70%, transparent)`, opacity: 0.4 }} />
         </div>
       </div>
 
-      {/* ── Sticky filters ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: BG, borderBottom: `1px solid ${BORDER}` }}>
+      {/* Sticky filters */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--bg)', borderBottom: '1px solid var(--border)', transition: 'background 0.2s ease' }}>
         <div style={{ padding: '10px 16px 0', maxWidth: 1200, margin: '0 auto' }}>
-
-          {/* ── Category pills — WhatsApp style: small, tight, scrollable ── */}
           <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div className="hide-scrollbar" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10 }}>
               {categories.map(cat => {
                 const isActive = category === cat
-                const colour   = cat === 'All' ? DARK : getColour(cat)
+                const colour   = cat === 'All' ? 'var(--text)' : getColour(cat)
                 return (
                   <button key={cat} onClick={() => { setCategory(cat); setWeddingType('All') }} style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
                     padding: '5px 11px', borderRadius: 20, flexShrink: 0,
-                    border: `1px solid ${isActive ? colour : BORDER}`,
+                    border: `1px solid ${isActive ? colour : 'var(--border)'}`,
                     cursor: 'pointer', whiteSpace: 'nowrap',
                     fontSize: 12, fontWeight: isActive ? 600 : 400,
-                    background: isActive ? colour : CARD_BG,
-                    color: isActive ? '#fff' : PILL_TEXT,
+                    background: isActive ? colour : 'var(--bg-card)',
+                    color: isActive ? '#fff' : 'var(--text-pill)',
                     transition: 'all 0.15s ease',
-                    fontFamily: 'var(--font-jost, sans-serif)',
-                    lineHeight: 1,
+                    fontFamily: 'var(--font-jost, sans-serif)', lineHeight: 1,
                   }}>
                     <span style={{ fontSize: 11 }}>{cat === 'All' ? '✦' : getEmoji(cat)}</span>
                     <span>{cat}</span>
@@ -740,25 +699,21 @@ export default function Home() {
                 )
               })}
             </div>
-            {/* fade-out right edge */}
-            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 10, width: 40, pointerEvents: 'none', background: `linear-gradient(to right, transparent, ${BG} 80%)` }} />
+            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 10, width: 40, pointerEvents: 'none', background: 'linear-gradient(to right, transparent, var(--bg) 80%)' }} />
           </div>
 
-          {/* ── Outfit sub-filter ── */}
           {category === 'Outfits' && (
             <div style={{ display: 'flex', gap: 6, paddingBottom: 8 }}>
               {['All', 'White Wedding', 'Traditional'].map(type => (
                 <button key={type} onClick={() => setWeddingType(type)} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '5px 11px', borderRadius: 20, flexShrink: 0,
-                  border: `1px solid ${weddingType === type ? '#D97706' : BORDER}`,
-                  cursor: 'pointer', whiteSpace: 'nowrap',
-                  fontSize: 12, fontWeight: weddingType === type ? 600 : 400,
-                  background: weddingType === type ? '#D97706' : CARD_BG,
-                  color: weddingType === type ? '#fff' : PILL_TEXT,
-                  transition: 'all 0.15s ease',
-                  fontFamily: 'var(--font-jost, sans-serif)',
-                  lineHeight: 1,
+                  border: `1px solid ${weddingType === type ? '#D97706' : 'var(--border)'}`,
+                  cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 12, lineHeight: 1,
+                  fontWeight: weddingType === type ? 600 : 400,
+                  background: weddingType === type ? '#D97706' : 'var(--bg-card)',
+                  color: weddingType === type ? '#fff' : 'var(--text-pill)',
+                  transition: 'all 0.15s ease', fontFamily: 'var(--font-jost, sans-serif)',
                 }}>
                   {type === 'White Wedding' ? '🤍' : type === 'Traditional' ? '👘' : '✦'} {type}
                 </button>
@@ -766,18 +721,16 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Discounts + New pills ── */}
           <div style={{ display: 'flex', gap: 6, paddingBottom: 10 }}>
             <button onClick={() => { setCategory(category === '__discounts__' ? 'All' : '__discounts__'); setWeddingType('All') }} style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
               padding: '5px 11px', borderRadius: 20,
-              border: `1px solid ${category === '__discounts__' ? DARK : BORDER}`,
+              border: `1px solid ${category === '__discounts__' ? 'var(--text)' : 'var(--border)'}`,
               cursor: 'pointer', fontSize: 12, lineHeight: 1,
               fontWeight: category === '__discounts__' ? 600 : 400,
-              background: category === '__discounts__' ? DARK : CARD_BG,
-              color: category === '__discounts__' ? '#FEF3C7' : PILL_TEXT,
-              fontFamily: 'var(--font-jost, sans-serif)',
-              transition: 'all 0.15s ease',
+              background: category === '__discounts__' ? 'var(--text)' : 'var(--bg-card)',
+              color: category === '__discounts__' ? 'var(--accent-light)' : 'var(--text-pill)',
+              fontFamily: 'var(--font-jost, sans-serif)', transition: 'all 0.15s ease',
             }}>
               🏷️ Discounts
               <span style={{ fontSize: 10, opacity: 0.6, marginLeft: 2 }}>{vendors.filter(v => v.discount_code).length}</span>
@@ -787,13 +740,12 @@ export default function Home() {
               <button onClick={() => setShowNewOnly(!showNewOnly)} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 4,
                 padding: '5px 11px', borderRadius: 20,
-                border: `1px solid ${showNewOnly ? DARK : BORDER}`,
+                border: `1px solid ${showNewOnly ? 'var(--text)' : 'var(--border)'}`,
                 cursor: 'pointer', fontSize: 12, lineHeight: 1,
                 fontWeight: showNewOnly ? 600 : 400,
-                background: showNewOnly ? DARK : CARD_BG,
-                color: showNewOnly ? '#fff' : PILL_TEXT,
-                fontFamily: 'var(--font-jost, sans-serif)',
-                transition: 'all 0.15s ease',
+                background: showNewOnly ? 'var(--text)' : 'var(--bg-card)',
+                color: showNewOnly ? 'var(--bg)' : 'var(--text-pill)',
+                fontFamily: 'var(--font-jost, sans-serif)', transition: 'all 0.15s ease',
               }}>
                 🆕 New this week
                 <span style={{ fontSize: 10, opacity: 0.55, marginLeft: 2 }}>{newVendors.length}</span>
@@ -802,41 +754,39 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Search + location ── */}
         <div style={{ padding: '0 16px 10px', maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="6" cy="6" r="4.5" stroke={MUTED} strokeWidth="1.2"/>
-              <path d="M10 10l2 2" stroke={MUTED} strokeWidth="1.2" strokeLinecap="round"/>
+              <circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/>
+              <path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
             <input type="text" placeholder="Search vendors…" value={search} onChange={e => setSearch(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, background: 'transparent', color: DARK, fontFamily: 'var(--font-jost, sans-serif)' }} />
-            {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>}
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font-jost, sans-serif)' }} />
+            {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>}
           </div>
-          <select value={location} onChange={e => setLocation(e.target.value)} style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${BORDER}`, background: CARD_BG, fontSize: 12, color: PILL_TEXT, cursor: 'pointer', outline: 'none', flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
+          <select value={location} onChange={e => setLocation(e.target.value)}
+            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-card)', fontSize: 12, color: 'var(--text-pill)', cursor: 'pointer', outline: 'none', flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
             {LOCATION_ORDER.map(loc => <option key={loc} value={loc}>{loc}</option>)}
           </select>
         </div>
       </div>
 
-      {/* ── Vendor count ── */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 18px 2px' }}>
-        <p style={{ color: MUTED, fontSize: 12, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>{sorted.length} vendors</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>{sorted.length} vendors</p>
       </div>
 
-      {/* ── Grid ── */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 14 }}>
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ background: CARD_BG, borderRadius: 14, height: 100, opacity: 0.3, border: `1px solid ${BORDER}` }} />
+              <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 14, height: 100, opacity: 0.3, border: '1px solid var(--border)' }} />
             ))
           : sorted.length === 0
             ? (
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
                 <div style={{ fontSize: 36 }}>🔍</div>
-                <p style={{ color: MUTED, marginTop: 10, fontSize: 13, fontFamily: 'var(--font-jost, sans-serif)' }}>No vendors found.</p>
+                <p style={{ color: 'var(--text-muted)', marginTop: 10, fontSize: 13, fontFamily: 'var(--font-jost, sans-serif)' }}>No vendors found.</p>
                 <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setShowNewOnly(false); setWeddingType('All') }}
-                  style={{ marginTop: 8, padding: '6px 18px', background: ACCENT, color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-jost, sans-serif)' }}>
+                  style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-jost, sans-serif)' }}>
                   Show all
                 </button>
               </div>
@@ -854,7 +804,7 @@ export default function Home() {
         }
       </div>
 
-      <footer style={{ textAlign: 'center', padding: '20px', borderTop: `1px solid ${BORDER}`, color: MUTED, fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
         Made with ♥ for Nigerian brides &amp; families
       </footer>
     </main>

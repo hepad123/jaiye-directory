@@ -2,13 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { createBrowserClient } from '@supabase/ssr'
 import { useAuth } from '@/hooks/useAuth'
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabase } from '@/lib/supabase'
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const ACCENT    = '#8B6E9A'
@@ -388,8 +383,8 @@ export default function SavedPage() {
     }
   })
 
-  const totalSaved  = savedVendors.length
-  const firstName   = displayName.split(' ')[0]
+  const totalSaved = savedVendors.length
+  const firstName  = displayName.split(' ')[0]
 
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>

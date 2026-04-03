@@ -32,7 +32,6 @@ type Vendor = {
   location: string
   instagram?: string
   price_from?: string
-  verified?: boolean
 }
 
 type FollowProfile = {
@@ -96,7 +95,6 @@ function VendorRow({ vendor }: { vendor: Vendor }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>
           {vendor.name}
-          {vendor.verified && <span style={{ marginLeft: 5, fontSize: 11, color: '#5A8A72' }}>✓</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {vendor.location && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>{vendor.location}</span>}
@@ -243,7 +241,7 @@ export default function ProfilePage() {
       if (usedIds.length) {
         const { data: vendorData } = await supabase
           .from('vendors')
-          .select('id, name, category, location, instagram, price_from, verified')
+          .select('id, name, category, location, instagram, price_from')
           .in('id', usedIds)
         if (vendorData) setUsedVendors(vendorData)
       }
@@ -258,7 +256,7 @@ export default function ProfilePage() {
       if (recIds.length) {
         const { data: vendorData } = await supabase
           .from('vendors')
-          .select('id, name, category, location, instagram, price_from, verified')
+          .select('id, name, category, location, instagram, price_from')
           .in('id', recIds)
         if (vendorData) setRecVendors(vendorData)
       }

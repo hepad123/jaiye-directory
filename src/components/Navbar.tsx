@@ -3,15 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { useTheme } from '@/hooks/useTheme'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef } from 'react'
-
-const ACCENT    = '#D97706'
-const DARK      = '#1C1917'
-const BG        = '#FFFFFF'
-const BORDER    = '#E8E3DC'
-const PILL_BG   = '#EEE8E0'
-const MUTED     = '#A8A29E'
 
 type SearchProfile = {
   id: string
@@ -57,8 +51,8 @@ function UserSearch() {
     return () => clearTimeout(timer)
   }, [query])
 
-  const colours = [ACCENT, '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
-  const avatarColour = (name: string) => colours[name.charCodeAt(0) % colours.length]
+  const avatarColours = ['#D97706', '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
+  const avatarColour  = (name: string) => avatarColours[name.charCodeAt(0) % avatarColours.length]
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
@@ -67,13 +61,13 @@ function UserSearch() {
         title="Search people"
         style={{
           width: 32, height: 32, borderRadius: '50%',
-          background: open ? ACCENT : PILL_BG,
-          border: `1.5px solid ${open ? ACCENT : BORDER}`,
+          background: open ? 'var(--accent)' : 'var(--bg-pill)',
+          border: `1.5px solid ${open ? 'var(--accent)' : 'var(--border)'}`,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', padding: 0, transition: 'all 0.15s',
         }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-          stroke={open ? 'white' : MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          stroke={open ? 'white' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
           <circle cx="19" cy="19" r="3"/>
@@ -84,14 +78,14 @@ function UserSearch() {
       {open && (
         <div style={{
           position: 'absolute', top: 40, right: 0, zIndex: 200,
-          background: BG, borderRadius: 14,
-          boxShadow: '0 8px 32px rgba(28,25,23,0.12)',
-          border: `1px solid ${BORDER}`,
+          background: 'var(--bg-card)', borderRadius: 14,
+          boxShadow: '0 8px 32px rgba(28,25,23,0.14)',
+          border: '1px solid var(--border)',
           width: 300, overflow: 'hidden',
           fontFamily: 'var(--font-jost, sans-serif)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: `1px solid ${BORDER}` }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input
@@ -100,35 +94,35 @@ function UserSearch() {
               placeholder="Search by name or @username…"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: DARK, background: 'transparent', fontFamily: 'var(--font-jost, sans-serif)' }}
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: 'var(--text)', background: 'transparent', fontFamily: 'var(--font-jost, sans-serif)' }}
             />
             {query && (
               <button onClick={() => { setQuery(''); setResults([]) }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
             )}
           </div>
           <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-            {!query && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>Type to search for people</div>}
-            {query && searching && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>Searching…</div>}
-            {query && !searching && results.length === 0 && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>No users found for "{query}"</div>}
+            {!query && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Type to search for people</div>}
+            {query && searching && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Searching…</div>}
+            {query && !searching && results.length === 0 && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>No users found for "{query}"</div>}
             {results.map(p => {
               const initials = (p.display_name || p.username || '?').split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase()
               const colour   = avatarColour(p.display_name || p.username || 'a')
               return (
                 <Link key={p.id} href={`/profile/${p.username}`}
                   onClick={() => { setOpen(false); setQuery(''); setResults([]) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, textDecoration: 'none' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = PILL_BG)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid var(--border)', textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: `${colour}20`, border: `2px solid ${colour}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: colour }}>
                     {initials}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name || p.username}</div>
-                    <div style={{ fontSize: 11, color: MUTED }}>@{p.username}</div>
-                    {p.bio && <div style={{ fontSize: 10, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{p.bio}</div>}
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name || p.username}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>@{p.username}</div>
+                    {p.bio && <div style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{p.bio}</div>}
                   </div>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <polyline points="9 18 15 12 9 6"/>
                   </svg>
                 </Link>
@@ -140,6 +134,37 @@ function UserSearch() {
     </div>
   )
 }
+
+// ── Theme toggle button ────────────────────────────────────────────────────────
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme()
+  const isDark = theme === 'dark'
+
+  return (
+    <button
+      onClick={toggleTheme}
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      style={{
+        width: 38, height: 22, borderRadius: 11,
+        background: isDark ? 'var(--accent)' : 'var(--bg-pill)',
+        border: '1.5px solid var(--border)',
+        position: 'relative', cursor: 'pointer', padding: 0,
+        transition: 'background 0.2s, border-color 0.2s',
+        flexShrink: 0,
+      }}>
+      <div style={{
+        position: 'absolute', top: 2,
+        left: isDark ? 16 : 2,
+        width: 14, height: 14, borderRadius: '50%',
+        background: isDark ? 'white' : 'var(--text-muted)',
+        transition: 'left 0.2s, background 0.2s',
+      }} />
+    </button>
+  )
+}
+
+// ── Navbar ─────────────────────────────────────────────────────────────────────
 
 export default function Navbar() {
   const { user, openAuthModal } = useAuth()
@@ -172,8 +197,8 @@ export default function Navbar() {
       `}</style>
 
       <div style={{
-        background: BG,
-        borderBottom: `1px solid ${BORDER}`,
+        background: 'var(--bg-card)',
+        borderBottom: '1px solid var(--border)',
         padding: '10px 16px',
         display: 'flex',
         alignItems: 'center',
@@ -181,14 +206,15 @@ export default function Navbar() {
         position: 'sticky',
         top: 0,
         zIndex: 50,
+        transition: 'background 0.2s ease, border-color 0.2s ease',
       }}>
+
         {/* Logo */}
         <Link href="/" style={{
           fontFamily: 'var(--font-playfair, serif)',
           fontSize: 16, fontWeight: 700,
-          color: ACCENT, textDecoration: 'none',
-          letterSpacing: '0.08em',
-          flexShrink: 0,
+          color: 'var(--accent)', textDecoration: 'none',
+          letterSpacing: '0.08em', flexShrink: 0,
         }}>
           Jaiye
         </Link>
@@ -200,9 +226,9 @@ export default function Navbar() {
           <Link href="/" style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
             padding: '6px 10px', borderRadius: 20,
-            background: pathname === '/' ? PILL_BG : 'transparent',
+            background: pathname === '/' ? 'var(--bg-pill)' : 'transparent',
             textDecoration: 'none',
-            color: pathname === '/' ? DARK : MUTED,
+            color: pathname === '/' ? 'var(--text)' : 'var(--text-muted)',
             fontFamily: 'var(--font-jost, sans-serif)',
             fontSize: 13, fontWeight: pathname === '/' ? 600 : 400,
             transition: 'all 0.15s',
@@ -216,20 +242,19 @@ export default function Navbar() {
             <Link href="/saved" style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '6px 10px', borderRadius: 20,
-              background: isActive('/saved') ? PILL_BG : 'transparent',
+              background: isActive('/saved') ? 'var(--bg-pill)' : 'transparent',
               textDecoration: 'none',
-              color: isActive('/saved') ? DARK : MUTED,
+              color: isActive('/saved') ? 'var(--text)' : 'var(--text-muted)',
               fontFamily: 'var(--font-jost, sans-serif)',
               fontSize: 13, fontWeight: isActive('/saved') ? 600 : 400,
-              transition: 'all 0.15s',
-              position: 'relative',
+              transition: 'all 0.15s', position: 'relative',
             }}>
               <span style={{ fontSize: 14 }}>♡</span>
               <span className="nav-label">Saved</span>
               {savedCount > 0 && (
                 <span style={{
                   width: 16, height: 16, borderRadius: '50%',
-                  background: ACCENT, color: '#fff',
+                  background: 'var(--accent)', color: '#fff',
                   fontSize: 9, fontWeight: 700,
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 }}>{savedCount}</span>
@@ -240,7 +265,7 @@ export default function Navbar() {
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '6px 10px', borderRadius: 20,
               background: 'transparent', border: 'none', cursor: 'pointer',
-              color: MUTED, fontFamily: 'var(--font-jost, sans-serif)',
+              color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)',
               fontSize: 13, fontWeight: 400,
             }}>
               <span style={{ fontSize: 14 }}>♡</span>
@@ -249,7 +274,10 @@ export default function Navbar() {
           )}
 
           {/* Separator */}
-          <div style={{ width: 1, height: 18, background: BORDER, margin: '0 2px' }} />
+          <div style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 2px' }} />
+
+          {/* Theme toggle */}
+          <ThemeToggle />
 
           {/* User search */}
           <UserSearch />
@@ -258,11 +286,11 @@ export default function Navbar() {
           {user && username ? (
             <Link href={`/profile/${username}`} title="My profile" style={{
               width: 32, height: 32, borderRadius: '50%',
-              background: isActive('/profile') ? ACCENT : PILL_BG,
-              border: `1.5px solid ${isActive('/profile') ? ACCENT : BORDER}`,
+              background: isActive('/profile') ? 'var(--accent)' : 'var(--bg-pill)',
+              border: `1.5px solid ${isActive('/profile') ? 'var(--accent)' : 'var(--border)'}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               textDecoration: 'none', fontSize: 12, fontWeight: 700,
-              color: isActive('/profile') ? 'white' : DARK,
+              color: isActive('/profile') ? 'white' : 'var(--text)',
               flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)',
               transition: 'all 0.15s',
             }}>
@@ -271,11 +299,11 @@ export default function Navbar() {
           ) : (
             <button onClick={openAuthModal} style={{
               width: 32, height: 32, borderRadius: '50%',
-              background: PILL_BG, border: `1.5px solid ${BORDER}`,
+              background: 'var(--bg-pill)', border: '1.5px solid var(--border)',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', padding: 0, flexShrink: 0,
             }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
             </button>
@@ -286,7 +314,7 @@ export default function Navbar() {
             <button
               onClick={async () => { await supabase.auth.signOut() }}
               className="nav-label"
-              style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 4px', fontFamily: 'var(--font-jost, sans-serif)' }}>
+              style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 4px', fontFamily: 'var(--font-jost, sans-serif)' }}>
               Sign out
             </button>
           )}

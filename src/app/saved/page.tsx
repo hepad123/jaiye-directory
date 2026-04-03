@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 
-// ── Palette ───────────────────────────────────────────────────────────────────
 const ACCENT    = '#8B6E9A'
 const DARK      = '#2A1A2A'
 const BG        = '#FAFAFA'
@@ -67,8 +66,6 @@ const CATEGORY_ORDER = [
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? ACCENT
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
 const InstagramIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
     stroke={IG_COLOUR} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -105,8 +102,6 @@ function StarRating({ rating }: { rating: number }) {
     </div>
   )
 }
-
-// ─── My Notes ─────────────────────────────────────────────────────────────────
 
 function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: string; initialNote: string }) {
   const [note, setNote]             = useState(initialNote)
@@ -155,8 +150,6 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
   )
 }
 
-// ─── Review Section ───────────────────────────────────────────────────────────
-
 function ReviewSection({ vendor }: { vendor: Vendor }) {
   const [reviews, setReviews] = useState<Review[]>([])
 
@@ -187,8 +180,6 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
     </div>
   )
 }
-
-// ─── Vendor Card ──────────────────────────────────────────────────────────────
 
 function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
   v: Vendor; savedIds: Set<string>; onToggleSave: (vendorId: string) => void; userId: string; savedNote: string
@@ -222,14 +213,11 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
 
   return (
     <div style={{ background: 'white', borderRadius: 16, border: `1.5px solid ${colour}55`, overflow: 'hidden', position: 'relative' }}>
-
-      {/* Badges */}
       <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
         {isFeatured && <div style={{ background: '#FDF3E3', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#A07820', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>}
         {v.verified && <div style={{ background: '#F0EEFF', border: '1px solid #C0A8E8', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#6050A8', fontFamily: 'var(--font-jost, sans-serif)' }}>✓ Verified</div>}
       </div>
 
-      {/* Heart */}
       <button onClick={() => onToggleSave(v.id)}
         style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? '#F5F0F8' : 'white', border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
         <HeartIcon filled={isSaved} />
@@ -250,7 +238,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
           </div>
         )}
 
-        {v.location && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
+        {v.location   && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>💰 From ₦{v.price_from}</div>}
 
         {igHandle && (
@@ -304,8 +292,6 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
   )
 }
 
-// ─── Saved Page ───────────────────────────────────────────────────────────────
-
 export default function SavedPage() {
   const { user, loading: authLoading, openAuthModal } = useAuth()
 
@@ -315,7 +301,6 @@ export default function SavedPage() {
   const [savedNotes, setSavedNotes]     = useState<Record<string, string>>({})
   const [loading, setLoading]           = useState(true)
 
-  // Load display name from profiles
   useEffect(() => {
     if (!user?.id) return
     supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
@@ -325,17 +310,14 @@ export default function SavedPage() {
       })
   }, [user])
 
-  // Load saved vendors using UUID
   useEffect(() => {
-    if (authLoading) return           // ← wait for auth to finish before deciding
+    if (authLoading) return
     if (!user?.id) { setLoading(false); return }
 
     async function loadSaved() {
       setLoading(true)
       const { data: savedRows } = await supabase
-        .from('saved_vendors')
-        .select('vendor_id, notes')
-        .eq('user_id', user!.id)
+        .from('saved_vendors').select('vendor_id, notes').eq('user_id', user!.id)
 
       if (!savedRows || savedRows.length === 0) {
         setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({})
@@ -349,8 +331,7 @@ export default function SavedPage() {
       savedRows.forEach(r => { notesMap[r.vendor_id] = r.notes ?? '' })
       setSavedNotes(notesMap)
 
-      const { data: vendorData } = await supabase
-        .from('vendors').select('*').in('id', ids)
+      const { data: vendorData } = await supabase.from('vendors').select('*').in('id', ids)
       if (vendorData) setSavedVendors(
         vendorData.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
       )
@@ -366,8 +347,7 @@ export default function SavedPage() {
     if (isSaved) {
       setSavedVendors(prev => prev.filter(v => v.id !== vendorId))
       setSavedNotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
-      await supabase.from('saved_vendors').delete()
-        .eq('user_id', user.id).eq('vendor_id', vendorId)
+      await supabase.from('saved_vendors').delete().eq('user_id', user.id).eq('vendor_id', vendorId)
     } else {
       await supabase.from('saved_vendors').insert({ user_id: user.id, vendor_id: vendorId })
     }
@@ -387,24 +367,10 @@ export default function SavedPage() {
 
   const totalSaved = savedVendors.length
   const firstName  = displayName.split(' ')[0]
-
-  // Show skeleton while auth OR data is loading
-  const isLoading = authLoading || loading
+  const isLoading  = authLoading || loading
 
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
-
-      {/* Nav */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #E8E0E8', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, textDecoration: 'none', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
-          ← Directory
-        </Link>
-        {user && (
-          <div style={{ fontSize: 12, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            {firstName}'s saved vendors
-          </div>
-        )}
-      </div>
 
       {/* Hero */}
       <div style={{ background: 'linear-gradient(180deg, #DDD0E4 0%, #EDE4F0 40%, #FAFAFA 100%)', textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) 20px clamp(28px, 4vw, 36px)' }}>
@@ -430,7 +396,6 @@ export default function SavedPage() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 60px' }}>
 
-        {/* Loading — shown while auth OR vendors are loading */}
         {isLoading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12, marginTop: 8 }}>
             {Array.from({ length: 6 }).map((_, i) => (
@@ -439,7 +404,6 @@ export default function SavedPage() {
           </div>
         )}
 
-        {/* Not signed in — only show AFTER auth has finished loading */}
         {!isLoading && !user && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
@@ -451,7 +415,6 @@ export default function SavedPage() {
           </div>
         )}
 
-        {/* Empty */}
         {!isLoading && user && totalSaved === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
@@ -463,7 +426,6 @@ export default function SavedPage() {
           </div>
         )}
 
-        {/* Vendor groups */}
         {!isLoading && user && totalSaved > 0 && (
           <div>
             {Object.entries(grouped).map(([cat, vendors]) => (

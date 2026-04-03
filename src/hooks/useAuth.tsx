@@ -5,14 +5,12 @@ import { createBrowserClient } from '@supabase/ssr'
 import type { User } from '@supabase/supabase-js'
 
 // ─── Supabase browser client (singleton) ─────────────────────────────────────
-
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 type AuthContextType = {
   user: User | null
   loading: boolean
@@ -23,7 +21,6 @@ type AuthContextType = {
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
-
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -34,10 +31,9 @@ export const AuthContext = createContext<AuthContextType>({
 })
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser]                   = useState<User | null>(null)
-  const [loading, setLoading]             = useState(true)
+  const [user, setUser]                       = useState<User | null>(null)
+  const [loading, setLoading]                 = useState(true)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   useEffect(() => {
@@ -48,17 +44,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     })
 
-    // Listen for auth state changes
+    // Listen for auth state changes — do NOT auto-close modal here
+    // The modal closes itself after onboarding completes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       syncLegacyStorage(session?.user ?? null)
-      if (session?.user) setIsAuthModalOpen(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  // Keep legacy localStorage in sync so existing saved/page.tsx still works
+  // Keep legacy localStorage in sync so saved/page.tsx still works
   function syncLegacyStorage(u: User | null) {
     if (u) {
       const displayName =
@@ -87,11 +83,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useAuth() {
   return useContext(AuthContext)
 }
 
 // ─── Export supabase client for use elsewhere ─────────────────────────────────
-
 export { supabase }

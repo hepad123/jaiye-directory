@@ -6,15 +6,6 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 
-const ACCENT    = '#D97706'
-const DARK      = '#1C1917'
-const BG        = '#F5F5F4'
-const CARD_BG   = '#FFFFFF'
-const BORDER    = '#E8E3DC'
-const PILL_BG   = '#EEE8E0'
-const PILL_TEXT = '#57534E'
-const MUTED     = '#A8A29E'
-
 type Profile = {
   id: string
   email: string
@@ -58,12 +49,12 @@ const CATEGORY_ORDER = [
   'Decor & Venue', 'Catering', 'Entertainment', 'Other',
 ]
 
-const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? ACCENT
+const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
 function Avatar({ name, size = 64 }: { name: string; size?: number }) {
   const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
-  const colours  = [ACCENT, '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
+  const colours  = ['#D97706', '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
   const colour   = colours[name.charCodeAt(0) % colours.length]
   return (
     <div style={{
@@ -82,17 +73,17 @@ function VendorRow({ vendor }: { vendor: Vendor }) {
   const colour   = getColour(vendor.category)
   const igHandle = vendor.instagram?.replace('@', '').trim()
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: `1px solid ${BORDER}`, background: CARD_BG }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)' }}>
       <div style={{ width: 36, height: 36, borderRadius: 10, background: `${colour}15`, border: `1px solid ${colour}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>
         {getEmoji(vendor.category)}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>
           {vendor.name}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {vendor.location && <span style={{ fontSize: 11, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>{vendor.location}</span>}
-          {igHandle && <span style={{ fontSize: 11, color: ACCENT, fontFamily: 'var(--font-jost, sans-serif)' }}>@{igHandle}</span>}
+          {vendor.location && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>{vendor.location}</span>}
+          {igHandle && <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)' }}>@{igHandle}</span>}
         </div>
       </div>
       {vendor.price_from && (
@@ -120,13 +111,13 @@ function GroupedVendorList({ vendors }: { vendors: Vendor[] }) {
     <div>
       {Object.entries(grouped).map(([cat, catVendors]) => (
         <div key={cat} style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: PILL_BG, borderBottom: `1px solid ${BORDER}`, borderTop: `1px solid ${BORDER}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'var(--bg-pill)', borderBottom: '1px solid var(--border)', borderTop: '1px solid var(--border)' }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: getColour(cat), textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: 'var(--font-jost, sans-serif)' }}>
               {getEmoji(cat)} {cat}
             </span>
-            <span style={{ fontSize: 10, color: MUTED, fontFamily: 'var(--font-jost, sans-serif)' }}>· {catVendors.length}</span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>· {catVendors.length}</span>
           </div>
-          <div style={{ background: CARD_BG, borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
             {catVendors.map(v => <VendorRow key={v.id} vendor={v} />)}
           </div>
         </div>
@@ -142,25 +133,24 @@ function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, fo
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(28,25,23,0.45)', backdropFilter: 'blur(2px)' }} />
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 999, background: BG, borderRadius: '20px 20px 0 0', maxWidth: 480, margin: '0 auto', maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 40px rgba(28,25,23,0.12)', fontFamily: 'var(--font-jost, sans-serif)' }}>
-        <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-          <div style={{ width: 32, height: 3, background: BORDER, borderRadius: 2, margin: '0 auto 14px' }} />
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 999, background: 'var(--bg)', borderRadius: '20px 20px 0 0', maxWidth: 480, margin: '0 auto', maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 40px rgba(28,25,23,0.12)', fontFamily: 'var(--font-jost, sans-serif)' }}>
+        <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          <div style={{ width: 32, height: 3, background: 'var(--border)', borderRadius: 2, margin: '0 auto 14px' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: DARK, margin: 0, fontFamily: 'var(--font-playfair, serif)' }}>{title}</h3>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: MUTED, cursor: 'pointer', padding: 0 }}>×</button>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0, fontFamily: 'var(--font-playfair, serif)' }}>{title}</h3>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}>×</button>
           </div>
         </div>
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {people.length === 0
-            ? <div style={{ padding: '40px 20px', textAlign: 'center', color: MUTED, fontSize: 13 }}>No one here yet</div>
+            ? <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No one here yet</div>
             : people.map(p => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: `1px solid ${BORDER}` }}>
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
                 <Avatar name={p.display_name} size={38} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: DARK }}>{p.display_name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.display_name}</div>
                   {p.username && (
-                    <Link href={`/profile/${p.username}`} onClick={onClose}
-                      style={{ fontSize: 11, color: MUTED, textDecoration: 'none' }}>
+                    <Link href={`/profile/${p.username}`} onClick={onClose} style={{ fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none' }}>
                       @{p.username}
                     </Link>
                   )}
@@ -168,9 +158,9 @@ function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, fo
                 {currentUserId && p.id !== currentUserId && (
                   <button onClick={() => onToggleFollow(p.id)} style={{
                     padding: '5px 14px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                    background: followingIds.has(p.id) ? CARD_BG : ACCENT,
-                    color: followingIds.has(p.id) ? MUTED : 'white',
-                    border: followingIds.has(p.id) ? `1px solid ${BORDER}` : 'none',
+                    background: followingIds.has(p.id) ? 'var(--bg-card)' : 'var(--accent)',
+                    color: followingIds.has(p.id) ? 'var(--text-muted)' : 'white',
+                    border: followingIds.has(p.id) ? '1px solid var(--border)' : 'none',
                     fontFamily: 'var(--font-jost, sans-serif)',
                   }}>
                     {followingIds.has(p.id) ? 'Following' : 'Follow'}
@@ -255,12 +245,12 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
-        <div style={{ height: 120, background: 'linear-gradient(180deg, #E8E0D5 0%, #EDE8E0 40%, #F5F5F4 100%)' }} />
+      <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh' }}>
+        <div style={{ height: 120, background: 'var(--hero-grad)' }} />
         <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
-          <div style={{ background: CARD_BG, borderRadius: 20, padding: 20, marginTop: -8, boxShadow: '0 4px 24px rgba(28,25,23,0.08)', border: `1px solid ${BORDER}` }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 20, marginTop: -8, boxShadow: '0 4px 24px rgba(28,25,23,0.08)', border: '1px solid var(--border)' }}>
             {[70, 40, 50].map((h, i) => (
-              <div key={i} style={{ height: h, background: PILL_BG, borderRadius: 10, marginBottom: 12, opacity: 0.5 }} />
+              <div key={i} style={{ height: h, background: 'var(--bg-pill)', borderRadius: 10, marginBottom: 12, opacity: 0.5 }} />
             ))}
           </div>
         </div>
@@ -270,11 +260,11 @@ export default function ProfilePage() {
 
   if (notFound) {
     return (
-      <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', padding: 40 }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>✦</div>
-          <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Profile not found</h2>
-          <Link href="/" style={{ color: ACCENT, fontSize: 13, textDecoration: 'none' }}>← Back to directory</Link>
+          <h2 style={{ fontSize: 18, color: 'var(--text)', fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Profile not found</h2>
+          <Link href="/" style={{ color: 'var(--accent)', fontSize: 13, textDecoration: 'none' }}>← Back to directory</Link>
         </div>
       </main>
     )
@@ -286,47 +276,42 @@ export default function ProfilePage() {
   const activeVendors      = activeTab === 'used' ? usedVendors : recVendors
 
   return (
-    <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
-
-      <div style={{ background: 'linear-gradient(180deg, #E8E0D5 0%, #EDE8E0 40%, #F5F5F4 100%)', padding: '32px 20px 16px', textAlign: 'center' }}>
+    <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh' }}>
+      <div style={{ background: 'var(--hero-grad)', padding: '32px 20px 16px', textAlign: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 12 }}>
-          <div style={{ height: 1, width: 44, background: ACCENT, opacity: 0.4 }} />
-          <div style={{ width: 4, height: 4, borderRadius: '50%', background: ACCENT, opacity: 0.6 }} />
-          <div style={{ height: 1, width: 44, background: ACCENT, opacity: 0.4 }} />
+          <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
+          <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', opacity: 0.6 }} />
+          <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
         </div>
-        <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, fontWeight: 600 }}>
-          Vendor Profile
-        </div>
+        <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600 }}>Vendor Profile</div>
       </div>
 
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
-        <div style={{ background: CARD_BG, borderRadius: 20, padding: '20px 20px 0', boxShadow: '0 4px 24px rgba(28,25,23,0.08)', border: `1px solid ${BORDER}`, position: 'relative', top: -12 }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '20px 20px 0', boxShadow: '0 4px 24px rgba(28,25,23,0.08)', border: '1px solid var(--border)', position: 'relative', top: -12 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
             <Avatar name={displayName} size={68} />
             <div style={{ flex: 1, display: 'flex', gap: 24, paddingTop: 8 }}>
               <button onClick={() => setSheet('followers')} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', padding: 0 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: DARK, fontFamily: 'var(--font-playfair, serif)' }}>{followers.length}</div>
-                <div style={{ fontSize: 11, color: MUTED }}>Followers</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-playfair, serif)' }}>{followers.length}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Followers</div>
               </button>
               <button onClick={() => setSheet('following')} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', padding: 0 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: DARK, fontFamily: 'var(--font-playfair, serif)' }}>{following.length}</div>
-                <div style={{ fontSize: 11, color: MUTED }}>Following</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-playfair, serif)' }}>{following.length}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Following</div>
               </button>
             </div>
-
             {isOwner ? (
-              <button style={{ padding: '7px 16px', borderRadius: 20, border: `1px solid ${BORDER}`, background: CARD_BG, fontSize: 12, fontWeight: 600, color: DARK, cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)' }}>
+              <button style={{ padding: '7px 16px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--bg-card)', fontSize: 12, fontWeight: 600, color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)' }}>
                 Edit profile
               </button>
             ) : (
-              <button
-                onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.id) }}
+              <button onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.id) }}
                 style={{
                   padding: '7px 16px', borderRadius: 20,
-                  border: isFollowingProfile ? `1px solid ${BORDER}` : 'none',
-                  background: isFollowingProfile ? CARD_BG : ACCENT,
+                  border: isFollowingProfile ? '1px solid var(--border)' : 'none',
+                  background: isFollowingProfile ? 'var(--bg-card)' : 'var(--accent)',
                   fontSize: 12, fontWeight: 700,
-                  color: isFollowingProfile ? MUTED : 'white',
+                  color: isFollowingProfile ? 'var(--text-muted)' : 'white',
                   cursor: 'pointer', transition: 'all 0.15s',
                   fontFamily: 'var(--font-jost, sans-serif)',
                 }}>
@@ -336,14 +321,12 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ marginBottom: 16, paddingLeft: 2 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: DARK, marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{displayName}</div>
-            <div style={{ fontSize: 12, color: MUTED }}>@{handle}</div>
-            {profile?.bio && (
-              <div style={{ fontSize: 13, color: DARK, marginTop: 6, lineHeight: 1.5 }}>{profile.bio}</div>
-            )}
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{displayName}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>@{handle}</div>
+            {profile?.bio && <div style={{ fontSize: 13, color: 'var(--text)', marginTop: 6, lineHeight: 1.5 }}>{profile.bio}</div>}
           </div>
 
-          <div style={{ display: 'flex', borderTop: `1px solid ${BORDER}`, marginLeft: -20, marginRight: -20 }}>
+          <div style={{ display: 'flex', borderTop: '1px solid var(--border)', marginLeft: -20, marginRight: -20 }}>
             {[
               { key: 'used',        label: '✓ Used',  count: usedVendors.length },
               { key: 'recommended', label: '⭐ Recs', count: recVendors.length  },
@@ -351,14 +334,14 @@ export default function ProfilePage() {
               <button key={tab.key} onClick={() => setActiveTab(tab.key as 'used' | 'recommended')}
                 style={{
                   flex: 1, padding: '13px 8px', background: 'none', border: 'none', cursor: 'pointer',
-                  borderBottom: activeTab === tab.key ? `2px solid ${ACCENT}` : '2px solid transparent',
-                  color: activeTab === tab.key ? ACCENT : MUTED,
+                  borderBottom: activeTab === tab.key ? '2px solid var(--accent)' : '2px solid transparent',
+                  color: activeTab === tab.key ? 'var(--accent)' : 'var(--text-muted)',
                   fontSize: 12, fontWeight: activeTab === tab.key ? 700 : 500,
                   transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   fontFamily: 'var(--font-jost, sans-serif)',
                 }}>
                 {tab.label}
-                <span style={{ background: activeTab === tab.key ? `${ACCENT}18` : PILL_BG, color: activeTab === tab.key ? ACCENT : MUTED, borderRadius: 20, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>
+                <span style={{ background: activeTab === tab.key ? 'var(--accent-light)' : 'var(--bg-pill)', color: activeTab === tab.key ? 'var(--accent)' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>
                   {tab.count}
                 </span>
               </button>
@@ -368,7 +351,7 @@ export default function ProfilePage() {
 
         <div style={{ marginTop: 8, paddingBottom: 60 }}>
           {activeVendors.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 20px', color: MUTED, fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
               {activeTab === 'used'
                 ? (isOwner ? "You haven't marked any vendors as used yet." : `${displayName.split(' ')[0]} hasn't marked any vendors yet.`)
                 : (isOwner ? "You haven't recommended any vendors yet." : `${displayName.split(' ')[0]} hasn't recommended any vendors yet.`)}
@@ -390,7 +373,7 @@ export default function ProfilePage() {
         />
       )}
 
-      <footer style={{ textAlign: 'center', padding: '20px', borderTop: `1px solid ${BORDER}`, color: MUTED, fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
         Made with ♥ for Nigerian brides &amp; families
       </footer>
     </main>

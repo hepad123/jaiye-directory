@@ -3,13 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { createBrowserClient } from '@supabase/ssr'
 import { useAuth } from '@/hooks/useAuth'
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabase } from '@/lib/supabase'
 
 const ACCENT = '#8B6E9A'
 const DARK   = '#2A1A2A'
@@ -316,7 +311,6 @@ export default function ProfilePage() {
         .eq('follower_id', user.id)
         .eq('following_id', targetId)
 
-      // Remove from followers list if viewing this profile's followers
       if (targetId === profile?.id) {
         setFollowers(prev => prev.filter(f => f.id !== user.id))
       }
@@ -324,7 +318,6 @@ export default function ProfilePage() {
       await supabase.from('follows')
         .insert({ follower_id: user.id, following_id: targetId })
 
-      // Add to followers list if viewing this profile's followers
       if (targetId === profile?.id) {
         const { data } = await supabase
           .from('profiles').select('id, display_name, username').eq('id', user.id).maybeSingle()

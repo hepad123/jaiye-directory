@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Playfair_Display, Jost } from 'next/font/google'
 import { AuthProvider } from '@/hooks/useAuth'
 import AuthModal from '@/components/AuthModal'
+import Navbar from '@/components/Navbar'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{ margin: 0, padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}
       >
         <AuthProvider>
+          <Navbar />
           {children}
           <AuthModal />
         </AuthProvider>

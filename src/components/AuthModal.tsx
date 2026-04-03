@@ -1,13 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
 import { useAuth } from '@/hooks/useAuth'
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabase } from '@/lib/supabase'
 
 type Mode = 'login' | 'signup'
 type Step = 'auth' | 'type' | 'profile'
@@ -55,7 +50,6 @@ export default function AuthModal() {
 
   if (!isAuthModalOpen) return null
 
-  // During profile setup steps, user cannot dismiss the modal
   const isLocked = step === 'type' || step === 'profile'
 
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -147,7 +141,6 @@ export default function AuthModal() {
   }
 
   function handleClose() {
-    // Don't allow close if user is mid-onboarding
     if (isLocked) return
     closeAuthModal()
     setEmail(''); setPassword(''); setConfirmPassword('')
@@ -163,7 +156,7 @@ export default function AuthModal() {
 
   return (
     <>
-      {/* Backdrop — not clickable during onboarding */}
+      {/* Backdrop */}
       <div
         onClick={isLocked ? undefined : handleClose}
         style={{
@@ -188,7 +181,6 @@ export default function AuthModal() {
       }}>
         <div style={{ width: 36, height: 4, background: '#E8DDD5', borderRadius: 2, margin: '0 auto 24px' }} />
 
-        {/* Only show close button on auth step */}
         {!isLocked && (
           <button onClick={handleClose} style={{
             position: 'absolute', top: 20, right: 20,

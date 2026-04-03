@@ -24,7 +24,7 @@ export default function Navbar() {
         const name  = data?.display_name || user.email?.split('@')[0] || ''
         const uname = data?.username     || user.email?.split('@')[0] || ''
         setUsername(uname)
-        setInitials(name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase())
+        setInitials(name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase())
       })
     supabase.from('saved_vendors').select('vendor_id', { count: 'exact' }).eq('user_id', user.id)
       .then(({ count }) => setSavedCount(count ?? 0))
@@ -55,7 +55,6 @@ export default function Navbar() {
       top: 0,
       zIndex: 50,
     }}>
-      {/* Logo */}
       <Link href="/" style={{
         fontFamily: 'var(--font-playfair, serif)',
         fontSize: 16, fontWeight: 700,
@@ -65,7 +64,6 @@ export default function Navbar() {
         Jaiye
       </Link>
 
-      {/* Nav items */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
 
         <Link href="/" style={linkStyle(pathname === '/')}>
@@ -102,37 +100,4 @@ export default function Navbar() {
         {user && username ? (
           <Link href={`/profile/${username}`} title="My profile" style={{
             width: 32, height: 32, borderRadius: '50%',
-            background: isActive('/profile') ? ACCENT : '#F0E8F0',
-            border: `1.5px solid ${isActive('/profile') ? ACCENT : '#D0C0D8'}`,
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            textDecoration: 'none', fontSize: 12, fontWeight: 700,
-            color: isActive('/profile') ? 'white' : DARK,
-            flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)',
-            transition: 'all 0.15s',
-          }}>
-            {initials}
-          </Link>
-        ) : (
-          <button onClick={openAuthModal} style={{
-            width: 32, height: 32, borderRadius: '50%',
-            background: '#F0E8F0', border: '1.5px solid #D0C0D8',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', padding: 0,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </svg>
-          </button>
-        )}
-
-        {user && (
-          <button
-            onClick={async () => { await supabase.auth.signOut() }}
-            style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            Sign out
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
+            background: isActive('/profile') ? ACCENT : '#F0E

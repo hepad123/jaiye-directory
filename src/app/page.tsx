@@ -55,6 +55,15 @@ type SearchProfile = {
   bio?: string
 }
 
+// Bulk-loaded vendor stats
+type VendorStats = {
+  avgRating: number | null
+  usedCount: number
+  recCount: number
+  hasUsed: boolean
+  hasRec: boolean
+}
+
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
 
 const ACCENT    = '#8B6E9A'
@@ -107,32 +116,27 @@ const isNewVendor = (v: Vendor) => {
 // ─── User Search Dropdown ─────────────────────────────────────────────────────
 
 function UserSearch() {
-  const [open, setOpen]       = useState(false)
-  const [query, setQuery]     = useState('')
-  const [results, setResults] = useState<SearchProfile[]>([])
+  const [open, setOpen]           = useState(false)
+  const [query, setQuery]         = useState('')
+  const [results, setResults]     = useState<SearchProfile[]>([])
   const [searching, setSearching] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef                  = useRef<HTMLInputElement>(null)
+  const containerRef              = useRef<HTMLDivElement>(null)
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-        setQuery('')
-        setResults([])
+        setOpen(false); setQuery(''); setResults([])
       }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  // Focus input when opened
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50)
   }, [open])
 
-  // Search profiles
   useEffect(() => {
     if (!query.trim()) { setResults([]); return }
     const timer = setTimeout(async () => {
@@ -153,7 +157,6 @@ function UserSearch() {
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      {/* Search icon button */}
       <button
         onClick={() => setOpen(o => !o)}
         title="Search people"
@@ -173,7 +176,6 @@ function UserSearch() {
         </svg>
       </button>
 
-      {/* Dropdown */}
       {open && (
         <div style={{
           position: 'absolute', top: 40, right: 0, zIndex: 200,
@@ -183,7 +185,6 @@ function UserSearch() {
           width: 300, overflow: 'hidden',
           fontFamily: 'var(--font-jost, sans-serif)',
         }}>
-          {/* Search input */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid #F0EBF4' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -194,69 +195,33 @@ function UserSearch() {
               placeholder="Search by name or @username…"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              style={{
-                flex: 1, border: 'none', outline: 'none',
-                fontSize: 13, color: DARK, background: 'transparent',
-                fontFamily: 'var(--font-jost, sans-serif)',
-              }}
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: DARK, background: 'transparent', fontFamily: 'var(--font-jost, sans-serif)' }}
             />
             {query && (
               <button onClick={() => { setQuery(''); setResults([]) }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontSize: 16, padding: 0, lineHeight: 1 }}>
-                ×
-              </button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
             )}
           </div>
-
-          {/* Results */}
           <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-            {!query && (
-              <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>
-                Type to search for people
-              </div>
-            )}
-            {query && searching && (
-              <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>
-                Searching…
-              </div>
-            )}
-            {query && !searching && results.length === 0 && (
-              <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>
-                No users found for "{query}"
-              </div>
-            )}
+            {!query && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>Type to search for people</div>}
+            {query && searching && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>Searching…</div>}
+            {query && !searching && results.length === 0 && <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>No users found for "{query}"</div>}
             {results.map(p => {
               const initials = (p.display_name || p.username || '?').split(' ').map((x: string) => x[0]).slice(0, 2).join('').toUpperCase()
               const colour   = avatarColour(p.display_name || p.username || 'a')
               return (
-                <Link
-                  key={p.id}
-                  href={`/profile/${p.username}`}
+                <Link key={p.id} href={`/profile/${p.username}`}
                   onClick={() => { setOpen(false); setQuery(''); setResults([]) }}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid #F8F5FC', textDecoration: 'none', transition: 'background 0.1s' }}
                   onMouseEnter={e => (e.currentTarget.style.background = '#F8F5FC')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
-                  {/* Avatar */}
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                    background: `${colour}22`, border: `2px solid ${colour}55`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700, color: colour,
-                  }}>
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: `${colour}22`, border: `2px solid ${colour}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: colour }}>
                     {initials}
                   </div>
-                  {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {p.display_name || p.username}
-                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name || p.username}</div>
                     <div style={{ fontSize: 11, color: MUTED }}>@{p.username}</div>
-                    {p.bio && (
-                      <div style={{ fontSize: 10, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
-                        {p.bio}
-                      </div>
-                    )}
+                    {p.bio && <div style={{ fontSize: 10, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{p.bio}</div>}
                   </div>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <polyline points="9 18 15 12 9 6"/>
@@ -275,8 +240,7 @@ function UserSearch() {
 
 const InstagramIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-    stroke={IG_COLOUR} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    style={{ flexShrink: 0 }}>
+    stroke={IG_COLOUR} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
     <circle cx="12" cy="12" r="4"/>
     <circle cx="17.5" cy="6.5" r="1" fill={IG_COLOUR} stroke="none"/>
@@ -292,8 +256,7 @@ const WhatsAppIcon = () => (
 function HeartIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24"
-      fill={filled ? ACCENT : 'none'}
-      stroke={filled ? ACCENT : '#C4A8C8'} strokeWidth="2"
+      fill={filled ? ACCENT : 'none'} stroke={filled ? ACCENT : '#C4A8C8'} strokeWidth="2"
       style={{ flexShrink: 0, transition: 'all 0.15s ease' }}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
     </svg>
@@ -323,12 +286,20 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
   const [comment, setComment]       = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showForm, setShowForm]     = useState(false)
+  const [loaded, setLoaded]         = useState(false)
 
+  // Only load reviews when expanded
   useEffect(() => {
+    if (!loaded) return
     supabase.from('reviews').select('*').eq('vendor_id', vendor.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => { if (data) setReviews(data) })
-  }, [vendor.id])
+  }, [vendor.id, loaded])
+
+  function onExpand() {
+    setLoaded(true)
+    setShowForm(f => !f)
+  }
 
   async function submitReview() {
     if (!currentUser || rating === 0) return
@@ -347,9 +318,9 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EDE8F0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 10, color: '#B0A0B8', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
-          {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
+          {loaded ? (realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet') : 'Reviews'}
         </span>
-        <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; setShowForm(!showForm) }}
+        <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; setLoaded(true); onExpand() }}
           style={{ fontSize: 10, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {showForm ? 'Cancel' : '+ Add review'}
         </button>
@@ -365,7 +336,7 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
           </button>
         </div>
       )}
-      {realReviews.slice(0, 2).map(r => (
+      {loaded && realReviews.slice(0, 2).map(r => (
         <div key={r.id} style={{ background: '#F5F0F8', borderRadius: 8, padding: '6px 8px', marginBottom: 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 10, fontWeight: 600, color: '#5A4868', fontFamily: 'var(--font-jost, sans-serif)' }}>{r.reviewer_name}</span>
@@ -383,19 +354,16 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
 // ─── Vendor Card ──────────────────────────────────────────────────────────────
 
 function VendorCard({
-  v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth, followSavers,
+  v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth, followSavers, stats, onStatChange,
 }: {
   v: Vendor; isNew: boolean; resetKey: number; currentUser: CurrentUser | null
   savedIds: Set<string>; onToggleSave: (vendorId: string) => void
   onOpenAuth: () => void; followSavers: FollowProfile[]
+  stats: VendorStats
+  onStatChange: (vendorId: string, patch: Partial<VendorStats>) => void
 }) {
-  const [expanded, setExpanded]             = useState(false)
-  const [copied, setCopied]                 = useState(false)
-  const [avgRating, setAvgRating]           = useState<number | null>(null)
-  const [usedCount, setUsedCount]           = useState(0)
-  const [recCount, setRecCount]             = useState(0)
-  const [hasUsed, setHasUsed]               = useState(false)
-  const [hasRec, setHasRec]                 = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const [copied, setCopied]     = useState(false)
   const [usedSubmitting, setUsedSubmitting] = useState(false)
   const [recSubmitting, setRecSubmitting]   = useState(false)
 
@@ -407,44 +375,27 @@ function VendorCard({
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
   const isSaved    = savedIds.has(v.id)
 
-  useEffect(() => {
-    supabase.from('reviews').select('rating, comment').eq('vendor_id', v.id)
-      .then(({ data }) => {
-        if (!data || data.length === 0) return
-        const real = data.filter(r => r.comment !== '__used__')
-        const used = data.filter(r => r.comment === '__used__')
-        setUsedCount(used.length)
-        if (real.length > 0) setAvgRating(Math.round(real.reduce((s, r) => s + r.rating, 0) / real.length * 10) / 10)
-      })
-    supabase.from('vendor_recommendations').select('id', { count: 'exact' }).eq('vendor_id', v.id)
-      .then(({ count }) => { if (count) setRecCount(count) })
-  }, [v.id])
-
-  useEffect(() => {
-    if (!currentUser?.id) return
-    supabase.from('reviews').select('id').eq('vendor_id', v.id).eq('user_id', currentUser.id).eq('comment', '__used__')
-      .then(({ data }) => { if (data?.length) setHasUsed(true) })
-    supabase.from('vendor_recommendations').select('id').eq('vendor_id', v.id).eq('user_id', currentUser.id)
-      .then(({ data }) => { if (data?.length) setHasRec(true) })
-  }, [v.id, currentUser])
+  const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
 
   async function submitUsed() {
     if (!currentUser) { onOpenAuth(); return }
-    if (hasUsed) return
+    if (hasUsed || usedSubmitting) return
     setUsedSubmitting(true)
     await supabase.from('reviews').insert({ vendor_id: v.id, reviewer_name: currentUser.name, user_id: currentUser.id, rating: 5, comment: '__used__' })
-    setUsedCount(c => c + 1); setHasUsed(true); setUsedSubmitting(false)
+    onStatChange(v.id, { usedCount: usedCount + 1, hasUsed: true })
+    setUsedSubmitting(false)
   }
 
   async function toggleRecommend() {
     if (!currentUser) { onOpenAuth(); return }
+    if (recSubmitting) return
     setRecSubmitting(true)
     if (hasRec) {
       await supabase.from('vendor_recommendations').delete().eq('vendor_id', v.id).eq('user_id', currentUser.id)
-      setRecCount(c => Math.max(0, c - 1)); setHasRec(false)
+      onStatChange(v.id, { recCount: Math.max(0, recCount - 1), hasRec: false })
     } else {
       await supabase.from('vendor_recommendations').insert({ vendor_id: v.id, user_id: currentUser.id })
-      setRecCount(c => c + 1); setHasRec(true)
+      onStatChange(v.id, { recCount: recCount + 1, hasRec: true })
     }
     setRecSubmitting(false)
   }
@@ -463,7 +414,6 @@ function VendorCard({
   }
 
   const saverLabel = followSaverLabel()
-
   const btnBase: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 5,
     padding: '5px 12px', borderRadius: 20, fontSize: 11,
@@ -493,7 +443,6 @@ function VendorCard({
       </div>
 
       <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }}
-        title={currentUser ? (isSaved ? 'Remove from saved' : 'Save vendor') : 'Sign in to save vendors'}
         style={{ position: 'absolute', top: saverLabel ? 38 : 12, right: 12, background: isSaved ? '#F5F0F8' : 'white', border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
         <HeartIcon filled={isSaved} />
       </button>
@@ -514,7 +463,7 @@ function VendorCard({
           </div>
         )}
 
-        {v.location  && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
+        {v.location   && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>💰 From ₦{v.price_from}</div>}
 
         {igHandle && (
@@ -616,7 +565,9 @@ export default function Home() {
   const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
+  const [vendorStats, setVendorStats]   = useState<Record<string, VendorStats>>({})
 
+  // ── Load current user profile ──────────────────────────────────────────────
   useEffect(() => {
     if (!authUser?.id || !authUser?.email) { setCurrentUser(null); return }
     supabase.from('profiles').select('username, display_name').eq('id', authUser.id).maybeSingle()
@@ -627,12 +578,14 @@ export default function Home() {
       })
   }, [authUser])
 
+  // ── Load saved IDs ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!authUser?.id) { setSavedIds(new Set()); return }
     supabase.from('saved_vendors').select('vendor_id').eq('user_id', authUser.id)
       .then(({ data }) => { if (data) setSavedIds(new Set(data.map(r => r.vendor_id))) })
   }, [authUser])
 
+  // ── Load follow context ────────────────────────────────────────────────────
   useEffect(() => {
     if (!authUser?.id) { setFollowSaverMap({}); return }
     async function loadFollowContext() {
@@ -657,13 +610,60 @@ export default function Home() {
     loadFollowContext()
   }, [authUser])
 
+  // ── Load vendors + bulk stats in parallel ─────────────────────────────────
   useEffect(() => {
-    supabase.from('vendors').select('*').then(({ data, error }) => {
-      if (error) console.error(error)
-      else setVendors(data || [])
+    async function loadAll() {
+      setLoading(true)
+
+      // Fire all bulk queries in parallel
+      const [vendorsRes, reviewsRes, recsRes] = await Promise.all([
+        supabase.from('vendors').select('*'),
+        supabase.from('reviews').select('vendor_id, rating, comment, user_id'),
+        supabase.from('vendor_recommendations').select('vendor_id, user_id'),
+      ])
+
+      const allVendors = vendorsRes.data || []
+      const allReviews = reviewsRes.data || []
+      const allRecs    = recsRes.data    || []
+
+      setVendors(allVendors)
+
+      // Build stats map from bulk data
+      const stats: Record<string, VendorStats> = {}
+      allVendors.forEach(v => {
+        const vendorReviews = allReviews.filter(r => r.vendor_id === v.id)
+        const realReviews   = vendorReviews.filter(r => r.comment !== '__used__')
+        const usedReviews   = vendorReviews.filter(r => r.comment === '__used__')
+        const vendorRecs    = allRecs.filter(r => r.vendor_id === v.id)
+
+        const avgRating = realReviews.length > 0
+          ? Math.round(realReviews.reduce((s, r) => s + r.rating, 0) / realReviews.length * 10) / 10
+          : null
+
+        stats[v.id] = {
+          avgRating,
+          usedCount: usedReviews.length,
+          recCount:  vendorRecs.length,
+          hasUsed:   authUser?.id ? usedReviews.some(r => r.user_id === authUser.id) : false,
+          hasRec:    authUser?.id ? vendorRecs.some(r => r.user_id === authUser.id)  : false,
+        }
+      })
+
+      setVendorStats(stats)
       setLoading(false)
+    }
+    loadAll()
+  }, [authUser])
+
+  // ── Re-compute hasUsed/hasRec when user changes without reloading ──────────
+  useEffect(() => {
+    if (!authUser?.id || Object.keys(vendorStats).length === 0) return
+    setVendorStats(prev => {
+      const next = { ...prev }
+      // We can't update hasUsed/hasRec here without re-fetching, handled by full reload above
+      return next
     })
-  }, [])
+  }, [authUser])
 
   useEffect(() => { setCardResetKey(k => k + 1) }, [category])
 
@@ -677,6 +677,13 @@ export default function Home() {
       await supabase.from('saved_vendors').insert({ user_id: authUser.id, vendor_id: vendorId })
     }
   }, [authUser, savedIds])
+
+  const handleStatChange = useCallback((vendorId: string, patch: Partial<VendorStats>) => {
+    setVendorStats(prev => ({
+      ...prev,
+      [vendorId]: { ...prev[vendorId], ...patch }
+    }))
+  }, [])
 
   const vendorsWithSubcats = vendors.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
   const allCats            = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
@@ -698,32 +705,26 @@ export default function Home() {
 
   const sorted = [...filtered].sort((a, b) => (FEATURED_VENDORS.includes(a.name) ? 0 : 1) - (FEATURED_VENDORS.includes(b.name) ? 0 : 1))
 
+  const emptyStats: VendorStats = { avgRating: null, usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
+
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
 
       {/* ── Nav ── */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E8E0E8', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
-
-        {/* Saved link */}
         {currentUser && savedIds.size > 0 ? (
           <Link href="/saved" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
             ♡ Saved
             <span style={{ width: 18, height: 18, borderRadius: '50%', background: ACCENT, color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{savedIds.size}</span>
           </Link>
         ) : (
-          <button onClick={openAuthModal} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)' }}>
-            ♡ Saved
-          </button>
+          <button onClick={openAuthModal} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)' }}>♡ Saved</button>
         )}
 
         <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
-
-        {/* User search */}
         <UserSearch />
-
         <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
 
-        {/* Profile avatar */}
         {currentUser && authUser ? (
           <Link href={`/profile/${currentUser.username}`} title="My profile"
             style={{ width: 32, height: 32, borderRadius: '50%', background: '#F0E8F0', border: '1.5px solid #D0C0D8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: 12, fontWeight: 600, color: DARK, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
@@ -737,13 +738,8 @@ export default function Home() {
           </button>
         )}
 
-        {/* Sign out */}
         {currentUser && (
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut()
-              setCurrentUser(null); setSavedIds(new Set()); setFollowSaverMap({})
-            }}
+          <button onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); setSavedIds(new Set()); setFollowSaverMap({}) }}
             style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
             Sign out
           </button>
@@ -894,6 +890,8 @@ export default function Home() {
                 currentUser={currentUser} savedIds={savedIds}
                 onToggleSave={handleToggleSave} onOpenAuth={openAuthModal}
                 followSavers={followSaverMap[v.id] || []}
+                stats={vendorStats[v.id] || emptyStats}
+                onStatChange={handleStatChange}
               />
             ))
         }

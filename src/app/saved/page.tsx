@@ -230,7 +230,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
       </div>
 
       {/* Heart */}
-      <button onClick={() => onToggleSave(v.id)} title="Remove from saved"
+      <button onClick={() => onToggleSave(v.id)}
         style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? '#F5F0F8' : 'white', border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
         <HeartIcon filled={isSaved} />
       </button>
@@ -307,7 +307,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
 // ─── Saved Page ───────────────────────────────────────────────────────────────
 
 export default function SavedPage() {
-  const { user, openAuthModal } = useAuth()
+  const { user, loading: authLoading, openAuthModal } = useAuth()
 
   const [displayName, setDisplayName]   = useState('')
   const [savedVendors, setSavedVendors] = useState<Vendor[]>([])
@@ -327,7 +327,9 @@ export default function SavedPage() {
 
   // Load saved vendors using UUID
   useEffect(() => {
+    if (authLoading) return           // ← wait for auth to finish before deciding
     if (!user?.id) { setLoading(false); return }
+
     async function loadSaved() {
       setLoading(true)
       const { data: savedRows } = await supabase
@@ -355,7 +357,7 @@ export default function SavedPage() {
       setLoading(false)
     }
     loadSaved()
-  }, [user])
+  }, [user, authLoading])
 
   const handleToggleSave = useCallback(async (vendorId: string) => {
     if (!user?.id) return
@@ -385,6 +387,9 @@ export default function SavedPage() {
 
   const totalSaved = savedVendors.length
   const firstName  = displayName.split(' ')[0]
+
+  // Show skeleton while auth OR data is loading
+  const isLoading = authLoading || loading
 
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
@@ -418,15 +423,24 @@ export default function SavedPage() {
           Saved Vendors
         </div>
         <div style={{ fontFamily: 'var(--font-jost, sans-serif)', fontSize: 11, color: GOLD, fontWeight: 500 }}>
-          {loading ? 'Loading…' : totalSaved > 0 ? `${totalSaved} vendor${totalSaved !== 1 ? 's' : ''} saved` : 'Your shortlist, all in one place'}
+          {isLoading ? 'Loading…' : totalSaved > 0 ? `${totalSaved} vendor${totalSaved !== 1 ? 's' : ''} saved` : 'Your shortlist, all in one place'}
         </div>
         <div style={{ marginTop: 26, height: 1, background: `linear-gradient(to right, transparent, ${GOLD} 30%, ${GOLD} 70%, transparent 100%)` }} />
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 60px' }}>
 
-        {/* Not signed in */}
-        {!user && !loading && (
+        {/* Loading — shown while auth OR vendors are loading */}
+        {isLoading && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12, marginTop: 8 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} style={{ background: 'white', borderRadius: 16, height: 120, opacity: 0.3, border: '1px solid #E8E0E8' }} />
+            ))}
+          </div>
+        )}
+
+        {/* Not signed in — only show AFTER auth has finished loading */}
+        {!isLoading && !user && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
             <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Sign in to see your saved vendors</h2>
@@ -437,17 +451,8 @@ export default function SavedPage() {
           </div>
         )}
 
-        {/* Loading */}
-        {loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12, marginTop: 8 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={{ background: 'white', borderRadius: 16, height: 120, opacity: 0.3, border: '1px solid #E8E0E8' }} />
-            ))}
-          </div>
-        )}
-
         {/* Empty */}
-        {!loading && user && totalSaved === 0 && (
+        {!isLoading && user && totalSaved === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
             <h2 style={{ fontSize: 18, color: DARK, fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>No saved vendors yet</h2>
@@ -459,7 +464,7 @@ export default function SavedPage() {
         )}
 
         {/* Vendor groups */}
-        {!loading && user && totalSaved > 0 && (
+        {!isLoading && user && totalSaved > 0 && (
           <div>
             {Object.entries(grouped).map(([cat, vendors]) => (
               <div key={cat} style={{ marginBottom: 32 }}>

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import { Playfair_Display, Jost } from 'next/font/google'
+import { Fraunces, Jost } from 'next/font/google'
 import { AuthProvider } from '@/hooks/useAuth'
 import AuthModal from '@/components/AuthModal'
 import Navbar from '@/components/Navbar'
 
-const playfair = Playfair_Display({
+const fraunces = Fraunces({
   subsets: ['latin'],
   variable: '--font-playfair',
   weight: ['400', '600', '700'],
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body
-        className={`${playfair.variable} ${jost.variable}`}
+        className={`${fraunces.variable} ${jost.variable}`}
         style={{ margin: 0, padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}
       >
         <AuthProvider>

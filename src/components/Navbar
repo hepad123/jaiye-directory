@@ -13,16 +13,16 @@ const MUTED  = '#9A8A9A'
 export default function Navbar() {
   const { user, openAuthModal } = useAuth()
   const pathname = usePathname()
-  const [username, setUsername]   = useState('')
-  const [initials, setInitials]   = useState('')
+  const [username, setUsername]     = useState('')
+  const [initials, setInitials]     = useState('')
   const [savedCount, setSavedCount] = useState(0)
 
   useEffect(() => {
     if (!user?.id) { setUsername(''); setInitials(''); setSavedCount(0); return }
     supabase.from('profiles').select('username, display_name').eq('id', user.id).maybeSingle()
       .then(({ data }) => {
-        const name = data?.display_name || user.email?.split('@')[0] || ''
-        const uname = data?.username || user.email?.split('@')[0] || ''
+        const name  = data?.display_name || user.email?.split('@')[0] || ''
+        const uname = data?.username     || user.email?.split('@')[0] || ''
         setUsername(uname)
         setInitials(name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase())
       })
@@ -55,7 +55,7 @@ export default function Navbar() {
       top: 0,
       zIndex: 50,
     }}>
-      {/* Left — logo/directory link */}
+      {/* Logo */}
       <Link href="/" style={{
         fontFamily: 'var(--font-playfair, serif)',
         fontSize: 16, fontWeight: 700,
@@ -65,7 +65,7 @@ export default function Navbar() {
         Jaiye
       </Link>
 
-      {/* Right — nav items */}
+      {/* Nav items */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
 
         <Link href="/" style={linkStyle(pathname === '/')}>
@@ -86,8 +86,12 @@ export default function Navbar() {
           </Link>
         ) : (
           <button onClick={openAuthModal} style={{
-            ...linkStyle(false), background: 'none', border: 'none',
-            borderBottom: '2px solid transparent', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontSize: 13, fontWeight: 500, color: DARK,
+            background: 'none', border: 'none',
+            borderBottom: '2px solid transparent',
+            cursor: 'pointer', padding: '4px 0',
+            fontFamily: 'var(--font-jost, sans-serif)',
           }}>
             ♡ Saved
           </button>
@@ -122,7 +126,8 @@ export default function Navbar() {
         )}
 
         {user && (
-          <button onClick={async () => { await supabase.auth.signOut() }}
+          <button
+            onClick={async () => { await supabase.auth.signOut() }}
             style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
             Sign out
           </button>

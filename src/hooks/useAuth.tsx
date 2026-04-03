@@ -3,7 +3,6 @@ import { useEffect, useState, useCallback, createContext, useContext } from 'rea
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type AuthContextType = {
   user: User | null
   loading: boolean
@@ -13,7 +12,6 @@ type AuthContextType = {
   signOut: () => Promise<void>
 }
 
-// ─── Context ──────────────────────────────────────────────────────────────────
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -23,37 +21,28 @@ export const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 })
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]                       = useState<User | null>(null)
   const [loading, setLoading]                 = useState(true)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      syncLegacyStorage(session?.user ?? null)
-      setLoading(false)
-    })
-
-    // Listen for auth state changes — do NOT auto-close modal here
-    // The modal closes itself after onboarding completes
+    // onAuthStateChange fires immediately with the current session
+    // including restoring from localStorage — so we use it as the
+    // single source of truth and only set loading=false after it fires
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       syncLegacyStorage(session?.user ?? null)
+      setLoading(false)  // ← only mark done after auth state is known
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  // Keep legacy localStorage in sync so saved/page.tsx still works
   function syncLegacyStorage(u: User | null) {
+    if (typeof window === 'undefined') return
     if (u) {
-      const displayName =
-        u.user_metadata?.display_name ||
-        u.email?.split('@')[0] ||
-        'User'
+      const displayName = u.user_metadata?.display_name || u.email?.split('@')[0] || 'User'
       localStorage.setItem('jaiye_user', JSON.stringify({ name: displayName, email: u.email }))
     } else {
       localStorage.removeItem('jaiye_user')
@@ -75,10 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 export function useAuth() {
   return useContext(AuthContext)
 }
 
-// ─── Export supabase client for use elsewhere ─────────────────────────────────
 export { supabase }

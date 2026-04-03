@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
@@ -42,11 +42,17 @@ type CurrentUser = {
   username: string
 }
 
-// follower profile info
 type FollowProfile = {
   id: string
   display_name: string
   username: string
+}
+
+type SearchProfile = {
+  id: string
+  username: string
+  display_name: string
+  bio?: string
 }
 
 const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
@@ -96,6 +102,173 @@ const isNewVendor = (v: Vendor) => {
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
   return created > weekAgo
+}
+
+// ─── User Search Dropdown ─────────────────────────────────────────────────────
+
+function UserSearch() {
+  const [open, setOpen]       = useState(false)
+  const [query, setQuery]     = useState('')
+  const [results, setResults] = useState<SearchProfile[]>([])
+  const [searching, setSearching] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        setQuery('')
+        setResults([])
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  // Focus input when opened
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 50)
+  }, [open])
+
+  // Search profiles
+  useEffect(() => {
+    if (!query.trim()) { setResults([]); return }
+    const timer = setTimeout(async () => {
+      setSearching(true)
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, bio')
+        .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+        .limit(8)
+      setResults(data ?? [])
+      setSearching(false)
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [query])
+
+  const colours = [ACCENT, '#7B68C8', '#C07A2F', '#4A8FC4', '#C4563A', '#2E9E7A']
+  const avatarColour = (name: string) => colours[name.charCodeAt(0) % colours.length]
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      {/* Search icon button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        title="Search people"
+        style={{
+          width: 32, height: 32, borderRadius: '50%',
+          background: open ? ACCENT : '#F0E8F0',
+          border: `1.5px solid ${open ? ACCENT : '#D0C0D8'}`,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', padding: 0, transition: 'all 0.15s',
+        }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke={open ? 'white' : MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+          <circle cx="19" cy="19" r="3"/>
+          <line x1="21" y1="21" x2="17.5" y2="17.5"/>
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div style={{
+          position: 'absolute', top: 40, right: 0, zIndex: 200,
+          background: 'white', borderRadius: 16,
+          boxShadow: '0 8px 40px rgba(42,26,42,0.15)',
+          border: '1px solid #E8E0E8',
+          width: 300, overflow: 'hidden',
+          fontFamily: 'var(--font-jost, sans-serif)',
+        }}>
+          {/* Search input */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid #F0EBF4' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search by name or @username…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              style={{
+                flex: 1, border: 'none', outline: 'none',
+                fontSize: 13, color: DARK, background: 'transparent',
+                fontFamily: 'var(--font-jost, sans-serif)',
+              }}
+            />
+            {query && (
+              <button onClick={() => { setQuery(''); setResults([]) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontSize: 16, padding: 0, lineHeight: 1 }}>
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Results */}
+          <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+            {!query && (
+              <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>
+                Type to search for people
+              </div>
+            )}
+            {query && searching && (
+              <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>
+                Searching…
+              </div>
+            )}
+            {query && !searching && results.length === 0 && (
+              <div style={{ padding: '20px 16px', textAlign: 'center', color: MUTED, fontSize: 12 }}>
+                No users found for "{query}"
+              </div>
+            )}
+            {results.map(p => {
+              const initials = (p.display_name || p.username || '?').split(' ').map((x: string) => x[0]).slice(0, 2).join('').toUpperCase()
+              const colour   = avatarColour(p.display_name || p.username || 'a')
+              return (
+                <Link
+                  key={p.id}
+                  href={`/profile/${p.username}`}
+                  onClick={() => { setOpen(false); setQuery(''); setResults([]) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid #F8F5FC', textDecoration: 'none', transition: 'background 0.1s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8F5FC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  {/* Avatar */}
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                    background: `${colour}22`, border: `2px solid ${colour}55`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700, color: colour,
+                  }}>
+                    {initials}
+                  </div>
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {p.display_name || p.username}
+                    </div>
+                    <div style={{ fontSize: 11, color: MUTED }}>@{p.username}</div>
+                    {p.bio && (
+                      <div style={{ fontSize: 10, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
+                        {p.bio}
+                      </div>
+                    )}
+                  </div>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -161,18 +334,9 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
     if (!currentUser || rating === 0) return
     setSubmitting(true)
     const { data } = await supabase.from('reviews')
-      .insert({
-        vendor_id: vendor.id,
-        reviewer_name: currentUser.name,
-        user_id: currentUser.id,
-        rating,
-        comment,
-      })
+      .insert({ vendor_id: vendor.id, reviewer_name: currentUser.name, user_id: currentUser.id, rating, comment })
       .select()
-    if (data) {
-      setReviews(prev => [data[0], ...prev])
-      setRating(0); setComment(''); setShowForm(false)
-    }
+    if (data) { setReviews(prev => [data[0], ...prev]); setRating(0); setComment(''); setShowForm(false) }
     setSubmitting(false)
   }
 
@@ -185,13 +349,11 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
         <span style={{ fontSize: 10, color: '#B0A0B8', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {realReviews.length > 0 ? `${realReviews.length} review${realReviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
         </span>
-        <button
-          onClick={() => { if (!currentUser) { onOpenAuth(); return }; setShowForm(!showForm) }}
+        <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; setShowForm(!showForm) }}
           style={{ fontSize: 10, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {showForm ? 'Cancel' : '+ Add review'}
         </button>
       </div>
-
       {showForm && (
         <div style={{ background: '#F5F0F8', borderRadius: 10, padding: 10, marginBottom: 8 }}>
           <div style={{ marginBottom: 6 }}><StarRating rating={rating} onRate={setRating} /></div>
@@ -203,7 +365,6 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
           </button>
         </div>
       )}
-
       {realReviews.slice(0, 2).map(r => (
         <div key={r.id} style={{ background: '#F5F0F8', borderRadius: 8, padding: '6px 8px', marginBottom: 4 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -222,17 +383,11 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
 // ─── Vendor Card ──────────────────────────────────────────────────────────────
 
 function VendorCard({
-  v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth,
-  followSavers,
+  v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth, followSavers,
 }: {
-  v: Vendor
-  isNew: boolean
-  resetKey: number
-  currentUser: CurrentUser | null
-  savedIds: Set<string>
-  onToggleSave: (vendorId: string) => void
-  onOpenAuth: () => void
-  followSavers: FollowProfile[]
+  v: Vendor; isNew: boolean; resetKey: number; currentUser: CurrentUser | null
+  savedIds: Set<string>; onToggleSave: (vendorId: string) => void
+  onOpenAuth: () => void; followSavers: FollowProfile[]
 }) {
   const [expanded, setExpanded]             = useState(false)
   const [copied, setCopied]                 = useState(false)
@@ -267,11 +422,9 @@ function VendorCard({
 
   useEffect(() => {
     if (!currentUser?.id) return
-    supabase.from('reviews')
-      .select('id').eq('vendor_id', v.id).eq('user_id', currentUser.id).eq('comment', '__used__')
+    supabase.from('reviews').select('id').eq('vendor_id', v.id).eq('user_id', currentUser.id).eq('comment', '__used__')
       .then(({ data }) => { if (data?.length) setHasUsed(true) })
-    supabase.from('vendor_recommendations')
-      .select('id').eq('vendor_id', v.id).eq('user_id', currentUser.id)
+    supabase.from('vendor_recommendations').select('id').eq('vendor_id', v.id).eq('user_id', currentUser.id)
       .then(({ data }) => { if (data?.length) setHasRec(true) })
   }, [v.id, currentUser])
 
@@ -279,39 +432,24 @@ function VendorCard({
     if (!currentUser) { onOpenAuth(); return }
     if (hasUsed) return
     setUsedSubmitting(true)
-    await supabase.from('reviews').insert({
-      vendor_id: v.id,
-      reviewer_name: currentUser.name,
-      user_id: currentUser.id,
-      rating: 5,
-      comment: '__used__',
-    })
-    setUsedCount(c => c + 1)
-    setHasUsed(true)
-    setUsedSubmitting(false)
+    await supabase.from('reviews').insert({ vendor_id: v.id, reviewer_name: currentUser.name, user_id: currentUser.id, rating: 5, comment: '__used__' })
+    setUsedCount(c => c + 1); setHasUsed(true); setUsedSubmitting(false)
   }
 
   async function toggleRecommend() {
     if (!currentUser) { onOpenAuth(); return }
     setRecSubmitting(true)
     if (hasRec) {
-      await supabase.from('vendor_recommendations')
-        .delete().eq('vendor_id', v.id).eq('user_id', currentUser.id)
-      setRecCount(c => Math.max(0, c - 1))
-      setHasRec(false)
+      await supabase.from('vendor_recommendations').delete().eq('vendor_id', v.id).eq('user_id', currentUser.id)
+      setRecCount(c => Math.max(0, c - 1)); setHasRec(false)
     } else {
-      await supabase.from('vendor_recommendations')
-        .insert({ vendor_id: v.id, user_id: currentUser.id })
-      setRecCount(c => c + 1)
-      setHasRec(true)
+      await supabase.from('vendor_recommendations').insert({ vendor_id: v.id, user_id: currentUser.id })
+      setRecCount(c => c + 1); setHasRec(true)
     }
     setRecSubmitting(false)
   }
 
-  function copyCode() {
-    navigator.clipboard.writeText(v.discount_code)
-    setCopied(true); setTimeout(() => setCopied(false), 2000)
-  }
+  function copyCode() { navigator.clipboard.writeText(v.discount_code); setCopied(true); setTimeout(() => setCopied(false), 2000) }
 
   const whatsappNumber = v.phone?.replace(/\D/g, '')
   const whatsappUrl    = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null
@@ -335,71 +473,35 @@ function VendorCard({
 
   return (
     <div style={{ background: 'white', borderRadius: 16, border: `1.5px solid ${colour}55`, overflow: 'hidden', position: 'relative' }}>
-
-      {/* "People you follow saved this" banner */}
       {saverLabel && (
-        <div style={{
-          background: `${colour}10`, borderBottom: `1px solid ${colour}22`,
-          padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6,
-        }}>
+        <div style={{ background: `${colour}10`, borderBottom: `1px solid ${colour}22`, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ display: 'flex' }}>
             {followSavers.slice(0, 3).map((p, i) => (
-              <div key={p.id} style={{
-                width: 18, height: 18, borderRadius: '50%',
-                background: `${colour}30`, border: '1.5px solid white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 8, fontWeight: 700, color: colour,
-                marginLeft: i > 0 ? -5 : 0,
-                fontFamily: 'var(--font-jost, sans-serif)',
-              }}>
+              <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: `${colour}30`, border: '1.5px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 {p.display_name[0].toUpperCase()}
               </div>
             ))}
           </div>
-          <span style={{ fontSize: 10, color: colour, fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            {saverLabel}
-          </span>
+          <span style={{ fontSize: 10, color: colour, fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)' }}>{saverLabel}</span>
         </div>
       )}
 
-      {/* Badges — top LEFT */}
       <div style={{ position: 'absolute', top: saverLabel ? 38 : 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
-        {isFeatured && (
-          <div style={{ background: '#FDF3E3', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#A07820', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>
-        )}
-        {v.verified && (
-          <div style={{ background: '#F0EEFF', border: '1px solid #C0A8E8', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#6050A8', fontFamily: 'var(--font-jost, sans-serif)' }}>✓ Verified</div>
-        )}
-        {isNew && (
-          <div style={{ background: '#F0EEFF', border: '1px solid #C0A8E8', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#6050A8', fontFamily: 'var(--font-jost, sans-serif)' }}>🆕 New</div>
-        )}
+        {isFeatured && <div style={{ background: '#FDF3E3', border: '1px solid #E8C87A', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#A07820', fontFamily: 'var(--font-jost, sans-serif)' }}>⭐ Top pick</div>}
+        {v.verified && <div style={{ background: '#F0EEFF', border: '1px solid #C0A8E8', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#6050A8', fontFamily: 'var(--font-jost, sans-serif)' }}>✓ Verified</div>}
+        {isNew && <div style={{ background: '#F0EEFF', border: '1px solid #C0A8E8', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#6050A8', fontFamily: 'var(--font-jost, sans-serif)' }}>🆕 New</div>}
       </div>
 
-      {/* Heart button — top RIGHT */}
-      <button
-        onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }}
+      <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }}
         title={currentUser ? (isSaved ? 'Remove from saved' : 'Save vendor') : 'Sign in to save vendors'}
-        style={{
-          position: 'absolute', top: saverLabel ? 38 : 12, right: 12,
-          background: isSaved ? '#F5F0F8' : 'white',
-          border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`,
-          borderRadius: '50%', width: 28, height: 28,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', padding: 0, transition: 'all 0.15s ease',
-        }}>
+        style={{ position: 'absolute', top: saverLabel ? 38 : 12, right: 12, background: isSaved ? '#F5F0F8' : 'white', border: `1px solid ${isSaved ? '#D0B8E0' : '#E8E0F0'}`, borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
         <HeartIcon filled={isSaved} />
       </button>
 
-      <div style={{
-        padding: '14px 14px 12px',
-        paddingTop: (isFeatured || v.verified || isNew)
-          ? (saverLabel ? 52 : 36)
-          : (saverLabel ? 18 : 14),
-      }}>
+      <div style={{ padding: '14px 14px 12px', paddingTop: (isFeatured || v.verified || isNew) ? (saverLabel ? 52 : 36) : (saverLabel ? 18 : 14) }}>
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {getEmoji(v.category)} {v.category}
         </div>
-
         <div style={{ fontSize: 17, fontWeight: 700, color: DARK, lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: 'var(--font-playfair, serif)' }}>
           {v.name}
         </div>
@@ -412,7 +514,7 @@ function VendorCard({
           </div>
         )}
 
-        {v.location && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
+        {v.location  && <div style={{ fontSize: 11, color: MUTED, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>📍 {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#5A8A72', fontWeight: 600, marginBottom: 3, fontFamily: 'var(--font-jost, sans-serif)' }}>💰 From ₦{v.price_from}</div>}
 
         {igHandle && (
@@ -442,7 +544,6 @@ function VendorCard({
           </div>
         )}
 
-        {/* ── Expanded section ── */}
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #EDE8F0', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {v.services && <p style={{ fontSize: 11, color: '#5A4868', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
@@ -451,12 +552,9 @@ function VendorCard({
             {v.website  && <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#7B68C8', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
             {v.notes    && <p style={{ fontSize: 10, color: '#B0A0B8', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
 
-            {/* Who from your circle saved this */}
             {followSavers.length > 0 && (
               <div style={{ marginTop: 4, padding: '8px 10px', background: '#F5F0F8', borderRadius: 10 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: ACCENT, marginBottom: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>
-                  👯‍♀️ Saved by people you follow
-                </div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: ACCENT, marginBottom: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>👯‍♀️ Saved by people you follow</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {followSavers.map(p => (
                     <Link key={p.id} href={`/profile/${p.username}`}
@@ -468,30 +566,21 @@ function VendorCard({
               </div>
             )}
 
-            {/* Used this vendor */}
             <div style={{ marginTop: 4 }}>
               {hasUsed ? (
                 <div style={{ ...btnBase, background: '#F5F0F8', border: `1px solid ${ACCENT}44`, color: ACCENT, cursor: 'default' }}>
                   👋 Used this · <span style={{ fontWeight: 700 }}>{usedCount}</span>
                 </div>
               ) : (
-                <button onClick={submitUsed} disabled={usedSubmitting}
-                  style={{ ...btnBase, background: 'white', color: MUTED, opacity: usedSubmitting ? 0.6 : 1 }}>
+                <button onClick={submitUsed} disabled={usedSubmitting} style={{ ...btnBase, background: 'white', color: MUTED, opacity: usedSubmitting ? 0.6 : 1 }}>
                   👋 I used this vendor {usedCount > 0 && <span style={{ color: ACCENT, fontWeight: 700 }}>· {usedCount}</span>}
                 </button>
               )}
             </div>
 
-            {/* Recommend */}
             <div style={{ marginTop: 4 }}>
               <button onClick={toggleRecommend} disabled={recSubmitting}
-                style={{
-                  ...btnBase,
-                  background: hasRec ? '#F5F0F8' : 'white',
-                  border: hasRec ? `1px solid ${ACCENT}44` : '1px solid #E8E0F0',
-                  color: hasRec ? ACCENT : MUTED,
-                  opacity: recSubmitting ? 0.6 : 1,
-                }}>
+                style={{ ...btnBase, background: hasRec ? '#F5F0F8' : 'white', border: hasRec ? `1px solid ${ACCENT}44` : '1px solid #E8E0F0', color: hasRec ? ACCENT : MUTED, opacity: recSubmitting ? 0.6 : 1 }}>
                 ⭐ {hasRec ? 'Recommended' : 'I recommend this'} {recCount > 0 && <span style={{ fontWeight: 700, color: ACCENT }}>· {recCount}</span>}
               </button>
             </div>
@@ -500,14 +589,8 @@ function VendorCard({
           </div>
         )}
 
-        {/* More/Less toggle */}
         {hasDetails && (
-          <button onClick={() => setExpanded(!expanded)} style={{
-            marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            background: 'none', border: '1px solid #E8E0F0', borderRadius: 20,
-            cursor: 'pointer', fontSize: 10, color: MUTED, fontWeight: 500, padding: '6px 0',
-            fontFamily: 'var(--font-jost, sans-serif)',
-          }}>
+          <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid #E8E0F0', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: MUTED, fontWeight: 500, padding: '6px 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
             <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #D8D0E8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: MUTED, lineHeight: 1 }}>{expanded ? '−' : '+'}</span>
             {expanded ? 'Less info' : 'More info'}
           </button>
@@ -534,7 +617,6 @@ export default function Home() {
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
 
-  // Derive currentUser from profiles table
   useEffect(() => {
     if (!authUser?.id || !authUser?.email) { setCurrentUser(null); return }
     supabase.from('profiles').select('username, display_name').eq('id', authUser.id).maybeSingle()
@@ -545,59 +627,36 @@ export default function Home() {
       })
   }, [authUser])
 
-  // Load saved vendor IDs using UUID
   useEffect(() => {
     if (!authUser?.id) { setSavedIds(new Set()); return }
     supabase.from('saved_vendors').select('vendor_id').eq('user_id', authUser.id)
       .then(({ data }) => { if (data) setSavedIds(new Set(data.map(r => r.vendor_id))) })
   }, [authUser])
 
-  // Load follow social context
   useEffect(() => {
     if (!authUser?.id) { setFollowSaverMap({}); return }
     async function loadFollowContext() {
-      const { data: followRows } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', authUser!.id)
-
+      const { data: followRows } = await supabase.from('follows').select('following_id').eq('follower_id', authUser!.id)
       if (!followRows || followRows.length === 0) { setFollowSaverMap({}); return }
-
       const followingIds = followRows.map(r => r.following_id)
-
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name, username')
-        .in('id', followingIds)
-
+      const { data: profiles } = await supabase.from('profiles').select('id, display_name, username').in('id', followingIds)
       if (!profiles || profiles.length === 0) { setFollowSaverMap({}); return }
-
       const profileMap: Record<string, FollowProfile> = {}
       profiles.forEach(p => { profileMap[p.id] = p })
-
-      const { data: savedRows } = await supabase
-        .from('saved_vendors')
-        .select('vendor_id, user_id')
-        .in('user_id', followingIds)
-
+      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, user_id').in('user_id', followingIds)
       if (!savedRows || savedRows.length === 0) { setFollowSaverMap({}); return }
-
       const map: Record<string, FollowProfile[]> = {}
       savedRows.forEach(row => {
         const profile = profileMap[row.user_id]
         if (!profile) return
         if (!map[row.vendor_id]) map[row.vendor_id] = []
-        if (!map[row.vendor_id].find(p => p.id === profile.id)) {
-          map[row.vendor_id].push(profile)
-        }
+        if (!map[row.vendor_id].find(p => p.id === profile.id)) map[row.vendor_id].push(profile)
       })
-
       setFollowSaverMap(map)
     }
     loadFollowContext()
   }, [authUser])
 
-  // Load all vendors
   useEffect(() => {
     supabase.from('vendors').select('*').then(({ data, error }) => {
       if (error) console.error(error)
@@ -643,7 +702,9 @@ export default function Home() {
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
 
       {/* ── Nav ── */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #E8E0E8', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #E8E0E8', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+
+        {/* Saved link */}
         {currentUser && savedIds.size > 0 ? (
           <Link href="/saved" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
             ♡ Saved
@@ -657,6 +718,12 @@ export default function Home() {
 
         <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
 
+        {/* User search */}
+        <UserSearch />
+
+        <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
+
+        {/* Profile avatar */}
         {currentUser && authUser ? (
           <Link href={`/profile/${currentUser.username}`} title="My profile"
             style={{ width: 32, height: 32, borderRadius: '50%', background: '#F0E8F0', border: '1.5px solid #D0C0D8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: 12, fontWeight: 600, color: DARK, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
@@ -670,6 +737,7 @@ export default function Home() {
           </button>
         )}
 
+        {/* Sign out */}
         {currentUser && (
           <button
             onClick={async () => {
@@ -711,8 +779,6 @@ export default function Home() {
 
       {/* ── Sticky filters ── */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: BG, borderBottom: '1px solid #E8E0E8' }}>
-
-        {/* Category pills */}
         <div style={{ padding: '14px 16px 0', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ position: 'relative' }}>
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, scrollbarWidth: 'none' }}>
@@ -723,8 +789,8 @@ export default function Home() {
                   <button key={cat} onClick={() => { setCategory(cat); setWeddingType('All') }} style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     padding: '9px 18px', borderRadius: 40, flexShrink: 0, border: 'none',
-                    cursor: 'pointer', whiteSpace: 'nowrap',
-                    fontSize: 13, fontWeight: isActive ? 500 : 400,
+                    cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13,
+                    fontWeight: isActive ? 500 : 400,
                     background: isActive ? colour : PILL_BG,
                     color: isActive ? '#FAFAFA' : PILL_TEXT,
                     transition: 'all 0.15s ease', fontFamily: 'var(--font-jost, sans-serif)',
@@ -740,7 +806,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Fashion sub-filters */}
         {category === 'Outfits' && (
           <div style={{ padding: '0 16px 8px', maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -761,7 +826,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Discounts + New */}
         <div style={{ padding: '0 16px 10px', maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8 }}>
           <button onClick={() => { setCategory(category === '__discounts__' ? 'All' : '__discounts__'); setWeddingType('All') }} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -788,7 +852,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* Search + Location */}
         <div style={{ padding: '0 16px 12px', maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'white', border: '1px solid #DDD0E0', borderRadius: 10, padding: '9px 16px' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -805,12 +868,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Vendor count */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 18px 2px' }}>
         <p style={{ color: MUTED, fontSize: 13, margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>{sorted.length} vendors</p>
       </div>
 
-      {/* Vendor grid */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 14 }}>
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (

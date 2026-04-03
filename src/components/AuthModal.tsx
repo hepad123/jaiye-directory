@@ -1,3 +1,4 @@
+// src/components/AuthModal.tsx
 'use client'
 
 import { useState } from 'react'
@@ -7,8 +8,6 @@ import { supabase } from '@/lib/supabase'
 type Mode = 'login' | 'signup'
 type Step = 'auth' | 'type' | 'profile'
 type ProfileType = 'customer' | 'vendor'
-
-// ── Styles ────────────────────────────────────────────────────────────────────
 
 const inputStyle = (hasError = false): React.CSSProperties => ({
   width: '100%', padding: '12px 16px',
@@ -34,19 +33,19 @@ const btnStyle = (disabled: boolean): React.CSSProperties => ({
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal } = useAuth()
 
-  const [mode, setMode]                           = useState<Mode>('login')
-  const [email, setEmail]                         = useState('')
-  const [password, setPassword]                   = useState('')
-  const [confirmPassword, setConfirmPassword]     = useState('')
-  const [displayName, setDisplayName]             = useState('')
-  const [username, setUsername]                   = useState('')
-  const [profileType, setProfileType]             = useState<ProfileType | null>(null)
-  const [step, setStep]                           = useState<Step>('auth')
-  const [loading, setLoading]                     = useState(false)
-  const [error, setError]                         = useState('')
-  const [usernameOk, setUsernameOk]               = useState<boolean | null>(null)
-  const [checkingUsername, setCheckingUsername]   = useState(false)
-  const [showPassword, setShowPassword]           = useState(false)
+  const [mode, setMode]                         = useState<Mode>('login')
+  const [email, setEmail]                       = useState('')
+  const [password, setPassword]                 = useState('')
+  const [confirmPassword, setConfirmPassword]   = useState('')
+  const [displayName, setDisplayName]           = useState('')
+  const [username, setUsername]                 = useState('')
+  const [profileType, setProfileType]           = useState<ProfileType | null>(null)
+  const [step, setStep]                         = useState<Step>('auth')
+  const [loading, setLoading]                   = useState(false)
+  const [error, setError]                       = useState('')
+  const [usernameOk, setUsernameOk]             = useState<boolean | null>(null)
+  const [checkingUsername, setCheckingUsername] = useState(false)
+  const [showPassword, setShowPassword]         = useState(false)
 
   if (!isAuthModalOpen) return null
 
@@ -57,16 +56,42 @@ export default function AuthModal() {
   async function handleLogin() {
     if (!email.trim() || !password.trim()) { setError('Please fill in all fields.'); return }
     setLoading(true); setError('')
-    const { error: authError } = await supabase.auth.signInWithPassword({
+
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
     })
+
     if (authError) {
       setError('Incorrect email or password.')
       setLoading(false)
-    } else {
-      handleClose()
+      return
     }
+
+    // Check whether this user has already completed onboarding
+    const userId = data.user?.id
+    if (userId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, display_name, profile_type')
+        .eq('id', userId)
+        .maybeSingle()
+
+      const isComplete = profile?.username && profile?.display_name && profile?.profile_type
+
+      if (!isComplete) {
+        // Profile incomplete — send them into onboarding
+        // Pre-fill profile_type if we have it
+        if (profile?.profile_type) setProfileType(profile.profile_type as ProfileType)
+        setLoading(false)
+        setStep('type')
+        return
+      }
+    }
+
+    // Profile complete — close normally
+    setLoading(false)
+    handleClose()
   }
 
   // ── Sign up ────────────────────────────────────────────────────────────────
@@ -76,10 +101,12 @@ export default function AuthModal() {
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
     if (password !== confirmPassword) { setError("Passwords don't match."); return }
     setLoading(true); setError('')
+
     const { error: authError } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
     })
+
     if (authError) {
       setError(authError.message)
       setLoading(false)
@@ -139,6 +166,8 @@ export default function AuthModal() {
       handleClose()
     }
   }
+
+  // ── Close / reset ──────────────────────────────────────────────────────────
 
   function handleClose() {
     if (isLocked) return

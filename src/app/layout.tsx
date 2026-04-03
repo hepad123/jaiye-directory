@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { Fraunces, Jost } from 'next/font/google'
 import { AuthProvider } from '@/hooks/useAuth'
+import { ThemeProvider } from '@/hooks/useTheme'
 import AuthModal from '@/components/AuthModal'
 import Navbar from '@/components/Navbar'
+import './globals.css'
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -28,11 +30,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${fraunces.variable} ${jost.variable}`}
         style={{ margin: 0, padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}
       >
-        <AuthProvider>
-          <Navbar />
-          {children}
-          <AuthModal />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <Navbar />
+            {children}
+            <AuthModal />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

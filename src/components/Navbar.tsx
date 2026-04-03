@@ -6,9 +6,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef } from 'react'
 
-const ACCENT = '#8B6E9A'
-const DARK   = '#2A1A2A'
-const MUTED  = '#9A8A9A'
+const ACCENT    = '#D97706'
+const DARK      = '#1C1917'
+const BG        = '#FFFFFF'
+const BORDER    = '#E8E3DC'
+const PILL_BG   = '#EEE8E0'
+const MUTED     = '#A8A29E'
 
 type SearchProfile = {
   id: string
@@ -54,7 +57,7 @@ function UserSearch() {
     return () => clearTimeout(timer)
   }, [query])
 
-  const colours = [ACCENT, '#7B68C8', '#C07A2F', '#4A8FC4', '#C4563A', '#2E9E7A']
+  const colours = [ACCENT, '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
   const avatarColour = (name: string) => colours[name.charCodeAt(0) % colours.length]
 
   return (
@@ -64,8 +67,8 @@ function UserSearch() {
         title="Search people"
         style={{
           width: 32, height: 32, borderRadius: '50%',
-          background: open ? ACCENT : '#F0E8F0',
-          border: `1.5px solid ${open ? ACCENT : '#D0C0D8'}`,
+          background: open ? ACCENT : PILL_BG,
+          border: `1.5px solid ${open ? ACCENT : BORDER}`,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', padding: 0, transition: 'all 0.15s',
         }}>
@@ -81,13 +84,13 @@ function UserSearch() {
       {open && (
         <div style={{
           position: 'absolute', top: 40, right: 0, zIndex: 200,
-          background: 'white', borderRadius: 16,
-          boxShadow: '0 8px 40px rgba(42,26,42,0.15)',
-          border: '1px solid #E8E0E8',
+          background: BG, borderRadius: 14,
+          boxShadow: '0 8px 32px rgba(28,25,23,0.12)',
+          border: `1px solid ${BORDER}`,
           width: 300, overflow: 'hidden',
           fontFamily: 'var(--font-jost, sans-serif)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid #F0EBF4' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: `1px solid ${BORDER}` }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
@@ -114,10 +117,10 @@ function UserSearch() {
               return (
                 <Link key={p.id} href={`/profile/${p.username}`}
                   onClick={() => { setOpen(false); setQuery(''); setResults([]) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid #F8F5FC', textDecoration: 'none' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#F8F5FC')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = PILL_BG)}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: `${colour}22`, border: `2px solid ${colour}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: colour }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: `${colour}20`, border: `2px solid ${colour}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: colour }}>
                     {initials}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -169,8 +172,8 @@ export default function Navbar() {
       `}</style>
 
       <div style={{
-        background: '#fff',
-        borderBottom: '1px solid #E8E0E8',
+        background: BG,
+        borderBottom: `1px solid ${BORDER}`,
         padding: '10px 16px',
         display: 'flex',
         alignItems: 'center',
@@ -183,7 +186,7 @@ export default function Navbar() {
         <Link href="/" style={{
           fontFamily: 'var(--font-playfair, serif)',
           fontSize: 16, fontWeight: 700,
-          color: DARK, textDecoration: 'none',
+          color: ACCENT, textDecoration: 'none',
           letterSpacing: '0.08em',
           flexShrink: 0,
         }}>
@@ -197,14 +200,14 @@ export default function Navbar() {
           <Link href="/" style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
             padding: '6px 10px', borderRadius: 20,
-            background: pathname === '/' ? '#F0E8F0' : 'transparent',
+            background: pathname === '/' ? PILL_BG : 'transparent',
             textDecoration: 'none',
-            color: pathname === '/' ? ACCENT : DARK,
+            color: pathname === '/' ? DARK : MUTED,
             fontFamily: 'var(--font-jost, sans-serif)',
-            fontSize: 13, fontWeight: pathname === '/' ? 600 : 500,
+            fontSize: 13, fontWeight: pathname === '/' ? 600 : 400,
             transition: 'all 0.15s',
           }}>
-            <span style={{ fontSize: 16 }}>🌸</span>
+            <span style={{ fontSize: 14 }}>✦</span>
             <span className="nav-label">Directory</span>
           </Link>
 
@@ -213,15 +216,15 @@ export default function Navbar() {
             <Link href="/saved" style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '6px 10px', borderRadius: 20,
-              background: isActive('/saved') ? '#F0E8F0' : 'transparent',
+              background: isActive('/saved') ? PILL_BG : 'transparent',
               textDecoration: 'none',
-              color: isActive('/saved') ? ACCENT : DARK,
+              color: isActive('/saved') ? DARK : MUTED,
               fontFamily: 'var(--font-jost, sans-serif)',
-              fontSize: 13, fontWeight: isActive('/saved') ? 600 : 500,
+              fontSize: 13, fontWeight: isActive('/saved') ? 600 : 400,
               transition: 'all 0.15s',
               position: 'relative',
             }}>
-              <span style={{ fontSize: 16 }}>♡</span>
+              <span style={{ fontSize: 14 }}>♡</span>
               <span className="nav-label">Saved</span>
               {savedCount > 0 && (
                 <span style={{
@@ -237,16 +240,16 @@ export default function Navbar() {
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '6px 10px', borderRadius: 20,
               background: 'transparent', border: 'none', cursor: 'pointer',
-              color: DARK, fontFamily: 'var(--font-jost, sans-serif)',
-              fontSize: 13, fontWeight: 500,
+              color: MUTED, fontFamily: 'var(--font-jost, sans-serif)',
+              fontSize: 13, fontWeight: 400,
             }}>
-              <span style={{ fontSize: 16 }}>♡</span>
+              <span style={{ fontSize: 14 }}>♡</span>
               <span className="nav-label">Saved</span>
             </button>
           )}
 
           {/* Separator */}
-          <div style={{ width: 1, height: 18, background: '#D8D0D8', margin: '0 4px' }} />
+          <div style={{ width: 1, height: 18, background: BORDER, margin: '0 2px' }} />
 
           {/* User search */}
           <UserSearch />
@@ -255,8 +258,8 @@ export default function Navbar() {
           {user && username ? (
             <Link href={`/profile/${username}`} title="My profile" style={{
               width: 32, height: 32, borderRadius: '50%',
-              background: isActive('/profile') ? ACCENT : '#F0E8F0',
-              border: `1.5px solid ${isActive('/profile') ? ACCENT : '#D0C0D8'}`,
+              background: isActive('/profile') ? ACCENT : PILL_BG,
+              border: `1.5px solid ${isActive('/profile') ? ACCENT : BORDER}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               textDecoration: 'none', fontSize: 12, fontWeight: 700,
               color: isActive('/profile') ? 'white' : DARK,
@@ -268,7 +271,7 @@ export default function Navbar() {
           ) : (
             <button onClick={openAuthModal} style={{
               width: 32, height: 32, borderRadius: '50%',
-              background: '#F0E8F0', border: '1.5px solid #D0C0D8',
+              background: PILL_BG, border: `1.5px solid ${BORDER}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', padding: 0, flexShrink: 0,
             }}>
@@ -278,12 +281,12 @@ export default function Navbar() {
             </button>
           )}
 
-          {/* Sign out — hidden on mobile */}
+          {/* Sign out */}
           {user && (
             <button
               onClick={async () => { await supabase.auth.signOut() }}
               className="nav-label"
-              style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 4px', fontFamily: 'var(--font-jost, sans-serif)' }}>
+              style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 4px', fontFamily: 'var(--font-jost, sans-serif)' }}>
               Sign out
             </button>
           )}

@@ -2,13 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { createBrowserClient } from '@supabase/ssr'
 import { useAuth } from '@/hooks/useAuth'
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabase } from '@/lib/supabase'
 
 type Vendor = {
   id: string
@@ -228,7 +223,7 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
 
 function VendorCard({
   v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth,
-  followSavers, // people you follow who saved this vendor
+  followSavers,
 }: {
   v: Vendor
   isNew: boolean
@@ -321,7 +316,6 @@ function VendorCard({
   const whatsappNumber = v.phone?.replace(/\D/g, '')
   const whatsappUrl    = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null
 
-  // Build "X people you follow saved this" label
   const followSaverLabel = () => {
     if (followSavers.length === 0) return null
     const names = followSavers.map(p => p.display_name.split(' ')[0])
@@ -348,7 +342,6 @@ function VendorCard({
           background: `${colour}10`, borderBottom: `1px solid ${colour}22`,
           padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          {/* Mini avatars */}
           <div style={{ display: 'flex' }}>
             {followSavers.slice(0, 3).map((p, i) => (
               <div key={p.id} style={{
@@ -403,17 +396,14 @@ function VendorCard({
           ? (saverLabel ? 52 : 36)
           : (saverLabel ? 18 : 14),
       }}>
-        {/* Category */}
         <div style={{ fontSize: 9, fontWeight: 600, color: colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: 'var(--font-jost, sans-serif)' }}>
           {getEmoji(v.category)} {v.category}
         </div>
 
-        {/* Name */}
         <div style={{ fontSize: 17, fontWeight: 700, color: DARK, lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: 'var(--font-playfair, serif)' }}>
           {v.name}
         </div>
 
-        {/* Rating / used / rec counts */}
         {(avgRating !== null || usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
             {avgRating !== null && <span style={{ fontSize: 11, color: '#B8860B', fontFamily: 'var(--font-jost, sans-serif)' }}>★ {avgRating}</span>}
@@ -542,8 +532,6 @@ export default function Home() {
   const [cardResetKey, setCardResetKey] = useState(0)
   const [currentUser, setCurrentUser]   = useState<CurrentUser | null>(null)
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
-
-  // Map of vendor_id -> list of follow profiles who saved it
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
 
   // Derive currentUser from profiles table
@@ -564,11 +552,10 @@ export default function Home() {
       .then(({ data }) => { if (data) setSavedIds(new Set(data.map(r => r.vendor_id))) })
   }, [authUser])
 
-  // Load follow social context: who you follow + what they saved
+  // Load follow social context
   useEffect(() => {
     if (!authUser?.id) { setFollowSaverMap({}); return }
     async function loadFollowContext() {
-      // Get UUIDs of people this user follows
       const { data: followRows } = await supabase
         .from('follows')
         .select('following_id')
@@ -578,7 +565,6 @@ export default function Home() {
 
       const followingIds = followRows.map(r => r.following_id)
 
-      // Get their profiles
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, display_name, username')
@@ -589,7 +575,6 @@ export default function Home() {
       const profileMap: Record<string, FollowProfile> = {}
       profiles.forEach(p => { profileMap[p.id] = p })
 
-      // Get vendors they've saved
       const { data: savedRows } = await supabase
         .from('saved_vendors')
         .select('vendor_id, user_id')
@@ -597,7 +582,6 @@ export default function Home() {
 
       if (!savedRows || savedRows.length === 0) { setFollowSaverMap({}); return }
 
-      // Build map: vendor_id -> FollowProfile[]
       const map: Record<string, FollowProfile[]> = {}
       savedRows.forEach(row => {
         const profile = profileMap[row.user_id]
@@ -689,9 +673,7 @@ export default function Home() {
         {currentUser && (
           <button
             onClick={async () => {
-              const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
-              const sb = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-              await sb.auth.signOut()
+              await supabase.auth.signOut()
               setCurrentUser(null); setSavedIds(new Set()); setFollowSaverMap({})
             }}
             style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>

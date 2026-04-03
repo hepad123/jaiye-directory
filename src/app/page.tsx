@@ -711,7 +711,6 @@ export default function Home() {
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
 
       {/* ── Nav ── */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #E8E0E8', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
         {currentUser && savedIds.size > 0 ? (
           <Link href="/saved" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
             ♡ Saved

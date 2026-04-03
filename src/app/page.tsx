@@ -709,42 +709,7 @@ export default function Home() {
 
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: BG, minHeight: '100vh' }}>
-
-      {/* ── Nav ── */}
-        {currentUser && savedIds.size > 0 ? (
-          <Link href="/saved" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
-            ♡ Saved
-            <span style={{ width: 18, height: 18, borderRadius: '50%', background: ACCENT, color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{savedIds.size}</span>
-          </Link>
-        ) : (
-          <button onClick={openAuthModal} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: DARK, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)' }}>♡ Saved</button>
-        )}
-
-        <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
-        <UserSearch />
-        <div style={{ width: 1, height: 18, background: '#D8D0D8' }} />
-
-        {currentUser && authUser ? (
-          <Link href={`/profile/${currentUser.username}`} title="My profile"
-            style={{ width: 32, height: 32, borderRadius: '50%', background: '#F0E8F0', border: '1.5px solid #D0C0D8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: 12, fontWeight: 600, color: DARK, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            {currentUser.name.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}
-          </Link>
-        ) : (
-          <button onClick={openAuthModal} style={{ width: 32, height: 32, borderRadius: '50%', background: '#F0E8F0', border: '1.5px solid #D0C0D8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </svg>
-          </button>
-        )}
-
-        {currentUser && (
-          <button onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); setSavedIds(new Set()); setFollowSaverMap({}) }}
-            style={{ fontSize: 11, color: '#B0A0B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>
-            Sign out
-          </button>
-        )}
-      </div>
-
+     
       {/* ── Hero ── */}
       <div style={{ background: 'linear-gradient(180deg, #DDD0E4 0%, #EDE4F0 40%, #FAFAFA 100%)' }}>
         <div style={{ textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) clamp(20px, 4vw, 40px) clamp(28px, 4vw, 36px)', maxWidth: 1200, margin: '0 auto' }}>

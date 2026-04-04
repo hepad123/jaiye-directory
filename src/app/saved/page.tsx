@@ -81,6 +81,57 @@ function StarRating({ rating }: { rating: number }) {
   )
 }
 
+function ShareButton({ username }: { username: string }) {
+  const [copied, setCopied] = useState(false)
+  const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://jaiye-directory.vercel.app'}/shortlist/${username}`
+
+  async function handleShare() {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My vendor shortlist — Jaiye Directory',
+          text: 'Check out the vendors I\'ve saved for my wedding 💍',
+          url,
+        })
+        return
+      } catch {
+        // User cancelled or share failed — fall through to copy
+      }
+    }
+    // Fallback: copy to clipboard
+    await navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+
+  return (
+    <button
+      onClick={handleShare}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 7,
+        padding: '9px 18px', borderRadius: 24,
+        background: copied ? 'var(--accent-light)' : 'var(--bg-card)',
+        border: `1.5px solid ${copied ? 'var(--gold)' : 'var(--border)'}`,
+        color: copied ? 'var(--gold)' : 'var(--text-muted)',
+        fontSize: 12, fontWeight: 600, cursor: 'pointer',
+        fontFamily: 'var(--font-jost, sans-serif)',
+        transition: 'all 0.2s',
+      }}>
+      {copied ? (
+        <>✓ Link copied!</>
+      ) : (
+        <>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Share my shortlist
+        </>
+      )}
+    </button>
+  )
+}
+
 function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: string; initialNote: string }) {
   const [note, setNote]             = useState(initialNote)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -184,10 +235,10 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
       .then(({ data }) => {
         if (!data || data.length === 0) return
         const real = data.filter(r => r.comment !== '__used__')
-        const used = data.filter(r => r.comment === '__used__')
-        setUsedCount(used.length)
         if (real.length > 0) setAvgRating(Math.round(real.reduce((s, r) => s + r.rating, 0) / real.length * 10) / 10)
       })
+    supabase.from('vendor_used').select('id', { count: 'exact' }).eq('vendor_id', v.id)
+      .then(({ count }) => { if (count) setUsedCount(count) })
   }, [v.id])
 
   function copyCode() { navigator.clipboard.writeText(v.discount_code); setCopied(true); setTimeout(() => setCopied(false), 2000) }
@@ -254,7 +305,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
                 🌐 {v.website}
               </a>
             )}
-            {v.notes    && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
+            {v.notes && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
             <ReviewSection vendor={v} />
           </div>
         )}
@@ -272,6 +323,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
 export default function SavedPage() {
   const { user, loading: authLoading, openAuthModal } = useAuth()
   const [displayName, setDisplayName]   = useState('')
+  const [username, setUsername]         = useState('')
   const [savedVendors, setSavedVendors] = useState<Vendor[]>([])
   const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
   const [savedNotes, setSavedNotes]     = useState<Record<string, string>>({})
@@ -279,8 +331,11 @@ export default function SavedPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
-      .then(({ data }) => { setDisplayName(data?.display_name || user.email?.split('@')[0] || 'You') })
+    supabase.from('profiles').select('display_name, username').eq('id', user.id).maybeSingle()
+      .then(({ data }) => {
+        setDisplayName(data?.display_name || user.email?.split('@')[0] || 'You')
+        setUsername(data?.username || '')
+      })
   }, [user])
 
   useEffect(() => {
@@ -344,10 +399,18 @@ export default function SavedPage() {
           {firstName ? `${firstName}'s` : 'Saved'}
         </h1>
         <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-pill)', marginBottom: 16 }}>Saved Vendors</div>
-        <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>
+        <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, marginBottom: 16 }}>
           {isLoading ? 'Loading…' : totalSaved > 0 ? `${totalSaved} vendor${totalSaved !== 1 ? 's' : ''} saved` : 'Your shortlist, all in one place'}
         </div>
-        <div style={{ marginTop: 26, height: 1, background: 'linear-gradient(to right, transparent, var(--accent) 30%, var(--accent) 70%, transparent)', opacity: 0.4 }} />
+
+        {/* Share button — only show when logged in and has vendors */}
+        {!isLoading && user && totalSaved > 0 && username && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <ShareButton username={username} />
+          </div>
+        )}
+
+        <div style={{ marginTop: 16, height: 1, background: 'linear-gradient(to right, transparent, var(--accent) 30%, var(--accent) 70%, transparent)', opacity: 0.4 }} />
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 60px' }}>

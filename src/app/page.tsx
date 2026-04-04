@@ -357,12 +357,22 @@ function VendorCard({
   const isSaved    = savedIds.has(v.id)
   const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
 
-  async function submitUsed() {
+  // ── Toggle "I used this" — now works both ways ────────────────────────────
+  async function toggleUsed() {
     if (!currentUser) { onOpenAuth(); return }
-    if (hasUsed || usedSubmitting) return
+    if (usedSubmitting) return
     setUsedSubmitting(true)
-    await supabase.from('reviews').insert({ vendor_id: v.id, reviewer_name: currentUser.name, user_id: currentUser.id, rating: 5, comment: '__used__' })
-    onStatChange(v.id, { usedCount: usedCount + 1, hasUsed: true })
+    if (hasUsed) {
+      await supabase.from('vendor_used')
+        .delete()
+        .eq('vendor_id', v.id)
+        .eq('user_id', currentUser.id)
+      onStatChange(v.id, { usedCount: Math.max(0, usedCount - 1), hasUsed: false })
+    } else {
+      await supabase.from('vendor_used')
+        .insert({ vendor_id: v.id, user_id: currentUser.id })
+      onStatChange(v.id, { usedCount: usedCount + 1, hasUsed: true })
+    }
     setUsedSubmitting(false)
   }
 
@@ -484,7 +494,7 @@ function VendorCard({
                 🌐 {v.website}
               </a>
             )}
-            {v.notes    && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
+            {v.notes && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
 
             {followSavers.length > 0 && (
               <div style={{ marginTop: 4, padding: '8px 10px', background: 'var(--bg-pill)', borderRadius: 10 }}>
@@ -500,16 +510,20 @@ function VendorCard({
               </div>
             )}
 
+            {/* I used this — now a toggle like recommendations */}
             <div style={{ marginTop: 4 }}>
-              {hasUsed ? (
-                <div style={{ ...btnBase, background: 'var(--accent-light)', border: '1px solid var(--gold)', color: 'var(--gold)', cursor: 'default' }}>
-                  👋 Used this · <span style={{ fontWeight: 700 }}>{usedCount}</span>
-                </div>
-              ) : (
-                <button onClick={submitUsed} disabled={usedSubmitting} style={{ ...btnBase, background: 'var(--bg-card)', color: 'var(--text-muted)', opacity: usedSubmitting ? 0.6 : 1 }}>
-                  👋 I used this vendor {usedCount > 0 && <span style={{ color: 'var(--accent)', fontWeight: 700 }}>· {usedCount}</span>}
-                </button>
-              )}
+              <button
+                onClick={toggleUsed}
+                disabled={usedSubmitting}
+                style={{
+                  ...btnBase,
+                  background: hasUsed ? 'var(--accent-light)' : 'var(--bg-card)',
+                  border: hasUsed ? '1px solid var(--gold)' : '1px solid var(--border)',
+                  color: hasUsed ? 'var(--gold)' : 'var(--text-muted)',
+                  opacity: usedSubmitting ? 0.6 : 1,
+                }}>
+                👋 {hasUsed ? 'Used this' : 'I used this vendor'} {usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}>· {usedCount}</span>}
+              </button>
             </div>
 
             <div style={{ marginTop: 4 }}>
@@ -525,9 +539,9 @@ function VendorCard({
 
         {hasDetails && (
           <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, padding: '6px 0', fontFamily: 'var(--font-jost, sans-serif)' }}>
-            <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1 }}>{expanded ? '−' : '+'}</span>
-            {expanded ? 'Less info' : 'More info'}
-          </button>
+          <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1 }}>{expanded ? '−' : '+'}</span>
+          {expanded ? 'Less info' : 'More info'}
+        </button>
         )}
       </div>
     </div>
@@ -593,30 +607,32 @@ export default function Home() {
   useEffect(() => {
     async function loadAll() {
       setLoading(true)
-      const [vendorsRes, reviewsRes, recsRes] = await Promise.all([
+      const [vendorsRes, reviewsRes, recsRes, usedRes] = await Promise.all([
         supabase.from('vendors').select('*'),
         supabase.from('reviews').select('vendor_id, rating, comment, user_id'),
         supabase.from('vendor_recommendations').select('vendor_id, user_id'),
+        supabase.from('vendor_used').select('vendor_id, user_id'),
       ])
       const allVendors = vendorsRes.data || []
       const allReviews = reviewsRes.data || []
       const allRecs    = recsRes.data    || []
+      const allUsed    = usedRes.data    || []
       setVendors(allVendors)
       const stats: Record<string, VendorStats> = {}
       allVendors.forEach(v => {
         const vendorReviews = allReviews.filter(r => r.vendor_id === v.id)
         const realReviews   = vendorReviews.filter(r => r.comment !== '__used__')
-        const usedReviews   = vendorReviews.filter(r => r.comment === '__used__')
         const vendorRecs    = allRecs.filter(r => r.vendor_id === v.id)
+        const vendorUsed    = allUsed.filter(r => r.vendor_id === v.id)
         const avgRating = realReviews.length > 0
           ? Math.round(realReviews.reduce((s, r) => s + r.rating, 0) / realReviews.length * 10) / 10
           : null
         stats[v.id] = {
           avgRating,
-          usedCount: usedReviews.length,
+          usedCount: vendorUsed.length,
           recCount:  vendorRecs.length,
-          hasUsed:   authUser?.id ? usedReviews.some(r => r.user_id === authUser.id) : false,
-          hasRec:    authUser?.id ? vendorRecs.some(r => r.user_id === authUser.id)  : false,
+          hasUsed:   authUser?.id ? vendorUsed.some(r => r.user_id === authUser.id) : false,
+          hasRec:    authUser?.id ? vendorRecs.some(r => r.user_id === authUser.id) : false,
         }
       })
       setVendorStats(stats)

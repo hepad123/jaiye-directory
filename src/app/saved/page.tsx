@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { sanitizeNote, LIMITS } from '@/lib/sanitize'
 
 type Vendor = {
   id: string
@@ -87,10 +88,15 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
   const debounceRef                 = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleChange(val: string) {
-    setNote(val); setSaveStatus('saving')
+    const clean = sanitizeNote(val)
+    setNote(clean)
+    setSaveStatus('saving')
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
-      await supabase.from('saved_vendors').update({ notes: val }).eq('user_id', userId).eq('vendor_id', vendorId)
+      await supabase.from('saved_vendors')
+        .update({ notes: clean })
+        .eq('user_id', userId)
+        .eq('vendor_id', vendorId)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 1800)
     }, 800)
@@ -112,10 +118,16 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
         </button>
       )}
       {(isEditing || !!note) && (
-        <textarea autoFocus={isEditing && !note}
+        <textarea
+          autoFocus={isEditing && !note}
           placeholder="e.g. Quoted ₦250k for aso-ebi, follow up in March…"
-          value={note} onChange={e => handleChange(e.target.value)} onFocus={() => setIsEditing(true)} rows={3}
-          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: 'var(--text)', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'var(--font-jost, sans-serif)', padding: 0 }} />
+          value={note}
+          onChange={e => handleChange(e.target.value)}
+          onFocus={() => setIsEditing(true)}
+          rows={3}
+          maxLength={LIMITS.note}
+          style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: 'var(--text)', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'var(--font-jost, sans-serif)', padding: 0 }}
+        />
       )}
     </div>
   )

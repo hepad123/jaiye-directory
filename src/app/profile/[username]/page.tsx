@@ -321,8 +321,9 @@ export default function ProfilePage() {
               </button>
             </div>
             {isOwner ? (
-              <button style={{ padding: '7px 16px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--bg-card)', fontSize: 12, fontWeight: 600, color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)' }}>
-                Edit profile
+      <Link href="/profile/edit" style={{ padding: '7px 16px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--bg-card)', fontSize: 12, fontWeight: 600, color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)', textDecoration: 'none', display: 'inline-block' }}>
+  Edit profile
+</Link>
               </button>
             ) : (
               <button

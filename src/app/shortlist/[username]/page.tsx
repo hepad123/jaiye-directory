@@ -2,7 +2,6 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
-// Server component — no auth needed, fully public
 const supabaseServer = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -19,7 +18,7 @@ type Vendor = {
   website: string
 }
 
-type Props = { params: { username: string } }
+type Props = { params: Promise<{ username: string }> }
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Event Planning':        { emoji: '📋', colour: '#6366F1' },
@@ -45,11 +44,12 @@ const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { username } = await params
   const { data: profile } = await supabaseServer
     .from('profiles').select('display_name, username')
-    .eq('username', params.username).maybeSingle()
+    .eq('username', username).maybeSingle()
 
-  const name = profile?.display_name || params.username
+  const name = profile?.display_name || username
   return {
     title: `${name}'s Vendor Shortlist — Jaiye Directory`,
     description: `${name}'s saved Nigerian wedding vendors on Jaiye Directory.`,
@@ -57,9 +57,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ShortlistPage({ params }: Props) {
-  const { username } = params
+  const { username } = await params
 
-  // Load profile
   const { data: profile } = await supabaseServer
     .from('profiles').select('id, display_name, username')
     .eq('username', username).maybeSingle()
@@ -77,14 +76,12 @@ export default async function ShortlistPage({ params }: Props) {
     )
   }
 
-  // Load saved vendor IDs
   const { data: savedRows } = await supabaseServer
     .from('saved_vendors').select('vendor_id')
     .eq('user_id', profile.id)
 
   const vendorIds = (savedRows ?? []).map(r => r.vendor_id)
 
-  // Load vendor details
   let vendors: Vendor[] = []
   if (vendorIds.length > 0) {
     const { data: vendorData } = await supabaseServer
@@ -96,7 +93,6 @@ export default async function ShortlistPage({ params }: Props) {
     )
   }
 
-  // Group by category
   const grouped = CATEGORY_ORDER.reduce<Record<string, Vendor[]>>((acc, cat) => {
     const inCat = vendors.filter(v => v.category === cat)
     if (inCat.length > 0) acc[cat] = inCat
@@ -116,7 +112,6 @@ export default async function ShortlistPage({ params }: Props) {
   return (
     <main style={{ fontFamily: "'Jost', sans-serif", background: '#F5F5F4', minHeight: '100vh' }}>
 
-      {/* Hero */}
       <div style={{ background: 'linear-gradient(180deg, #E8E0D5 0%, #EDE8E0 40%, #F5F5F4 100%)', textAlign: 'center', padding: '40px 20px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16 }}>
           <div style={{ height: 1, width: 44, background: '#D97706', opacity: 0.4 }} />
@@ -137,7 +132,6 @@ export default async function ShortlistPage({ params }: Props) {
         <div style={{ marginTop: 20, height: 1, background: 'linear-gradient(to right, transparent, #D97706 30%, #D97706 70%, transparent)', opacity: 0.3 }} />
       </div>
 
-      {/* Jaiye branding strip */}
       <div style={{ background: '#1C1917', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 700, color: '#D97706', letterSpacing: '0.08em' }}>Jaiye</span>
@@ -148,9 +142,7 @@ export default async function ShortlistPage({ params }: Props) {
         </Link>
       </div>
 
-      {/* Vendor list */}
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px 60px' }}>
-
         {totalSaved === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>✦</div>
@@ -162,21 +154,17 @@ export default async function ShortlistPage({ params }: Props) {
         ) : (
           Object.entries(grouped).map(([cat, catVendors]) => (
             <div key={cat} style={{ marginBottom: 28 }}>
-
-              {/* Category header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: getColour(cat), color: 'white', fontSize: 12, fontWeight: 600 }}>
                   {getEmoji(cat)} {cat}
                 </span>
                 <span style={{ fontSize: 12, color: '#A8A29E' }}>{catVendors.length} vendor{catVendors.length !== 1 ? 's' : ''}</span>
               </div>
-
-              {/* Vendor cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {catVendors.map(v => {
-                  const igHandle      = v.instagram?.replace('@', '').trim()
-                  const whatsappNum   = v.phone?.replace(/\D/g, '')
-                  const whatsappUrl   = whatsappNum ? `https://wa.me/${whatsappNum}` : null
+                  const igHandle    = v.instagram?.replace('@', '').trim()
+                  const whatsappNum = v.phone?.replace(/\D/g, '')
+                  const whatsappUrl = whatsappNum ? `https://wa.me/${whatsappNum}` : null
 
                   return (
                     <div key={v.id} style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E8E3DC', padding: '14px 16px', boxShadow: '0 1px 3px rgba(28,25,23,0.06)' }}>
@@ -186,20 +174,12 @@ export default async function ShortlistPage({ params }: Props) {
                             {v.name}
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                            {v.location && (
-                              <span style={{ fontSize: 11, color: '#A8A29E' }}>📍 {v.location}</span>
-                            )}
-                            {v.price_from && (
-                              <span style={{ fontSize: 11, color: '#0D9488', fontWeight: 600 }}>💰 From ₦{v.price_from}</span>
-                            )}
+                            {v.location  && <span style={{ fontSize: 11, color: '#A8A29E' }}>📍 {v.location}</span>}
+                            {v.price_from && <span style={{ fontSize: 11, color: '#0D9488', fontWeight: 600 }}>💰 From ₦{v.price_from}</span>}
                           </div>
                         </div>
-
-                        {/* Category dot */}
                         <div style={{ width: 10, height: 10, borderRadius: '50%', background: getColour(cat), flexShrink: 0, marginTop: 6 }} />
                       </div>
-
-                      {/* Actions */}
                       {(igHandle || whatsappUrl) && (
                         <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                           {igHandle && (
@@ -232,7 +212,6 @@ export default async function ShortlistPage({ params }: Props) {
           ))
         )}
 
-        {/* Footer CTA */}
         {totalSaved > 0 && (
           <div style={{ textAlign: 'center', marginTop: 16, padding: '24px 20px', background: '#1C1917', borderRadius: 20 }}>
             <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: '#D97706', marginBottom: 6 }}>Jaiye Directory</div>

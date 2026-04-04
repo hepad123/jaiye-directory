@@ -480,7 +480,7 @@ function VendorCard({
             {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
             {v.phone    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
             {v.email    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
-            {href={safeVendorUrl(v.website) ?? '#'} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
+{safeVendorUrl(v.website) && <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
             {v.notes    && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
 
             {followSavers.length > 0 && (

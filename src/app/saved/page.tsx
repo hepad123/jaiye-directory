@@ -60,6 +60,10 @@ const CATEGORY_ORDER = [
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
+function formatNaira(n: number) {
+  return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 })
+}
+
 function HeartIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24"
@@ -89,37 +93,21 @@ function ShareButton({ username }: { username: string }) {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
-          title: 'My vendor shortlist — Jaiye Directory',
-          text: 'Check out the vendors I\'ve saved for my wedding 💍',
+          title: "My vendor shortlist — Jaiye Directory",
+          text: "Check out the vendors I've saved for my wedding 💍",
           url,
         })
         return
-      } catch {
-        // User cancelled or share failed — fall through to copy
-      }
+      } catch { /* user cancelled */ }
     }
-    // Fallback: copy to clipboard
     await navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2500)
   }
 
   return (
-    <button
-      onClick={handleShare}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 7,
-        padding: '9px 18px', borderRadius: 24,
-        background: copied ? 'var(--accent-light)' : 'var(--bg-card)',
-        border: `1.5px solid ${copied ? 'var(--gold)' : 'var(--border)'}`,
-        color: copied ? 'var(--gold)' : 'var(--text-muted)',
-        fontSize: 12, fontWeight: 600, cursor: 'pointer',
-        fontFamily: 'var(--font-jost, sans-serif)',
-        transition: 'all 0.2s',
-      }}>
-      {copied ? (
-        <>✓ Link copied!</>
-      ) : (
+    <button onClick={handleShare} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 24, background: copied ? 'var(--accent-light)' : 'var(--bg-card)', border: `1.5px solid ${copied ? 'var(--gold)' : 'var(--border)'}`, color: copied ? 'var(--gold)' : 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)', transition: 'all 0.2s' }}>
+      {copied ? <>✓ Link copied!</> : (
         <>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -132,20 +120,64 @@ function ShareButton({ username }: { username: string }) {
   )
 }
 
-function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: string; initialNote: string }) {
+function BudgetBar({ quotes }: { quotes: Record<string, number> }) {
+  const entries = Object.entries(quotes).filter(([, v]) => v > 0)
+  const total = entries.reduce((s, [, v]) => s + v, 0)
+  if (entries.length === 0) return null
+
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px', marginBottom: 24, boxShadow: 'var(--shadow-card)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>💰</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-playfair, serif)' }}>Budget Tracker</span>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#0D9488', fontFamily: 'var(--font-playfair, serif)' }}>{formatNaira(total)}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>{entries.length} vendor{entries.length !== 1 ? 's' : ''} quoted</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        {entries.map(([name, amount]) => {
+          const pct = total > 0 ? (amount / total) * 100 : 0
+          return (
+            <div key={name}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{name}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-jost, sans-serif)' }}>{formatNaira(amount)}</span>
+              </div>
+              <div style={{ height: 4, background: 'var(--bg-pill)', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(to right, #D97706, #B45309)', borderRadius: 4, transition: 'width 0.4s ease' }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function MyNotes({ vendorId, userId, initialNote, initialQuotedPrice, onQuoteChange }: {
+  vendorId: string
+  userId: string
+  initialNote: string
+  initialQuotedPrice: number | null
+  onQuoteChange: (vendorId: string, name: string, amount: number | null) => void
+}) {
   const [note, setNote]             = useState(initialNote)
+  const [price, setPrice]           = useState(initialQuotedPrice?.toString() ?? '')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [isEditing, setIsEditing]   = useState(false)
   const debounceRef                 = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function handleChange(val: string) {
-    const clean = sanitizeNote(val)
-    setNote(clean)
+  function scheduleSave(newNote: string, newPrice: string) {
     setSaveStatus('saving')
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
+      const parsedPrice = parseFloat(newPrice.replace(/[^0-9.]/g, ''))
+      const priceVal = isNaN(parsedPrice) ? null : parsedPrice
       const { error } = await supabase.from('saved_vendors')
-        .update({ notes: clean })
+        .update({ notes: newNote, quoted_price: priceVal })
         .eq('user_id', userId)
         .eq('vendor_id', vendorId)
       if (error) { setSaveStatus('idle'); return }
@@ -154,19 +186,48 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
     }, 800)
   }
 
+  function handleNoteChange(val: string) {
+    const clean = sanitizeNote(val)
+    setNote(clean)
+    scheduleSave(clean, price)
+  }
+
+  function handlePriceChange(val: string) {
+    // only allow digits and one decimal point
+    const clean = val.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
+    setPrice(clean)
+    const parsed = parseFloat(clean)
+    onQuoteChange(vendorId, '', isNaN(parsed) ? null : parsed)
+    scheduleSave(note, clean)
+  }
+
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
   return (
     <div style={{ marginTop: 10, background: 'var(--bg-pill)', border: '1px dashed var(--border)', borderRadius: 10, padding: '8px 10px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gold)', letterSpacing: 0.4, fontFamily: 'var(--font-jost, sans-serif)' }}>📝 My notes</span>
         <span style={{ fontSize: 9, fontWeight: 600, fontFamily: 'var(--font-jost, sans-serif)', color: saveStatus === 'saving' ? 'var(--text-muted)' : saveStatus === 'saved' ? '#16A34A' : 'transparent' }}>
           {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? '✓ Saved' : '·'}
         </span>
       </div>
+
+      {/* Quoted price input */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)', flexShrink: 0 }}>Quoted price ₦</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="e.g. 250000"
+          value={price}
+          onChange={e => handlePriceChange(e.target.value)}
+          style={{ flex: 1, minWidth: 0, border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 11, background: 'var(--bg-card)', color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}
+        />
+      </div>
+
       {!isEditing && !note && (
         <button onClick={() => setIsEditing(true)} style={{ width: '100%', padding: '4px 0', background: 'none', border: 'none', cursor: 'text', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic', fontFamily: 'var(--font-jost, sans-serif)' }}>
-          + Add a private note about this vendor…
+          + Add a private note…
         </button>
       )}
       {(isEditing || !!note) && (
@@ -174,7 +235,7 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
           autoFocus={isEditing && !note}
           placeholder="e.g. Quoted ₦250k for aso-ebi, follow up in March…"
           value={note}
-          onChange={e => handleChange(e.target.value)}
+          onChange={e => handleNoteChange(e.target.value)}
           onFocus={() => setIsEditing(true)}
           rows={3}
           maxLength={LIMITS.note}
@@ -187,15 +248,12 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
 
 function ReviewSection({ vendor }: { vendor: Vendor }) {
   const [reviews, setReviews] = useState<Review[]>([])
-
   useEffect(() => {
     supabase.from('reviews').select('*').eq('vendor_id', vendor.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => { if (data) setReviews(data) })
   }, [vendor.id])
-
   const realReviews = reviews.filter(r => r.comment !== '__used__')
-
   return (
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
       <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: 0.5, fontFamily: 'var(--font-jost, sans-serif)' }}>
@@ -216,8 +274,14 @@ function ReviewSection({ vendor }: { vendor: Vendor }) {
   )
 }
 
-function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
-  v: Vendor; savedIds: Set<string>; onToggleSave: (id: string) => void; userId: string; savedNote: string
+function VendorCard({ v, savedIds, onToggleSave, userId, savedNote, savedQuotedPrice, onQuoteChange }: {
+  v: Vendor
+  savedIds: Set<string>
+  onToggleSave: (id: string) => void
+  userId: string
+  savedNote: string
+  savedQuotedPrice: number | null
+  onQuoteChange: (vendorId: string, name: string, amount: number | null) => void
 }) {
   const [expanded, setExpanded]   = useState(false)
   const [copied, setCopied]       = useState(false)
@@ -293,7 +357,13 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
             </button>
           </div>
         )}
-        <MyNotes vendorId={v.id} userId={userId} initialNote={savedNote} />
+        <MyNotes
+          vendorId={v.id}
+          userId={userId}
+          initialNote={savedNote}
+          initialQuotedPrice={savedQuotedPrice}
+          onQuoteChange={(vid, , amount) => onQuoteChange(vid, v.name, amount)}
+        />
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
@@ -322,12 +392,14 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
 
 export default function SavedPage() {
   const { user, loading: authLoading, openAuthModal } = useAuth()
-  const [displayName, setDisplayName]   = useState('')
-  const [username, setUsername]         = useState('')
-  const [savedVendors, setSavedVendors] = useState<Vendor[]>([])
-  const [savedIds, setSavedIds]         = useState<Set<string>>(new Set())
-  const [savedNotes, setSavedNotes]     = useState<Record<string, string>>({})
-  const [loading, setLoading]           = useState(true)
+  const [displayName, setDisplayName]     = useState('')
+  const [username, setUsername]           = useState('')
+  const [savedVendors, setSavedVendors]   = useState<Vendor[]>([])
+  const [savedIds, setSavedIds]           = useState<Set<string>>(new Set())
+  const [savedNotes, setSavedNotes]       = useState<Record<string, string>>({})
+  const [savedQuotes, setSavedQuotes]     = useState<Record<string, number | null>>({})
+  const [vendorNames, setVendorNames]     = useState<Record<string, string>>({})
+  const [loading, setLoading]             = useState(true)
 
   useEffect(() => {
     if (!user?.id) return
@@ -343,15 +415,32 @@ export default function SavedPage() {
     if (!user?.id) { setLoading(false); return }
     async function loadSaved() {
       setLoading(true)
-      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, notes').eq('user_id', user!.id)
-      if (!savedRows || savedRows.length === 0) { setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({}); setLoading(false); return }
+      const { data: savedRows } = await supabase
+        .from('saved_vendors')
+        .select('vendor_id, notes, quoted_price')
+        .eq('user_id', user!.id)
+      if (!savedRows || savedRows.length === 0) {
+        setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({}); setSavedQuotes({})
+        setLoading(false); return
+      }
       const ids = savedRows.map(r => r.vendor_id)
       setSavedIds(new Set(ids))
       const notesMap: Record<string, string> = {}
-      savedRows.forEach(r => { notesMap[r.vendor_id] = r.notes ?? '' })
+      const quotesMap: Record<string, number | null> = {}
+      savedRows.forEach(r => {
+        notesMap[r.vendor_id]  = r.notes ?? ''
+        quotesMap[r.vendor_id] = r.quoted_price ?? null
+      })
       setSavedNotes(notesMap)
+      setSavedQuotes(quotesMap)
       const { data: vendorData } = await supabase.from('vendors').select('*').in('id', ids)
-      if (vendorData) setSavedVendors(vendorData.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v))
+      if (vendorData) {
+        const mapped = vendorData.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
+        setSavedVendors(mapped)
+        const names: Record<string, string> = {}
+        mapped.forEach(v => { names[v.id] = v.name })
+        setVendorNames(names)
+      }
       setLoading(false)
     }
     loadSaved()
@@ -364,11 +453,23 @@ export default function SavedPage() {
     if (isSaved) {
       setSavedVendors(prev => prev.filter(v => v.id !== vendorId))
       setSavedNotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
+      setSavedQuotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
       await supabase.from('saved_vendors').delete().eq('user_id', user.id).eq('vendor_id', vendorId)
     } else {
       await supabase.from('saved_vendors').insert({ user_id: user.id, vendor_id: vendorId })
     }
   }, [user, savedIds])
+
+  function handleQuoteChange(vendorId: string, name: string, amount: number | null) {
+    setSavedQuotes(prev => ({ ...prev, [vendorId]: amount }))
+    if (name) setVendorNames(prev => ({ ...prev, [vendorId]: name }))
+  }
+
+  // Build quotes map keyed by vendor name for BudgetBar
+  const namedQuotes: Record<string, number> = {}
+  Object.entries(savedQuotes).forEach(([vid, amount]) => {
+    if (amount !== null && amount > 0) namedQuotes[vendorNames[vid] || vid] = amount
+  })
 
   const grouped = CATEGORY_ORDER.reduce<Record<string, Vendor[]>>((acc, cat) => {
     const inCat = savedVendors.filter(v => v.category === cat)
@@ -402,14 +503,11 @@ export default function SavedPage() {
         <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, marginBottom: 16 }}>
           {isLoading ? 'Loading…' : totalSaved > 0 ? `${totalSaved} vendor${totalSaved !== 1 ? 's' : ''} saved` : 'Your shortlist, all in one place'}
         </div>
-
-        {/* Share button — only show when logged in and has vendors */}
         {!isLoading && user && totalSaved > 0 && username && (
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
             <ShareButton username={username} />
           </div>
         )}
-
         <div style={{ marginTop: 16, height: 1, background: 'linear-gradient(to right, transparent, var(--accent) 30%, var(--accent) 70%, transparent)', opacity: 0.4 }} />
       </div>
 
@@ -439,6 +537,7 @@ export default function SavedPage() {
         )}
         {!isLoading && user && totalSaved > 0 && (
           <div>
+            <BudgetBar quotes={namedQuotes} />
             {Object.entries(grouped).map(([cat, vendors]) => (
               <div key={cat} style={{ marginBottom: 32 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -449,7 +548,16 @@ export default function SavedPage() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 12 }}>
                   {vendors.map(v => (
-                    <VendorCard key={v.id} v={v} savedIds={savedIds} onToggleSave={handleToggleSave} userId={user.id} savedNote={savedNotes[v.id] ?? ''} />
+                    <VendorCard
+                      key={v.id}
+                      v={v}
+                      savedIds={savedIds}
+                      onToggleSave={handleToggleSave}
+                      userId={user.id}
+                      savedNote={savedNotes[v.id] ?? ''}
+                      savedQuotedPrice={savedQuotes[v.id] ?? null}
+                      onQuoteChange={handleQuoteChange}
+                    />
                   ))}
                 </div>
               </div>

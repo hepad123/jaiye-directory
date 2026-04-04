@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabase'
 
 type Profile = {
   id: string
-  email: string
   display_name: string
   username?: string
   bio?: string
@@ -196,32 +195,49 @@ export default function ProfilePage() {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const { data: profileData } = await supabase.from('profiles').select('*').eq('username', username).maybeSingle()
+      const { data: profileData } = await supabase
+        .from('profiles').select('*').eq('username', username).maybeSingle()
       if (!profileData) { setNotFound(true); setLoading(false); return }
       setProfile(profileData)
       const profileId = profileData.id
+
       const [usedRows, recRows, followerRows, followingRows, myFollowingRows] = await Promise.all([
-        supabase.from('reviews').select('vendor_id').eq('user_id', profileId).eq('comment', '__used__'),
+        // ── Read from vendor_used table ──────────────────────────────────────
+        supabase.from('vendor_used').select('vendor_id').eq('user_id', profileId),
         supabase.from('vendor_recommendations').select('vendor_id').eq('user_id', profileId),
         supabase.from('follows').select('follower_id').eq('following_id', profileId),
         supabase.from('follows').select('following_id').eq('follower_id', profileId),
-        user?.id ? supabase.from('follows').select('following_id').eq('follower_id', user.id) : Promise.resolve({ data: [] }),
+        user?.id
+          ? supabase.from('follows').select('following_id').eq('follower_id', user.id)
+          : Promise.resolve({ data: [] }),
       ])
-      const usedIds     = [...new Set((usedRows.data      ?? []).map((r: {vendor_id: string}) => r.vendor_id))]
-      const recIds      = [...new Set((recRows.data       ?? []).map((r: {vendor_id: string}) => r.vendor_id))]
-      const followerIds = (followerRows.data  ?? []).map((r: {follower_id: string})  => r.follower_id)
-      const followIds   = (followingRows.data ?? []).map((r: {following_id: string}) => r.following_id)
+
+      const usedIds     = [...new Set((usedRows.data     ?? []).map((r: { vendor_id: string }) => r.vendor_id))]
+      const recIds      = [...new Set((recRows.data      ?? []).map((r: { vendor_id: string }) => r.vendor_id))]
+      const followerIds = (followerRows.data  ?? []).map((r: { follower_id: string })  => r.follower_id)
+      const followIds   = (followingRows.data ?? []).map((r: { following_id: string }) => r.following_id)
+
       const [usedVendorRes, recVendorRes, followerProfileRes, followingProfileRes] = await Promise.all([
-        usedIds.length     ? supabase.from('vendors').select('id, name, category, location, instagram, price_from').in('id', usedIds)     : Promise.resolve({ data: [] }),
-        recIds.length      ? supabase.from('vendors').select('id, name, category, location, instagram, price_from').in('id', recIds)      : Promise.resolve({ data: [] }),
-        followerIds.length ? supabase.from('profiles').select('id, display_name, username').in('id', followerIds) : Promise.resolve({ data: [] }),
-        followIds.length   ? supabase.from('profiles').select('id, display_name, username').in('id', followIds)   : Promise.resolve({ data: [] }),
+        usedIds.length
+          ? supabase.from('vendors').select('id, name, category, location, instagram, price_from').in('id', usedIds)
+          : Promise.resolve({ data: [] }),
+        recIds.length
+          ? supabase.from('vendors').select('id, name, category, location, instagram, price_from').in('id', recIds)
+          : Promise.resolve({ data: [] }),
+        followerIds.length
+          ? supabase.from('profiles').select('id, display_name, username').in('id', followerIds)
+          : Promise.resolve({ data: [] }),
+        followIds.length
+          ? supabase.from('profiles').select('id, display_name, username').in('id', followIds)
+          : Promise.resolve({ data: [] }),
       ])
+
       if (usedVendorRes.data)       setUsedVendors(usedVendorRes.data)
       if (recVendorRes.data)        setRecVendors(recVendorRes.data)
       if (followerProfileRes.data)  setFollowers(followerProfileRes.data)
       if (followingProfileRes.data) setFollowing(followingProfileRes.data)
-      if (myFollowingRows.data)     setFollowingIds(new Set(myFollowingRows.data.map((r: {following_id: string}) => r.following_id)))
+      if (myFollowingRows.data)     setFollowingIds(new Set(myFollowingRows.data.map((r: { following_id: string }) => r.following_id)))
+
       setLoading(false)
     }
     load()
@@ -230,7 +246,11 @@ export default function ProfilePage() {
   const handleToggleFollow = useCallback(async (targetId: string) => {
     if (!user?.id) { openAuthModal(); return }
     const isFollowing = followingIds.has(targetId)
-    setFollowingIds(prev => { const n = new Set(prev); isFollowing ? n.delete(targetId) : n.add(targetId); return n })
+    setFollowingIds(prev => {
+      const n = new Set(prev)
+      isFollowing ? n.delete(targetId) : n.add(targetId)
+      return n
+    })
     if (isFollowing) {
       await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', targetId)
       if (targetId === profile?.id) setFollowers(prev => prev.filter(f => f.id !== user.id))
@@ -305,7 +325,8 @@ export default function ProfilePage() {
                 Edit profile
               </button>
             ) : (
-              <button onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.id) }}
+              <button
+                onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.id) }}
                 style={{
                   padding: '7px 16px', borderRadius: 20,
                   border: isFollowingProfile ? '1px solid var(--border)' : 'none',

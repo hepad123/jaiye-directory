@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import { sanitizeNote, LIMITS } from '@/lib/sanitize'
+import { sanitizeNote, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
 type Vendor = {
   id: string
@@ -93,10 +93,11 @@ function MyNotes({ vendorId, userId, initialNote }: { vendorId: string; userId: 
     setSaveStatus('saving')
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
-      await supabase.from('saved_vendors')
+      const { error } = await supabase.from('saved_vendors')
         .update({ notes: clean })
         .eq('user_id', userId)
         .eq('vendor_id', vendorId)
+      if (error) { setSaveStatus('idle'); return }
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 1800)
     }, 800)
@@ -247,7 +248,12 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote }: {
             {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
             {v.phone    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
             {v.email    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
-            {v.website  && <a href={v.website.startsWith('http') ? v.website : `https://${v.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
+            {safeVendorUrl(v.website) && (
+              <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow"
+                style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
+                🌐 {v.website}
+              </a>
+            )}
             {v.notes    && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
             <ReviewSection vendor={v} />
           </div>
@@ -389,13 +395,3 @@ export default function SavedPage() {
               <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 ← Browse more vendors
               </Link>
-            </div>
-          </div>
-        )}
-      </div>
-      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
-        Made with ♥ for Nigerian brides &amp; families
-      </footer>
-    </main>
-  )
-}

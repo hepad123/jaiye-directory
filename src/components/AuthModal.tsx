@@ -60,7 +60,7 @@ export default function AuthModal() {
     const cleanPass  = sanitizePassword(password)
 
     if (!cleanEmail || !cleanPass) { setError('Please fill in all fields.'); return }
-    if (!isValidEmail(cleanEmail)) { setError('Please enter a valid email address.'); return }
+    if (!isValidEmail(cleanEmail))  { setError('Please enter a valid email address.'); return }
     if (!isValidPassword(cleanPass)) { setError('Password must be 6–128 characters.'); return }
 
     setLoading(true); setError('')
@@ -114,24 +114,31 @@ export default function AuthModal() {
     const cleanName     = sanitizeDisplayName(displayName)
     const cleanUsername = sanitizeUsername(username)
 
-    if (!isValidDisplayName(cleanName))    { setError('Please enter your name.'); return }
-    if (!isValidUsername(cleanUsername))   { setError('Username must be 3–30 characters (letters, numbers, underscores).'); return }
-    if (usernameOk === false)              { setError('That username is taken.'); return }
+    if (!isValidDisplayName(cleanName))  { setError('Please enter your name.'); return }
+    if (!isValidUsername(cleanUsername)) { setError('Username must be 3–30 characters (letters, numbers, underscores).'); return }
+    if (usernameOk === false)            { setError('That username is taken.'); return }
 
     setLoading(true); setError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
 
+    // Note: email is intentionally excluded — it lives in auth.users,
+    // not in the public profiles table to avoid leaking it publicly.
     const { error: profileError } = await supabase.from('profiles').upsert({
-      id: user.id, email: user.email,
+      id:           user.id,
       display_name: cleanName,
-      username: cleanUsername,
+      username:     cleanUsername,
       profile_type: profileType,
     })
     if (profileError) { setError(profileError.message); setLoading(false) }
     else {
       await supabase.auth.updateUser({
-        data: { display_name: cleanName, username: cleanUsername, profile_type: profileType, onboarding_complete: true },
+        data: {
+          display_name:        cleanName,
+          username:            cleanUsername,
+          profile_type:        profileType,
+          onboarding_complete: true,
+        },
       })
       handleClose()
     }
@@ -229,7 +236,8 @@ export default function AuthModal() {
                 />
                 <button onClick={() => setShowPassword(!showPassword)} style={{
                   position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--text-muted)', padding: 0,
+                  background: 'none', border: 'none', cursor: 'pointer', fontSize: 11,
+                  color: 'var(--text-muted)', padding: 0,
                 }}>{showPassword ? 'Hide' : 'Show'}</button>
               </div>
               {mode === 'signup' && (
@@ -369,11 +377,4 @@ export default function AuthModal() {
               <button onClick={() => setStep('type')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '4px 0' }}>
                 ← Change account type
               </button>
-              <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: '4px 0 0' }}>Step 3 of 3</p>
-            </div>
-          </>
-        )}
-      </div>
-    </>
-  )
-}
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center',

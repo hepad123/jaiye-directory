@@ -87,3 +87,13 @@ export function isValidDisplayName(name: string): boolean {
 export function isValidRating(rating: number): boolean {
   return Number.isInteger(rating) && rating >= 1 && rating <= 5;
 }
+export function safeVendorUrl(raw: string | undefined | null): string | null {
+  if (!raw?.trim()) return null
+  try {
+    const url = new URL(raw.startsWith('http') ? raw : `https://${raw}`)
+    if (!['http:', 'https:'].includes(url.protocol)) return null
+    return url.href
+  } catch {
+    return null
+  }
+}

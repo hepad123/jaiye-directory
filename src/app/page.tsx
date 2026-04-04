@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { sanitizeReviewComment, sanitizeSearch, isValidRating, LIMITS } from '@/lib/sanitize'
 
 type Vendor = {
   id: string
@@ -175,7 +176,8 @@ function UserSearch() {
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input ref={inputRef} type="text" placeholder="Search by name or @username…" value={query}
-              onChange={e => setQuery(e.target.value)}
+              maxLength={LIMITS.search}
+              onChange={e => setQuery(sanitizeSearch(e.target.value))}
               style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: 'var(--text)', background: 'transparent', fontFamily: 'var(--font-jost, sans-serif)' }} />
             {query && (
               <button onClick={() => { setQuery(''); setResults([]) }}
@@ -271,10 +273,21 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
   }, [vendor.id, loaded])
 
   async function submitReview() {
-    if (!currentUser || rating === 0) return
+    if (!currentUser) return
+    if (!isValidRating(rating)) return
+
+    const cleanComment = sanitizeReviewComment(comment)
+    if (cleanComment.length > LIMITS.reviewComment) return
+
     setSubmitting(true)
     const { data } = await supabase.from('reviews')
-      .insert({ vendor_id: vendor.id, reviewer_name: currentUser.name, user_id: currentUser.id, rating, comment })
+      .insert({
+        vendor_id: vendor.id,
+        reviewer_name: currentUser.name,
+        user_id: currentUser.id,
+        rating,
+        comment: cleanComment,
+      })
       .select()
     if (data) { setReviews(prev => [data[0], ...prev]); setRating(0); setComment(''); setShowForm(false) }
     setSubmitting(false)
@@ -296,7 +309,12 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
       {showForm && (
         <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: 10, marginBottom: 8 }}>
           <div style={{ marginBottom: 6 }}><StarRating rating={rating} onRate={setRating} /></div>
-          <textarea placeholder="Share your experience..." value={comment} onChange={e => setComment(e.target.value)} rows={2}
+          <textarea
+            placeholder="Share your experience..."
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            rows={2}
+            maxLength={LIMITS.reviewComment}
             style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: 'var(--bg)', color: 'var(--text)', padding: '6px 10px', marginBottom: 6, boxSizing: 'border-box' as const, resize: 'none' as const, fontFamily: 'var(--font-jost, sans-serif)', outline: 'none' }} />
           <button onClick={submitReview} disabled={submitting || rating === 0}
             style={{ padding: '5px 14px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, fontSize: 11, cursor: 'pointer', opacity: rating === 0 ? 0.45 : 1, fontFamily: 'var(--font-jost, sans-serif)' }}>
@@ -760,8 +778,14 @@ export default function Home() {
               <circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/>
               <path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
-            <input type="text" placeholder="Search vendors…" value={search} onChange={e => setSearch(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font-jost, sans-serif)' }} />
+            <input
+              type="text"
+              placeholder="Search vendors…"
+              value={search}
+              maxLength={LIMITS.search}
+              onChange={e => setSearch(sanitizeSearch(e.target.value))}
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, background: 'transparent', color: 'var(--text)', fontFamily: 'var(--font-jost, sans-serif)' }}
+            />
             {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>}
           </div>
           <select value={location} onChange={e => setLocation(e.target.value)}

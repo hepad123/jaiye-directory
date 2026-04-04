@@ -395,3 +395,14 @@ export default function SavedPage() {
               <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 ← Browse more vendors
               </Link>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
+        Made with ♥ for Nigerian brides &amp; families
+      </footer>
+    </main>
+  )
+}

@@ -361,7 +361,7 @@ function VendorCard({
     if (!currentUser) { onOpenAuth(); return }
     if (hasUsed || usedSubmitting) return
     setUsedSubmitting(true)
-    await supabase.from('vendor_used').insert({ vendor_id: v.id, user_id: currentUser.id })
+    await supabase.from('reviews').insert({ vendor_id: v.id, reviewer_name: currentUser.name, user_id: currentUser.id, rating: 5, comment: '__used__' })
     onStatChange(v.id, { usedCount: usedCount + 1, hasUsed: true })
     setUsedSubmitting(false)
   }
@@ -484,7 +484,7 @@ function VendorCard({
                 🌐 {v.website}
               </a>
             )}
-            {v.notes && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
+            {v.notes    && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
 
             {followSavers.length > 0 && (
               <div style={{ marginTop: 4, padding: '8px 10px', background: 'var(--bg-pill)', borderRadius: 10 }}>
@@ -593,32 +593,30 @@ export default function Home() {
   useEffect(() => {
     async function loadAll() {
       setLoading(true)
-      const [vendorsRes, reviewsRes, recsRes, usedRes] = await Promise.all([
+      const [vendorsRes, reviewsRes, recsRes] = await Promise.all([
         supabase.from('vendors').select('*'),
         supabase.from('reviews').select('vendor_id, rating, comment, user_id'),
         supabase.from('vendor_recommendations').select('vendor_id, user_id'),
-        supabase.from('vendor_used').select('vendor_id, user_id'),
       ])
       const allVendors = vendorsRes.data || []
       const allReviews = reviewsRes.data || []
       const allRecs    = recsRes.data    || []
-      const allUsed    = usedRes.data    || []
       setVendors(allVendors)
       const stats: Record<string, VendorStats> = {}
       allVendors.forEach(v => {
         const vendorReviews = allReviews.filter(r => r.vendor_id === v.id)
         const realReviews   = vendorReviews.filter(r => r.comment !== '__used__')
+        const usedReviews   = vendorReviews.filter(r => r.comment === '__used__')
         const vendorRecs    = allRecs.filter(r => r.vendor_id === v.id)
-        const vendorUsed    = allUsed.filter(r => r.vendor_id === v.id)
         const avgRating = realReviews.length > 0
           ? Math.round(realReviews.reduce((s, r) => s + r.rating, 0) / realReviews.length * 10) / 10
           : null
         stats[v.id] = {
           avgRating,
-          usedCount: vendorUsed.length,
+          usedCount: usedReviews.length,
           recCount:  vendorRecs.length,
-          hasUsed:   authUser?.id ? vendorUsed.some(r => r.user_id === authUser.id) : false,
-          hasRec:    authUser?.id ? vendorRecs.some(r => r.user_id === authUser.id) : false,
+          hasUsed:   authUser?.id ? usedReviews.some(r => r.user_id === authUser.id) : false,
+          hasRec:    authUser?.id ? vendorRecs.some(r => r.user_id === authUser.id)  : false,
         }
       })
       setVendorStats(stats)

@@ -27,23 +27,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   useEffect(() => {
-    // onAuthStateChange fires immediately with the current session
-    // including restoring from localStorage — so we use it as the
-    // single source of truth and only set loading=false after it fires
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       syncLegacyStorage(session?.user ?? null)
-      setLoading(false)  // ← only mark done after auth state is known
+      setLoading(false)
     })
-
     return () => subscription.unsubscribe()
   }, [])
 
   function syncLegacyStorage(u: User | null) {
     if (typeof window === 'undefined') return
     if (u) {
+      // Store only the display name — never the email —
+      // so it isn't sitting in localStorage where JS can read it.
       const displayName = u.user_metadata?.display_name || u.email?.split('@')[0] || 'User'
-      localStorage.setItem('jaiye_user', JSON.stringify({ name: displayName, email: u.email }))
+      localStorage.setItem('jaiye_user', JSON.stringify({ name: displayName }))
     } else {
       localStorage.removeItem('jaiye_user')
     }

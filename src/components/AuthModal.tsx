@@ -34,6 +34,17 @@ const btnStyle = (disabled: boolean): React.CSSProperties => ({
   fontFamily: 'var(--font-jost, sans-serif)',
 })
 
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+  )
+}
+
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal } = useAuth()
 
@@ -46,6 +57,7 @@ export default function AuthModal() {
   const [profileType, setProfileType]           = useState<ProfileType | null>(null)
   const [step, setStep]                         = useState<Step>('auth')
   const [loading, setLoading]                   = useState(false)
+  const [googleLoading, setGoogleLoading]       = useState(false)
   const [error, setError]                       = useState('')
   const [usernameOk, setUsernameOk]             = useState<boolean | null>(null)
   const [checkingUsername, setCheckingUsername] = useState(false)
@@ -54,6 +66,15 @@ export default function AuthModal() {
   if (!isAuthModalOpen) return null
 
   const isLocked = step === 'type' || step === 'profile'
+
+  async function handleGoogleLogin() {
+    setGoogleLoading(true); setError('')
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (authError) { setError('Could not connect to Google. Please try again.'); setGoogleLoading(false) }
+  }
 
   async function handleLogin() {
     const cleanEmail = sanitizeEmail(email)
@@ -182,7 +203,7 @@ export default function AuthModal() {
           }}>×</button>
         )}
 
-        {/* Step 1: Auth */}
+        {/* ── Step 1: Auth ───────────────────────────────────────────────── */}
         {step === 'auth' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -191,10 +212,37 @@ export default function AuthModal() {
                 {mode === 'login' ? 'Welcome back' : 'Join the Jaiye Directory'}
               </h2>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
-                {mode === 'login' ? 'Sign in to see your saved vendors.' : 'Save vendors, share recommendations and connect with other brides.'}
+                {mode === 'login'
+                  ? 'Sign in to see your saved vendors.'
+                  : 'Save vendors, share recommendations and connect with other brides.'}
               </p>
             </div>
 
+            {/* Google */}
+            <button
+              onClick={handleGoogleLogin}
+              disabled={googleLoading}
+              style={{
+                width: '100%', padding: '12px 16px',
+                background: 'var(--bg-card)', border: '1.5px solid var(--border)',
+                borderRadius: 12, fontSize: 14, fontWeight: 600, color: 'var(--text)',
+                cursor: googleLoading ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                fontFamily: 'var(--font-jost, sans-serif)',
+                opacity: googleLoading ? 0.7 : 1, transition: 'all 0.2s', marginBottom: 16,
+              }}>
+              <GoogleIcon />
+              {googleLoading ? 'Connecting…' : 'Continue with Google'}
+            </button>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>or continue with email</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            </div>
+
+            {/* Login / Signup toggle */}
             <div style={{ display: 'flex', background: 'var(--bg-pill)', borderRadius: 12, padding: 4, marginBottom: 20 }}>
               {(['login', 'signup'] as Mode[]).map(m => (
                 <button key={m} onClick={() => switchMode(m)} style={{
@@ -214,10 +262,7 @@ export default function AuthModal() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                autoFocus
+                type="email" placeholder="Email address" value={email} autoFocus
                 maxLength={LIMITS.email}
                 onChange={e => { setEmail(e.target.value); setError('') }}
                 style={inputStyle(false)}
@@ -225,30 +270,39 @@ export default function AuthModal() {
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Password"
-                  value={password}
+                  placeholder="Password" value={password}
                   maxLength={LIMITS.password}
                   onChange={e => { setPassword(e.target.value); setError('') }}
                   onKeyDown={e => e.key === 'Enter' && mode === 'login' && handleLogin()}
-                  style={{ ...inputStyle(false), paddingRight: 44 }}
+                  style={{ ...inputStyle(false), paddingRight: 56 }}
                 />
-                <button onClick={() => setShowPassword(!showPassword)} style={{
+                <button onClick={() => setShowPassword(s => !s)} style={{
                   position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', fontSize: 11,
-                  color: 'var(--text-muted)', padding: 0,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--text-muted)', padding: 0,
                 }}>{showPassword ? 'Hide' : 'Show'}</button>
               </div>
               {mode === 'signup' && (
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Confirm password"
-                  value={confirmPassword}
+                  placeholder="Confirm password" value={confirmPassword}
                   maxLength={LIMITS.password}
                   onChange={e => { setConfirmPassword(e.target.value); setError('') }}
                   style={inputStyle(false)}
                 />
               )}
+
+              {/* Forgot password — login only */}
+              {mode === 'login' && (
+                <div style={{ textAlign: 'right', marginTop: -4 }}>
+                  <a href="/auth/forgot-password" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
+                    Forgot password?
+                  </a>
+                </div>
+              )}
+
               {error && <p style={{ fontSize: 11, color: '#DC2626', margin: '0 0 2px 4px' }}>{error}</p>}
+
               <button
                 onClick={mode === 'login' ? handleLogin : handleSignUp}
                 disabled={loading || !email.trim() || !password.trim()}
@@ -260,19 +314,25 @@ export default function AuthModal() {
             {mode === 'login' && (
               <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: '14px 0 0' }}>
                 Don't have an account?{' '}
-                <button onClick={() => switchMode('signup')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Sign up free</button>
+                <button onClick={() => switchMode('signup')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+                  Sign up free
+                </button>
               </p>
             )}
           </>
         )}
 
-        {/* Step 2: Profile type */}
+        {/* ── Step 2: Profile type ───────────────────────────────────────── */}
         {step === 'type' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <div style={{ fontSize: 30, marginBottom: 10 }}>🎯</div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px', fontFamily: 'var(--font-playfair, serif)' }}>One last thing!</h2>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>Just set up your profile and you're in.</p>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px', fontFamily: 'var(--font-playfair, serif)' }}>
+                One last thing!
+              </h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
+                Just set up your profile and you're in.
+              </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
@@ -316,7 +376,7 @@ export default function AuthModal() {
           </>
         )}
 
-        {/* Step 3: Profile setup */}
+        {/* ── Step 3: Profile setup ──────────────────────────────────────── */}
         {step === 'profile' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -337,8 +397,7 @@ export default function AuthModal() {
                 <input
                   type="text"
                   placeholder={profileType === 'vendor' ? 'e.g. Glam by Omoye' : 'e.g. Temi Adeyemi'}
-                  value={displayName}
-                  autoFocus
+                  value={displayName} autoFocus
                   maxLength={LIMITS.displayName}
                   onChange={e => { setDisplayName(sanitizeDisplayName(e.target.value)); setError('') }}
                   style={inputStyle(false)}
@@ -354,8 +413,7 @@ export default function AuthModal() {
                   <input
                     type="text"
                     placeholder={profileType === 'vendor' ? 'glambyomoye' : 'temi_adeye'}
-                    value={username}
-                    maxLength={LIMITS.username}
+                    value={username} maxLength={LIMITS.username}
                     onChange={e => checkUsername(e.target.value)}
                     style={{
                       ...inputStyle(usernameOk === false), paddingLeft: 28,

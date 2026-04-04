@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import { sanitizeReviewComment, sanitizeSearch, isValidRating, LIMITS } from '@/lib/sanitize'
+import { sanitizeReviewComment, sanitizeSearch, isValidRating, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
 type Vendor = {
   id: string
@@ -275,18 +275,16 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
   async function submitReview() {
     if (!currentUser) return
     if (!isValidRating(rating)) return
-
     const cleanComment = sanitizeReviewComment(comment)
     if (cleanComment.length > LIMITS.reviewComment) return
-
     setSubmitting(true)
     const { data } = await supabase.from('reviews')
       .insert({
-        vendor_id: vendor.id,
+        vendor_id:     vendor.id,
         reviewer_name: currentUser.name,
-        user_id: currentUser.id,
+        user_id:       currentUser.id,
         rating,
-        comment: cleanComment,
+        comment:       cleanComment,
       })
       .select()
     if (data) { setReviews(prev => [data[0], ...prev]); setRating(0); setComment(''); setShowForm(false) }
@@ -480,7 +478,12 @@ function VendorCard({
             {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.services}</p>}
             {v.phone    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>📞 {v.phone}</p>}
             {v.email    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>✉️ {v.email}</p>}
-{safeVendorUrl(v.website) && <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>🌐 {v.website}</a>}
+            {safeVendorUrl(v.website) && (
+              <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow"
+                style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
+                🌐 {v.website}
+              </a>
+            )}
             {v.notes    && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: 'var(--font-jost, sans-serif)' }}>{v.notes}</p>}
 
             {followSavers.length > 0 && (
@@ -663,7 +666,6 @@ export default function Home() {
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh' }}>
 
-      {/* Hero */}
       <div style={{ background: 'var(--hero-grad)' }}>
         <div style={{ textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) clamp(20px, 4vw, 40px) clamp(28px, 4vw, 36px)', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 18 }}>
@@ -690,7 +692,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Sticky filters */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--bg)', borderBottom: '1px solid var(--border)', transition: 'background 0.2s ease' }}>
         <div style={{ padding: '10px 16px 0', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ position: 'relative' }}>

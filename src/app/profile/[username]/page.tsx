@@ -202,7 +202,6 @@ export default function ProfilePage() {
       const profileId = profileData.id
 
       const [usedRows, recRows, followerRows, followingRows, myFollowingRows] = await Promise.all([
-        // ── Read from vendor_used table ──────────────────────────────────────
         supabase.from('vendor_used').select('vendor_id').eq('user_id', profileId),
         supabase.from('vendor_recommendations').select('vendor_id').eq('user_id', profileId),
         supabase.from('follows').select('follower_id').eq('following_id', profileId),
@@ -320,11 +319,20 @@ export default function ProfilePage() {
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Following</div>
               </button>
             </div>
+
+            {/* Edit profile button — now a Link */}
             {isOwner ? (
-      <Link href="/profile/edit" style={{ padding: '7px 16px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--bg-card)', fontSize: 12, fontWeight: 600, color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)', textDecoration: 'none', display: 'inline-block' }}>
-  Edit profile
-</Link>
-              </button>
+              <Link href="/profile/edit" style={{
+                padding: '7px 16px', borderRadius: 20,
+                border: '1px solid var(--border)',
+                background: 'var(--bg-card)',
+                fontSize: 12, fontWeight: 600,
+                color: 'var(--text)', cursor: 'pointer',
+                fontFamily: 'var(--font-jost, sans-serif)',
+                textDecoration: 'none', display: 'inline-block',
+              }}>
+                Edit profile
+              </Link>
             ) : (
               <button
                 onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.id) }}

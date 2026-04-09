@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import { useUser } from '@clerk/nextjs'
 import { supabase } from '@/lib/supabase'
 import { sanitizeText, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
@@ -42,7 +42,7 @@ type Photo = {
 export default function VendorDashboard() {
   const { id }   = useParams() as { id: string }
   const router   = useRouter()
-  const { user } = useAuth()
+  const { user } = useUser()
 
   const [vendor, setVendor]         = useState<Vendor | null>(null)
   const [reviews, setReviews]       = useState<Review[]>([])
@@ -67,7 +67,7 @@ export default function VendorDashboard() {
       const { data: v } = await supabase
         .from('vendors').select('*').eq('id', id).maybeSingle()
 
-      if (!v || v.claimed_by !== user?.id || v.claim_status !== 'claimed') {
+      if (!v || v.clerk_claimed_by !== user?.id || v.claim_status !== 'claimed') {
         router.replace('/')
         return
       }
@@ -113,14 +113,20 @@ export default function VendorDashboard() {
 
   async function saveProfile() {
     setSaving(true); setSaveMsg('')
-    const { error } = await supabase.from('vendors').update({
-      bio:       sanitizeText(bio, 500),
-      services:  sanitizeText(services, LIMITS.generic),
-      phone:     sanitizeText(phone, 30),
-      website:   safeVendorUrl(website) || website,
-      instagram: sanitizeText(instagram.replace('@', ''), 50),
-      price_from: sanitizeText(priceFrom, 20),
-    }).eq('id', id)
+    const res = await fetch('/api/vendor', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vendor_id: id,
+        bio: sanitizeText(bio, 500),
+        services: sanitizeText(services, LIMITS.generic),
+        phone: sanitizeText(phone, 30),
+        website: safeVendorUrl(website) || website,
+        instagram: sanitizeText(instagram.replace('@', ''), 50),
+        price_from: sanitizeText(priceFrom, 20),
+      }),
+    })
+    const error = res.ok ? null : (await res.json()).error
 
     if (error) { setSaveMsg('Error saving. Please try again.') }
     else { setSaveMsg('Saved ✓') }
@@ -142,24 +148,34 @@ export default function VendorDashboard() {
     const { data: { publicUrl } } = supabase.storage
       .from('vendor-photos').getPublicUrl(fileName)
 
-    const { data: photo } = await supabase.from('vendor_photos')
-      .insert({ vendor_id: id, user_id: user.id, url: publicUrl })
-      .select().maybeSingle()
+    const photoRes = await fetch('/api/vendor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'photo', vendor_id: id, url: publicUrl }),
+    })
+    const { data: photo } = await photoRes.json()
 
     if (photo) setPhotos(prev => [photo, ...prev])
     setUploading(false)
   }
 
   async function deletePhoto(photoId: string, url: string) {
-    await supabase.from('vendor_photos').delete().eq('id', photoId)
+    await fetch('/api/vendor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_photo', photo_id: photoId, vendor_id: id }),
+    })
     setPhotos(prev => prev.filter(p => p.id !== photoId))
   }
 
   async function submitResponse(reviewId: string, response: string) {
     if (!user?.id || !response.trim()) return
-    const { data } = await supabase.from('review_responses')
-      .insert({ review_id: reviewId, vendor_id: id, user_id: user.id, response: response.trim() })
-      .select().maybeSingle()
+    const res = await fetch('/api/vendor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'respond', review_id: reviewId, vendor_id: id, response: response.trim() }),
+    })
+    const { data } = await res.json()
 
     if (data) {
       setReviews(prev => prev.map(r =>
@@ -169,7 +185,11 @@ export default function VendorDashboard() {
   }
 
   async function deleteResponse(reviewId: string, responseId: string) {
-    await supabase.from('review_responses').delete().eq('id', responseId)
+    await fetch('/api/vendor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_response', response_id: responseId, vendor_id: id }),
+    })
     setReviews(prev => prev.map(r =>
       r.id === reviewId ? { ...r, response: undefined } : r
     ))

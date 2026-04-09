@@ -3,14 +3,16 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import Image from 'next/image'
+import { useUser, useClerk } from '@clerk/nextjs'
 import { supabase } from '@/lib/supabase'
 
 type Profile = {
-  id: string
+  clerk_user_id: string
   display_name: string
   username?: string
   bio?: string
+  avatar_url?: string
 }
 
 type Vendor = {
@@ -23,9 +25,10 @@ type Vendor = {
 }
 
 type FollowProfile = {
-  id: string
+  clerk_user_id: string
   display_name: string
   username?: string
+  avatar_url?: string
 }
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
@@ -51,10 +54,23 @@ const CATEGORY_ORDER = [
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
 const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
-function Avatar({ name, size = 64 }: { name: string; size?: number }) {
+function Avatar({ name, size = 64, imageUrl }: { name: string; size?: number; imageUrl?: string }) {
   const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
   const colours  = ['#D97706', '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
   const colour   = colours[name.charCodeAt(0) % colours.length]
+
+  if (imageUrl) {
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: '50%',
+        overflow: 'hidden', flexShrink: 0,
+        border: `2px solid ${colour}40`,
+      }}>
+        <Image src={imageUrl} alt={name} width={size} height={size} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+      </div>
+    )
+  }
+
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
@@ -144,8 +160,8 @@ function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, fo
           {people.length === 0
             ? <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No one here yet</div>
             : people.map(p => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
-                <Avatar name={p.display_name} size={38} />
+              <div key={p.clerk_user_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
+                <Avatar name={p.display_name} size={38} imageUrl={p.avatar_url} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.display_name}</div>
                   {p.username && (
@@ -154,15 +170,15 @@ function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, fo
                     </Link>
                   )}
                 </div>
-                {currentUserId && p.id !== currentUserId && (
-                  <button onClick={() => onToggleFollow(p.id)} style={{
+                {currentUserId && p.clerk_user_id !== currentUserId && (
+                  <button onClick={() => onToggleFollow(p.clerk_user_id)} style={{
                     padding: '5px 14px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                    background: followingIds.has(p.id) ? 'var(--bg-card)' : 'var(--accent)',
-                    color: followingIds.has(p.id) ? 'var(--text-muted)' : 'white',
-                    border: followingIds.has(p.id) ? '1px solid var(--border)' : 'none',
+                    background: followingIds.has(p.clerk_user_id) ? 'var(--bg-card)' : 'var(--accent)',
+                    color: followingIds.has(p.clerk_user_id) ? 'var(--text-muted)' : 'white',
+                    border: followingIds.has(p.clerk_user_id) ? '1px solid var(--border)' : 'none',
                     fontFamily: 'var(--font-jost, sans-serif)',
                   }}>
-                    {followingIds.has(p.id) ? 'Following' : 'Follow'}
+                    {followingIds.has(p.clerk_user_id) ? 'Following' : 'Follow'}
                   </button>
                 )}
               </div>
@@ -177,7 +193,8 @@ function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, fo
 export default function ProfilePage() {
   const params   = useParams()
   const username = params?.username as string
-  const { user, openAuthModal } = useAuth()
+  const { user } = useUser()
+  const { openSignIn } = useClerk()
 
   const [profile, setProfile]           = useState<Profile | null>(null)
   const [usedVendors, setUsedVendors]   = useState<Vendor[]>([])
@@ -190,7 +207,7 @@ export default function ProfilePage() {
   const [loading, setLoading]           = useState(true)
   const [notFound, setNotFound]         = useState(false)
 
-  const isOwner = user?.id === profile?.id
+  const isOwner = user?.id === profile?.clerk_user_id
 
   useEffect(() => {
     async function load() {
@@ -199,22 +216,22 @@ export default function ProfilePage() {
         .from('profiles').select('*').eq('username', username).maybeSingle()
       if (!profileData) { setNotFound(true); setLoading(false); return }
       setProfile(profileData)
-      const profileId = profileData.id
+      const profileId = profileData.clerk_user_id
 
       const [usedRows, recRows, followerRows, followingRows, myFollowingRows] = await Promise.all([
-        supabase.from('vendor_used').select('vendor_id').eq('user_id', profileId),
-        supabase.from('vendor_recommendations').select('vendor_id').eq('user_id', profileId),
-        supabase.from('follows').select('follower_id').eq('following_id', profileId),
-        supabase.from('follows').select('following_id').eq('follower_id', profileId),
+        supabase.from('vendor_used').select('vendor_id').eq('clerk_user_id', profileId),
+        supabase.from('vendor_recommendations').select('vendor_id').eq('clerk_user_id', profileId),
+        supabase.from('follows').select('clerk_follower_id').eq('clerk_following_id', profileId),
+        supabase.from('follows').select('clerk_following_id').eq('clerk_follower_id', profileId),
         user?.id
-          ? supabase.from('follows').select('following_id').eq('follower_id', user.id)
+          ? supabase.from('follows').select('clerk_following_id').eq('clerk_follower_id', user.id)
           : Promise.resolve({ data: [] }),
       ])
 
       const usedIds     = [...new Set((usedRows.data     ?? []).map((r: { vendor_id: string }) => r.vendor_id))]
       const recIds      = [...new Set((recRows.data      ?? []).map((r: { vendor_id: string }) => r.vendor_id))]
-      const followerIds = (followerRows.data  ?? []).map((r: { follower_id: string })  => r.follower_id)
-      const followIds   = (followingRows.data ?? []).map((r: { following_id: string }) => r.following_id)
+      const followerIds = (followerRows.data  ?? []).map((r: { clerk_follower_id: string })  => r.clerk_follower_id)
+      const followIds   = (followingRows.data ?? []).map((r: { clerk_following_id: string }) => r.clerk_following_id)
 
       const [usedVendorRes, recVendorRes, followerProfileRes, followingProfileRes] = await Promise.all([
         usedIds.length
@@ -224,10 +241,10 @@ export default function ProfilePage() {
           ? supabase.from('vendors').select('id, name, category, location, instagram, price_from').in('id', recIds)
           : Promise.resolve({ data: [] }),
         followerIds.length
-          ? supabase.from('profiles').select('id, display_name, username').in('id', followerIds)
+          ? supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').in('clerk_user_id', followerIds)
           : Promise.resolve({ data: [] }),
         followIds.length
-          ? supabase.from('profiles').select('id, display_name, username').in('id', followIds)
+          ? supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').in('clerk_user_id', followIds)
           : Promise.resolve({ data: [] }),
       ])
 
@@ -235,7 +252,7 @@ export default function ProfilePage() {
       if (recVendorRes.data)        setRecVendors(recVendorRes.data)
       if (followerProfileRes.data)  setFollowers(followerProfileRes.data)
       if (followingProfileRes.data) setFollowing(followingProfileRes.data)
-      if (myFollowingRows.data)     setFollowingIds(new Set(myFollowingRows.data.map((r: { following_id: string }) => r.following_id)))
+      if (myFollowingRows.data)     setFollowingIds(new Set(myFollowingRows.data.map((r: { clerk_following_id: string }) => r.clerk_following_id)))
 
       setLoading(false)
     }
@@ -243,7 +260,7 @@ export default function ProfilePage() {
   }, [username, user])
 
   const handleToggleFollow = useCallback(async (targetId: string) => {
-    if (!user?.id) { openAuthModal(); return }
+    if (!user?.id) { openSignIn(); return }
     const isFollowing = followingIds.has(targetId)
     setFollowingIds(prev => {
       const n = new Set(prev)
@@ -251,16 +268,24 @@ export default function ProfilePage() {
       return n
     })
     if (isFollowing) {
-      await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', targetId)
-      if (targetId === profile?.id) setFollowers(prev => prev.filter(f => f.id !== user.id))
+      await fetch('/api/follows', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_id: targetId }),
+      })
+      if (targetId === profile?.clerk_user_id) setFollowers(prev => prev.filter(f => f.clerk_user_id !== user.id))
     } else {
-      await supabase.from('follows').insert({ follower_id: user.id, following_id: targetId })
-      if (targetId === profile?.id) {
-        const { data } = await supabase.from('profiles').select('id, display_name, username').eq('id', user.id).maybeSingle()
+      await fetch('/api/follows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_id: targetId }),
+      })
+      if (targetId === profile?.clerk_user_id) {
+        const { data } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').eq('clerk_user_id', user.id).maybeSingle()
         if (data) setFollowers(prev => [...prev, data])
       }
     }
-  }, [user, followingIds, profile, openAuthModal])
+  }, [user, followingIds, profile, openSignIn])
 
   if (loading) {
     return (
@@ -291,7 +316,7 @@ export default function ProfilePage() {
 
   const displayName        = profile?.display_name || 'Unknown'
   const handle             = profile?.username || ''
-  const isFollowingProfile = followingIds.has(profile?.id ?? '')
+  const isFollowingProfile = followingIds.has(profile?.clerk_user_id ?? '')
   const activeVendors      = activeTab === 'used' ? usedVendors : recVendors
 
   return (
@@ -308,7 +333,7 @@ export default function ProfilePage() {
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
         <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '20px 20px 0', boxShadow: '0 4px 24px rgba(28,25,23,0.08)', border: '1px solid var(--border)', position: 'relative', top: -12 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
-            <Avatar name={displayName} size={68} />
+            <Avatar name={displayName} size={68} imageUrl={profile?.avatar_url} />
             <div style={{ flex: 1, display: 'flex', gap: 24, paddingTop: 8 }}>
               <button onClick={() => setSheet('followers')} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', padding: 0 }}>
                 <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-playfair, serif)' }}>{followers.length}</div>
@@ -335,7 +360,7 @@ export default function ProfilePage() {
               </Link>
             ) : (
               <button
-                onClick={() => { if (!user) { openAuthModal(); return }; handleToggleFollow(profile!.id) }}
+                onClick={() => { if (!user) { openSignIn(); return }; handleToggleFollow(profile!.clerk_user_id) }}
                 style={{
                   padding: '7px 16px', borderRadius: 20,
                   border: isFollowingProfile ? '1px solid var(--border)' : 'none',

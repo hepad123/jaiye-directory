@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import { useUser, useClerk } from '@clerk/nextjs'
 import { supabase } from '@/lib/supabase'
 import { sanitizeReviewComment, sanitizeSearch, isValidRating, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
@@ -47,6 +47,7 @@ type FollowProfile = {
   id: string
   display_name: string
   username: string
+  avatar_url?: string
 }
 
 type SearchProfile = {
@@ -278,15 +279,12 @@ function ReviewSection({ vendor, currentUser, onOpenAuth }: {
     const cleanComment = sanitizeReviewComment(comment)
     if (cleanComment.length > LIMITS.reviewComment) return
     setSubmitting(true)
-    const { data } = await supabase.from('reviews')
-      .insert({
-        vendor_id:     vendor.id,
-        reviewer_name: currentUser.name,
-        user_id:       currentUser.id,
-        rating,
-        comment:       cleanComment,
-      })
-      .select()
+    const res = await fetch('/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendor_id: vendor.id, reviewer_name: currentUser.name, rating, comment: cleanComment }),
+    })
+    const { data } = await res.json()
     if (data) { setReviews(prev => [data[0], ...prev]); setRating(0); setComment(''); setShowForm(false) }
     setSubmitting(false)
   }
@@ -363,14 +361,18 @@ function VendorCard({
     if (usedSubmitting) return
     setUsedSubmitting(true)
     if (hasUsed) {
-      await supabase.from('vendor_used')
-        .delete()
-        .eq('vendor_id', v.id)
-        .eq('user_id', currentUser.id)
+      await fetch('/api/interactions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: v.id, type: 'used' }),
+      })
       onStatChange(v.id, { usedCount: Math.max(0, usedCount - 1), hasUsed: false })
     } else {
-      await supabase.from('vendor_used')
-        .insert({ vendor_id: v.id, user_id: currentUser.id })
+      await fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: v.id, type: 'used' }),
+      })
       onStatChange(v.id, { usedCount: usedCount + 1, hasUsed: true })
     }
     setUsedSubmitting(false)
@@ -381,10 +383,18 @@ function VendorCard({
     if (recSubmitting) return
     setRecSubmitting(true)
     if (hasRec) {
-      await supabase.from('vendor_recommendations').delete().eq('vendor_id', v.id).eq('user_id', currentUser.id)
+      await fetch('/api/interactions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: v.id, type: 'recommend' }),
+      })
       onStatChange(v.id, { recCount: Math.max(0, recCount - 1), hasRec: false })
     } else {
-      await supabase.from('vendor_recommendations').insert({ vendor_id: v.id, user_id: currentUser.id })
+      await fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: v.id, type: 'recommend' }),
+      })
       onStatChange(v.id, { recCount: recCount + 1, hasRec: true })
     }
     setRecSubmitting(false)
@@ -549,7 +559,9 @@ function VendorCard({
 }
 
 export default function Home() {
-  const { user: authUser, openAuthModal } = useAuth()
+  const { user: authUser } = useUser()
+  const { openSignIn } = useClerk()
+  const openAuthModal = () => openSignIn()
 
   const [vendors, setVendors]               = useState<Vendor[]>([])
   const [search, setSearch]                 = useState('')
@@ -565,36 +577,37 @@ export default function Home() {
   const [vendorStats, setVendorStats]       = useState<Record<string, VendorStats>>({})
 
   useEffect(() => {
-    if (!authUser?.id || !authUser?.email) { setCurrentUser(null); return }
-    supabase.from('profiles').select('username, display_name').eq('id', authUser.id).maybeSingle()
+    if (!authUser?.id) { setCurrentUser(null); return }
+    supabase.from('profiles').select('username, display_name').eq('clerk_user_id', authUser.id).maybeSingle()
       .then(({ data }) => {
-        const username    = data?.username     || authUser.email!.split('@')[0]
-        const displayName = data?.display_name || authUser.user_metadata?.display_name || authUser.email!.split('@')[0]
-        setCurrentUser({ id: authUser.id, name: displayName, email: authUser.email!, username })
+        const email       = authUser.primaryEmailAddress?.emailAddress || ''
+        const username    = data?.username     || email.split('@')[0]
+        const displayName = data?.display_name || authUser.fullName || email.split('@')[0]
+        setCurrentUser({ id: authUser.id, name: displayName, email, username })
       })
   }, [authUser])
 
   useEffect(() => {
     if (!authUser?.id) { setSavedIds(new Set()); return }
-    supabase.from('saved_vendors').select('vendor_id').eq('user_id', authUser.id)
+    supabase.from('saved_vendors').select('vendor_id').eq('clerk_user_id', authUser.id)
       .then(({ data }) => { if (data) setSavedIds(new Set(data.map(r => r.vendor_id))) })
   }, [authUser])
 
   useEffect(() => {
     if (!authUser?.id) { setFollowSaverMap({}); return }
     async function loadFollowContext() {
-      const { data: followRows } = await supabase.from('follows').select('following_id').eq('follower_id', authUser!.id)
+      const { data: followRows } = await supabase.from('follows').select('clerk_following_id').eq('clerk_follower_id', authUser!.id)
       if (!followRows || followRows.length === 0) { setFollowSaverMap({}); return }
-      const followingIds = followRows.map(r => r.following_id)
-      const { data: profiles } = await supabase.from('profiles').select('id, display_name, username').in('id', followingIds)
+      const followingIds = followRows.map(r => r.clerk_following_id)
+      const { data: profiles } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').in('clerk_user_id', followingIds)
       if (!profiles || profiles.length === 0) { setFollowSaverMap({}); return }
       const profileMap: Record<string, FollowProfile> = {}
-      profiles.forEach(p => { profileMap[p.id] = p })
-      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, user_id').in('user_id', followingIds)
+      profiles.forEach(p => { profileMap[p.clerk_user_id] = { ...p, id: p.clerk_user_id } })
+      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, clerk_user_id').in('clerk_user_id', followingIds)
       if (!savedRows || savedRows.length === 0) { setFollowSaverMap({}); return }
       const map: Record<string, FollowProfile[]> = {}
       savedRows.forEach(row => {
-        const profile = profileMap[row.user_id]
+        const profile = profileMap[row.clerk_user_id]
         if (!profile) return
         if (!map[row.vendor_id]) map[row.vendor_id] = []
         if (!map[row.vendor_id].find(p => p.id === profile.id)) map[row.vendor_id].push(profile)
@@ -609,9 +622,9 @@ export default function Home() {
       setLoading(true)
       const [vendorsRes, reviewsRes, recsRes, usedRes] = await Promise.all([
         supabase.from('vendors').select('*'),
-        supabase.from('reviews').select('vendor_id, rating, comment, user_id'),
-        supabase.from('vendor_recommendations').select('vendor_id, user_id'),
-        supabase.from('vendor_used').select('vendor_id, user_id'),
+        supabase.from('reviews').select('vendor_id, rating, comment, clerk_user_id'),
+        supabase.from('vendor_recommendations').select('vendor_id, clerk_user_id'),
+        supabase.from('vendor_used').select('vendor_id, clerk_user_id'),
       ])
       const allVendors = vendorsRes.data || []
       const allReviews = reviewsRes.data || []
@@ -631,8 +644,8 @@ export default function Home() {
           avgRating,
           usedCount: vendorUsed.length,
           recCount:  vendorRecs.length,
-          hasUsed:   authUser?.id ? vendorUsed.some(r => r.user_id === authUser.id) : false,
-          hasRec:    authUser?.id ? vendorRecs.some(r => r.user_id === authUser.id) : false,
+          hasUsed:   authUser?.id ? vendorUsed.some(r => r.clerk_user_id === authUser.id) : false,
+          hasRec:    authUser?.id ? vendorRecs.some(r => r.clerk_user_id === authUser.id) : false,
         }
       })
       setVendorStats(stats)
@@ -648,9 +661,17 @@ export default function Home() {
     const isSaved = savedIds.has(vendorId)
     setSavedIds(prev => { const n = new Set(prev); if (isSaved) n.delete(vendorId); else n.add(vendorId); return n })
     if (isSaved) {
-      await supabase.from('saved_vendors').delete().eq('user_id', authUser.id).eq('vendor_id', vendorId)
+      await fetch('/api/saved', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: vendorId }),
+      })
     } else {
-      await supabase.from('saved_vendors').insert({ user_id: authUser.id, vendor_id: vendorId })
+      await fetch('/api/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: vendorId }),
+      })
     }
   }, [authUser, savedIds])
 

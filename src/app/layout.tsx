@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Fraunces, Jost } from 'next/font/google'
-import { AuthProvider } from '@/hooks/useAuth'
+import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from '@/hooks/useTheme'
-import AuthModal from '@/components/AuthModal'
 import Navbar from '@/components/Navbar'
 import './globals.css'
 
@@ -30,13 +29,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${fraunces.variable} ${jost.variable}`}
         style={{ margin: 0, padding: 0, fontFamily: 'var(--font-jost, sans-serif)' }}
       >
-        <ThemeProvider>
-          <AuthProvider>
+        <ClerkProvider signUpForceRedirectUrl="/onboarding">
+          <ThemeProvider>
             <Navbar />
             {children}
-            <AuthModal />
-          </AuthProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   )

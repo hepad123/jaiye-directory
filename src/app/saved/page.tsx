@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import { useUser, useClerk } from '@clerk/nextjs'
 import { supabase } from '@/lib/supabase'
 import { sanitizeNote, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
@@ -176,11 +176,12 @@ function MyNotes({ vendorId, userId, initialNote, initialQuotedPrice, onQuoteCha
     debounceRef.current = setTimeout(async () => {
       const parsedPrice = parseFloat(newPrice.replace(/[^0-9.]/g, ''))
       const priceVal = isNaN(parsedPrice) ? null : parsedPrice
-      const { error } = await supabase.from('saved_vendors')
-        .update({ notes: newNote, quoted_price: priceVal })
-        .eq('user_id', userId)
-        .eq('vendor_id', vendorId)
-      if (error) { setSaveStatus('idle'); return }
+      const res = await fetch('/api/saved', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: vendorId, notes: newNote, quoted_price: priceVal }),
+      })
+      if (!res.ok) { setSaveStatus('idle'); return }
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 1800)
     }, 800)
@@ -362,7 +363,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote, savedQuotedP
           userId={userId}
           initialNote={savedNote}
           initialQuotedPrice={savedQuotedPrice}
-          onQuoteChange={(vid, , amount) => onQuoteChange(vid, v.name, amount)}
+          onQuoteChange={(vid, _name, amount) => onQuoteChange(vid, v.name, amount)}
         />
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -391,7 +392,8 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote, savedQuotedP
 }
 
 export default function SavedPage() {
-  const { user, loading: authLoading, openAuthModal } = useAuth()
+  const { user, isLoaded } = useUser()
+  const { openSignIn } = useClerk()
   const [displayName, setDisplayName]     = useState('')
   const [username, setUsername]           = useState('')
   const [savedVendors, setSavedVendors]   = useState<Vendor[]>([])
@@ -403,22 +405,22 @@ export default function SavedPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('profiles').select('display_name, username').eq('id', user.id).maybeSingle()
+    supabase.from('profiles').select('display_name, username').eq('clerk_user_id', user.id).maybeSingle()
       .then(({ data }) => {
-        setDisplayName(data?.display_name || user.email?.split('@')[0] || 'You')
+        setDisplayName(data?.display_name || user.primaryEmailAddress?.emailAddress?.split('@')[0] || 'You')
         setUsername(data?.username || '')
       })
   }, [user])
 
   useEffect(() => {
-    if (authLoading) return
+    if (!isLoaded) return
     if (!user?.id) { setLoading(false); return }
     async function loadSaved() {
       setLoading(true)
       const { data: savedRows } = await supabase
         .from('saved_vendors')
         .select('vendor_id, notes, quoted_price')
-        .eq('user_id', user!.id)
+        .eq('clerk_user_id', user!.id)
       if (!savedRows || savedRows.length === 0) {
         setSavedVendors([]); setSavedIds(new Set()); setSavedNotes({}); setSavedQuotes({})
         setLoading(false); return
@@ -444,7 +446,7 @@ export default function SavedPage() {
       setLoading(false)
     }
     loadSaved()
-  }, [user, authLoading])
+  }, [user, isLoaded])
 
   const handleToggleSave = useCallback(async (vendorId: string) => {
     if (!user?.id) return
@@ -454,9 +456,17 @@ export default function SavedPage() {
       setSavedVendors(prev => prev.filter(v => v.id !== vendorId))
       setSavedNotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
       setSavedQuotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
-      await supabase.from('saved_vendors').delete().eq('user_id', user.id).eq('vendor_id', vendorId)
+      await fetch('/api/saved', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: vendorId }),
+      })
     } else {
-      await supabase.from('saved_vendors').insert({ user_id: user.id, vendor_id: vendorId })
+      await fetch('/api/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: vendorId }),
+      })
     }
   }, [user, savedIds])
 
@@ -485,7 +495,7 @@ export default function SavedPage() {
 
   const totalSaved = savedVendors.length
   const firstName  = displayName.split(' ')[0]
-  const isLoading  = authLoading || loading
+  const isLoading  = !isLoaded || loading
 
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh' }}>
@@ -524,7 +534,7 @@ export default function SavedPage() {
             <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
             <h2 style={{ fontSize: 18, color: 'var(--text)', fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Sign in to see your saved vendors</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px' }}>Head back to the directory and sign in to start saving vendors.</p>
-            <button onClick={openAuthModal} style={{ padding: '10px 24px', background: 'var(--accent)', color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>Sign in</button>
+            <button onClick={() => openSignIn()} style={{ padding: '10px 24px', background: 'var(--accent)', color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-jost, sans-serif)' }}>Sign in</button>
           </div>
         )}
         {!isLoading && user && totalSaved === 0 && (

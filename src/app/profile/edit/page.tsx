@@ -3,18 +3,21 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import { useUser, useClerk } from '@clerk/nextjs'
 import { supabase } from '@/lib/supabase'
 import {
-  sanitizeDisplayName, sanitizeUsername, sanitizeText,
-  isValidDisplayName, isValidUsername, LIMITS,
+  sanitizeUsername, sanitizeText,
+  isValidUsername, LIMITS,
 } from '@/lib/sanitize'
 
 export default function EditProfilePage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isLoaded } = useUser()
+  const { openUserProfile } = useClerk()
   const router = useRouter()
 
   const [displayName, setDisplayName]           = useState('')
+  const [businessName, setBusinessName]         = useState('')
+  const [profileType, setProfileType]           = useState('')
   const [username, setUsername]                 = useState('')
   const [bio, setBio]                           = useState('')
   const [originalUsername, setOriginalUsername] = useState('')
@@ -26,21 +29,23 @@ export default function EditProfilePage() {
   const [saveMsg, setSaveMsg]                   = useState('')
 
   useEffect(() => {
-    if (authLoading) return
+    if (!isLoaded) return
     if (!user) { router.replace('/'); return }
 
-    supabase.from('profiles').select('display_name, username, bio')
-      .eq('id', user.id).maybeSingle()
+    supabase.from('profiles').select('display_name, business_name, profile_type, username, bio')
+      .eq('clerk_user_id', user.id).maybeSingle()
       .then(({ data }) => {
         if (data) {
           setDisplayName(data.display_name || '')
+          setBusinessName(data.business_name || '')
+          setProfileType(data.profile_type || '')
           setUsername(data.username || '')
           setBio(data.bio || '')
           setOriginalUsername(data.username || '')
         }
         setLoading(false)
       })
-  }, [user, authLoading, router])
+  }, [user, isLoaded, router])
 
   async function checkUsername(raw: string) {
     const cleaned = sanitizeUsername(raw)
@@ -60,32 +65,29 @@ export default function EditProfilePage() {
   }
 
   async function handleSave() {
-    const cleanName     = sanitizeDisplayName(displayName)
     const cleanUsername = sanitizeUsername(username)
     const cleanBio      = sanitizeText(bio, LIMITS.bio)
 
-    if (!isValidDisplayName(cleanName)) { setError('Please enter your name.'); return }
     if (!isValidUsername(cleanUsername)) { setError('Username must be 3–30 characters (letters, numbers, underscores).'); return }
     if (cleanUsername !== originalUsername && usernameOk === false) { setError('That username is taken.'); return }
 
     setSaving(true); setError(''); setSaveMsg('')
 
-    const { error: updateError } = await supabase.from('profiles').update({
-      display_name: cleanName,
-      username:     cleanUsername,
-      bio:          cleanBio || null,
-    }).eq('id', user!.id)
+    const payload: Record<string, unknown> = { username: cleanUsername, bio: cleanBio || null }
+    if (profileType === 'vendor') payload.business_name = businessName.trim()
 
-    if (updateError) {
-      setError('Something went wrong. Please try again.')
+    const res = await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      const { error: apiError } = await res.json().catch(() => ({ error: null }))
+      setError(apiError || 'Something went wrong. Please try again.')
       setSaving(false)
       return
     }
-
-    // Also update auth metadata so navbar picks up new display name
-    await supabase.auth.updateUser({
-      data: { display_name: cleanName, username: cleanUsername },
-    })
 
     setOriginalUsername(cleanUsername)
     setSaveMsg('Profile updated!')
@@ -111,7 +113,7 @@ export default function EditProfilePage() {
     display: 'block', marginBottom: 8,
   }
 
-  if (authLoading || loading) {
+  if (!isLoaded || loading) {
     return (
       <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--accent)' }} />
@@ -145,21 +147,44 @@ export default function EditProfilePage() {
 
         <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 28, border: '1px solid var(--border)', boxShadow: '0 4px 24px rgba(28,25,23,0.08)', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Display name */}
+          {/* Display name (read-only — managed via Clerk Account Settings) */}
           <div>
             <label style={labelStyle}>YOUR NAME</label>
-            <input
-              type="text"
-              value={displayName}
-              maxLength={LIMITS.displayName}
-              onChange={e => { setDisplayName(e.target.value); setError(''); setSaveMsg('') }}
-              placeholder="e.g. Temi Adeyemi"
-              style={inputStyle}
-            />
+            <div style={{
+              ...inputStyle, background: 'var(--bg-pill)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              color: 'var(--text)',
+            }}>
+              <span>{displayName || user?.fullName || 'Not set'}</span>
+              <button
+                onClick={() => openUserProfile()}
+                style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)', padding: 0 }}
+              >
+                Change
+              </button>
+            </div>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0 4px' }}>
-              This is the name shown on your profile and vendor interactions.
+              Update your name via Account Settings.
             </p>
           </div>
+
+          {/* Business name — vendors only */}
+          {profileType === 'vendor' && (
+            <div>
+              <label style={labelStyle}>BUSINESS NAME</label>
+              <input
+                type="text"
+                value={businessName}
+                maxLength={LIMITS.displayName}
+                onChange={e => { setBusinessName(e.target.value); setError(''); setSaveMsg('') }}
+                placeholder="e.g. Glam by Omoye"
+                style={inputStyle}
+              />
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0 4px' }}>
+                This is the name shown on your vendor listing.
+              </p>
+            </div>
+          )}
 
           {/* Username */}
           <div>
@@ -218,7 +243,7 @@ export default function EditProfilePage() {
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               onClick={handleSave}
-              disabled={saving || !displayName.trim() || username.length < 3 || (username !== originalUsername && usernameOk !== true)}
+              disabled={saving || username.length < 3 || (username !== originalUsername && usernameOk !== true)}
               style={{
                 flex: 1, padding: '13px 16px',
                 background: saving || !displayName.trim() || username.length < 3 || (username !== originalUsername && usernameOk !== true)
@@ -244,6 +269,37 @@ export default function EditProfilePage() {
             </Link>
           </div>
 
+        </div>
+
+        {/* Account Settings */}
+        <div style={{
+          background: 'var(--bg-card)', borderRadius: 20, padding: 28,
+          border: '1px solid var(--border)', boxShadow: '0 4px 24px rgba(28,25,23,0.08)',
+          marginTop: 20,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 4, fontFamily: 'var(--font-playfair, serif)' }}>
+                Account Settings
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                Change your name, email, password, or manage your account security.
+              </p>
+            </div>
+            <button
+              onClick={() => openUserProfile()}
+              style={{
+                padding: '9px 18px', borderRadius: 12,
+                border: '1.5px solid var(--border)',
+                background: 'var(--bg-card)', color: 'var(--text)',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'var(--font-jost, sans-serif)',
+                flexShrink: 0,
+              }}
+            >
+              Manage →
+            </button>
+          </div>
         </div>
       </div>
     </main>

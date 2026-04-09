@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import { useUser, useClerk } from '@clerk/nextjs'
 import { supabase } from '@/lib/supabase'
 
 type Vendor = {
@@ -18,7 +18,8 @@ type Vendor = {
 export default function ClaimVendorPage() {
   const { id }   = useParams() as { id: string }
   const router   = useRouter()
-  const { user, openAuthModal } = useAuth()
+  const { user } = useUser()
+  const { openSignIn } = useClerk()
 
   const [vendor, setVendor]       = useState<Vendor | null>(null)
   const [message, setMessage]     = useState('')
@@ -38,7 +39,7 @@ export default function ClaimVendorPage() {
       if (user?.id && v) {
         const { data: claim } = await supabase
           .from('vendor_claims').select('id')
-          .eq('vendor_id', id).eq('user_id', user.id).maybeSingle()
+          .eq('vendor_id', id).eq('clerk_user_id', user.id).maybeSingle()
         if (claim) setExistingClaim(true)
       }
       setLoading(false)
@@ -47,19 +48,19 @@ export default function ClaimVendorPage() {
   }, [id, user])
 
   async function handleSubmit() {
-    if (!user) { openAuthModal(); return }
+    if (!user) { openSignIn(); return }
     if (!message.trim()) { setError('Please add a message explaining your connection to this vendor.'); return }
     if (message.length > 500) { setError('Message must be under 500 characters.'); return }
 
     setSubmitting(true); setError('')
-    const { error: claimError } = await supabase.from('vendor_claims').insert({
-      vendor_id: id,
-      user_id:   user.id,
-      message:   message.trim(),
+    const res = await fetch('/api/vendor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'claim', vendor_id: id, message: message.trim() }),
     })
-
-    if (claimError) {
-      if (claimError.code === '23505') {
+    if (!res.ok) {
+      const { error: errMsg } = await res.json()
+      if (errMsg === 'duplicate') {
         setError('You have already submitted a claim for this vendor.')
       } else {
         setError('Something went wrong. Please try again.')
@@ -67,9 +68,6 @@ export default function ClaimVendorPage() {
       setSubmitting(false)
       return
     }
-
-    // Update vendor claim_status to pending
-    await supabase.from('vendors').update({ claim_status: 'pending' }).eq('id', id)
     setSubmitted(true)
     setSubmitting(false)
   }
@@ -155,7 +153,7 @@ export default function ClaimVendorPage() {
           {!user ? (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>You need to be signed in to claim a listing.</p>
-              <button onClick={openAuthModal} style={{ padding: '12px 28px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={() => openSignIn()} style={{ padding: '12px 28px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                 Sign in to continue
               </button>
             </div>

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseServer = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 )
 
 type Vendor = {
@@ -60,7 +60,7 @@ export default async function ShortlistPage({ params }: Props) {
   const { username } = await params
 
   const { data: profile } = await supabaseServer
-    .from('profiles').select('id, display_name, username')
+    .from('profiles').select('clerk_user_id, display_name, username')
     .eq('username', username).maybeSingle()
 
   if (!profile) {
@@ -78,7 +78,7 @@ export default async function ShortlistPage({ params }: Props) {
 
   const { data: savedRows } = await supabaseServer
     .from('saved_vendors').select('vendor_id')
-    .eq('user_id', profile.id)
+    .eq('clerk_user_id', profile.clerk_user_id)
 
   const vendorIds = (savedRows ?? []).map(r => r.vendor_id)
 

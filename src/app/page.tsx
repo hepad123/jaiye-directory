@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
 import { useEffect, useState } from 'react'
 import { useSupabase } from '@/hooks/useSupabase'
 import { useUser } from '@clerk/nextjs'
@@ -50,7 +49,6 @@ export default function HomePage() {
 
   return (
     <>
-      <Navbar />
       <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: jost }}>
 
         <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: 'clamp(48px, 8vw, 80px) 24px clamp(40px, 6vw, 64px)', textAlign: 'center' }}>

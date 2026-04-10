@@ -24,6 +24,16 @@ type Vendor = {
   price_from?: string
 }
 
+type ServiceRow = {
+  id: string
+  name: string
+  category: string
+  subcategories: string[]
+  location: string | null
+  city: string
+  instagram: string | null
+}
+
 type FollowProfile = {
   clerk_user_id: string
   display_name: string
@@ -45,6 +55,12 @@ const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Other':                 { emoji: '✦',  colour: '#57534E' },
 }
 
+const SERVICE_CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
+  'Hair':   { emoji: '💇🏾', colour: '#D97706' },
+  'Makeup': { emoji: '💄',   colour: '#DB2777' },
+  'Lashes': { emoji: '✨',   colour: '#0D9488' },
+}
+
 const CATEGORY_ORDER = [
   'Event Planning', 'Outfits', 'Styling', 'Makeup',
   'Hair & Gele', 'Photography', 'Videography & Content',
@@ -58,27 +74,15 @@ function Avatar({ name, size = 64, imageUrl }: { name: string; size?: number; im
   const initials = name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
   const colours  = ['#D97706', '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
   const colour   = colours[name.charCodeAt(0) % colours.length]
-
   if (imageUrl) {
     return (
-      <div style={{
-        width: size, height: size, borderRadius: '50%',
-        overflow: 'hidden', flexShrink: 0,
-        border: `2px solid ${colour}40`,
-      }}>
+      <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '2px solid ' + colour + '40' }}>
         <Image src={imageUrl} alt={name} width={size} height={size} style={{ borderRadius: '50%', objectFit: 'cover' }} />
       </div>
     )
   }
-
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: `${colour}18`, border: `2px solid ${colour}40`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.32, fontWeight: 700, color: colour,
-      fontFamily: 'var(--font-jost, sans-serif)', flexShrink: 0,
-    }}>
+    <div style={{ width: size, height: size, borderRadius: '50%', background: colour + '18', border: '2px solid ' + colour + '40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.32, fontWeight: 700, color: colour, fontFamily: 'var(--font-jost, sans-serif)', flexShrink: 0 }}>
       {initials || '?'}
     </div>
   )
@@ -89,21 +93,33 @@ function VendorRow({ vendor }: { vendor: Vendor }) {
   const igHandle = vendor.instagram?.replace('@', '').trim()
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)' }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: `${colour}15`, border: `1px solid ${colour}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>
-        {getEmoji(vendor.category)}
-      </div>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: colour + '15', border: '1px solid ' + colour + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>{getEmoji(vendor.category)}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>
-          {vendor.name}
-        </div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{vendor.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {vendor.location && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>{vendor.location}</span>}
           {igHandle && <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)' }}>@{igHandle}</span>}
         </div>
       </div>
-      {vendor.price_from && (
-        <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>₦{vendor.price_from}</div>
-      )}
+      {vendor.price_from && (<div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>N{vendor.price_from}</div>)}
+    </div>
+  )
+}
+
+function ServiceRow({ service }: { service: ServiceRow }) {
+  const meta     = SERVICE_CATEGORY_META[service.category] || { emoji: '✦', colour: '#D97706' }
+  const igHandle = service.instagram?.replace('@', '').trim()
+  const loc      = [service.location, service.city].filter(Boolean).join(', ')
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: meta.colour + '15', border: '1px solid ' + meta.colour + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>{meta.emoji}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{service.name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {loc && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>{loc}</span>}
+          {igHandle && <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)' }}>@{igHandle}</span>}
+        </div>
+      </div>
     </div>
   )
 }
@@ -127,9 +143,7 @@ function GroupedVendorList({ vendors }: { vendors: Vendor[] }) {
       {Object.entries(grouped).map(([cat, catVendors]) => (
         <div key={cat} style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'var(--bg-pill)', borderBottom: '1px solid var(--border)', borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: getColour(cat), textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: 'var(--font-jost, sans-serif)' }}>
-              {getEmoji(cat)} {cat}
-            </span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: getColour(cat), textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: 'var(--font-jost, sans-serif)' }}>{getEmoji(cat)} {cat}</span>
             <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>· {catVendors.length}</span>
           </div>
           <div style={{ background: 'var(--bg-card)', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
@@ -141,10 +155,35 @@ function GroupedVendorList({ vendors }: { vendors: Vendor[] }) {
   )
 }
 
-function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, followingIds }: {
-  title: string; people: FollowProfile[]; onClose: () => void
-  currentUserId?: string; onToggleFollow: (id: string) => void; followingIds: Set<string>
-}) {
+function GroupedServiceList({ services }: { services: ServiceRow[] }) {
+  if (services.length === 0) return null
+  const grouped = ['Hair', 'Makeup', 'Lashes'].reduce<Record<string, ServiceRow[]>>((acc, cat) => {
+    const inCat = services.filter(s => s.category === cat)
+    if (inCat.length > 0) acc[cat] = inCat
+    return acc
+  }, {})
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)', padding: '8px 16px', letterSpacing: 1.2, textTransform: 'uppercase' }}>Stylists</div>
+      {Object.entries(grouped).map(([cat, catServices]) => {
+        const meta = SERVICE_CATEGORY_META[cat] || { emoji: '✦', colour: '#D97706' }
+        return (
+          <div key={cat} style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'var(--bg-pill)', borderBottom: '1px solid var(--border)', borderTop: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: meta.colour, textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: 'var(--font-jost, sans-serif)' }}>{meta.emoji} {cat}</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>· {catServices.length}</span>
+            </div>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
+              {catServices.map(s => <ServiceRow key={s.id} service={s} />)}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, followingIds }: { title: string; people: FollowProfile[]; onClose: () => void; currentUserId?: string; onToggleFollow: (id: string) => void; followingIds: Set<string> }) {
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(28,25,23,0.45)', backdropFilter: 'blur(2px)' }} />
@@ -153,7 +192,7 @@ function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, fo
           <div style={{ width: 32, height: 3, background: 'var(--border)', borderRadius: 2, margin: '0 auto 14px' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0, fontFamily: 'var(--font-playfair, serif)' }}>{title}</h3>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}>×</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}>x</button>
           </div>
         </div>
         <div style={{ overflowY: 'auto', flex: 1 }}>
@@ -164,20 +203,10 @@ function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, fo
                 <Avatar name={p.display_name} size={38} imageUrl={p.avatar_url} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.display_name}</div>
-                  {p.username && (
-                    <Link href={`/profile/${p.username}`} onClick={onClose} style={{ fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none' }}>
-                      @{p.username}
-                    </Link>
-                  )}
+                  {p.username && (<Link href={'/profile/' + p.username} onClick={onClose} style={{ fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none' }}>@{p.username}</Link>)}
                 </div>
                 {currentUserId && p.clerk_user_id !== currentUserId && (
-                  <button onClick={() => onToggleFollow(p.clerk_user_id)} style={{
-                    padding: '5px 14px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                    background: followingIds.has(p.clerk_user_id) ? 'var(--bg-card)' : 'var(--accent)',
-                    color: followingIds.has(p.clerk_user_id) ? 'var(--text-muted)' : 'white',
-                    border: followingIds.has(p.clerk_user_id) ? '1px solid var(--border)' : 'none',
-                    fontFamily: 'var(--font-jost, sans-serif)',
-                  }}>
+                  <button onClick={() => onToggleFollow(p.clerk_user_id)} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', background: followingIds.has(p.clerk_user_id) ? 'var(--bg-card)' : 'var(--accent)', color: followingIds.has(p.clerk_user_id) ? 'var(--text-muted)' : 'white', border: followingIds.has(p.clerk_user_id) ? '1px solid var(--border)' : 'none', fontFamily: 'var(--font-jost, sans-serif)' }}>
                     {followingIds.has(p.clerk_user_id) ? 'Following' : 'Follow'}
                   </button>
                 )}
@@ -200,6 +229,8 @@ export default function ProfilePage() {
   const [profile, setProfile]           = useState<Profile | null>(null)
   const [usedVendors, setUsedVendors]   = useState<Vendor[]>([])
   const [recVendors, setRecVendors]     = useState<Vendor[]>([])
+  const [usedServices, setUsedServices] = useState<ServiceRow[]>([])
+  const [recServices, setRecServices]   = useState<ServiceRow[]>([])
   const [followers, setFollowers]       = useState<FollowProfile[]>([])
   const [following, setFollowing]       = useState<FollowProfile[]>([])
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
@@ -213,13 +244,12 @@ export default function ProfilePage() {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const { data: profileData } = await supabase
-        .from('profiles').select('*').eq('username', username).maybeSingle()
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('username', username).maybeSingle()
       if (!profileData) { setNotFound(true); setLoading(false); return }
       setProfile(profileData)
       const profileId = profileData.clerk_user_id
 
-      const [usedRows, recRows, followerRows, followingRows, myFollowingRows] = await Promise.all([
+      const [usedRows, recRows, followerRows, followingRows, myFollowingRows, serviceUsedRows, serviceRecRows] = await Promise.all([
         supabase.from('vendor_used').select('vendor_id').eq('clerk_user_id', profileId),
         supabase.from('vendor_recommendations').select('vendor_id').eq('clerk_user_id', profileId),
         supabase.from('follows').select('clerk_follower_id').eq('clerk_following_id', profileId),
@@ -227,14 +257,18 @@ export default function ProfilePage() {
         user?.id
           ? supabase.from('follows').select('clerk_following_id').eq('clerk_follower_id', user.id)
           : Promise.resolve({ data: [] }),
+        supabase.from('service_used').select('service_id').eq('clerk_user_id', profileId),
+        supabase.from('service_recommendations').select('service_id').eq('clerk_user_id', profileId),
       ])
 
-      const usedIds     = [...new Set((usedRows.data     ?? []).map((r: { vendor_id: string }) => r.vendor_id))]
-      const recIds      = [...new Set((recRows.data      ?? []).map((r: { vendor_id: string }) => r.vendor_id))]
-      const followerIds = (followerRows.data  ?? []).map((r: { clerk_follower_id: string })  => r.clerk_follower_id)
-      const followIds   = (followingRows.data ?? []).map((r: { clerk_following_id: string }) => r.clerk_following_id)
+      const usedIds        = [...new Set((usedRows.data        ?? []).map((r: { vendor_id: string }) => r.vendor_id))]
+      const recIds         = [...new Set((recRows.data         ?? []).map((r: { vendor_id: string }) => r.vendor_id))]
+      const followerIds    = (followerRows.data  ?? []).map((r: { clerk_follower_id: string })  => r.clerk_follower_id)
+      const followIds      = (followingRows.data ?? []).map((r: { clerk_following_id: string }) => r.clerk_following_id)
+      const serviceUsedIds = [...new Set((serviceUsedRows.data ?? []).map((r: { service_id: string }) => r.service_id))]
+      const serviceRecIds  = [...new Set((serviceRecRows.data  ?? []).map((r: { service_id: string }) => r.service_id))]
 
-      const [usedVendorRes, recVendorRes, followerProfileRes, followingProfileRes] = await Promise.all([
+      const [usedVendorRes, recVendorRes, followerProfileRes, followingProfileRes, usedServiceRes, recServiceRes] = await Promise.all([
         usedIds.length
           ? supabase.from('vendors').select('id, name, category, location, instagram, price_from').in('id', usedIds)
           : Promise.resolve({ data: [] }),
@@ -247,12 +281,20 @@ export default function ProfilePage() {
         followIds.length
           ? supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').in('clerk_user_id', followIds)
           : Promise.resolve({ data: [] }),
+        serviceUsedIds.length
+          ? supabase.from('services').select('id, name, category, subcategories, location, city, instagram').in('id', serviceUsedIds)
+          : Promise.resolve({ data: [] }),
+        serviceRecIds.length
+          ? supabase.from('services').select('id, name, category, subcategories, location, city, instagram').in('id', serviceRecIds)
+          : Promise.resolve({ data: [] }),
       ])
 
       if (usedVendorRes.data)       setUsedVendors(usedVendorRes.data)
       if (recVendorRes.data)        setRecVendors(recVendorRes.data)
       if (followerProfileRes.data)  setFollowers(followerProfileRes.data)
       if (followingProfileRes.data) setFollowing(followingProfileRes.data)
+      if (usedServiceRes.data)      setUsedServices(usedServiceRes.data)
+      if (recServiceRes.data)       setRecServices(recServiceRes.data)
       if (myFollowingRows.data)     setFollowingIds(new Set(myFollowingRows.data.map((r: { clerk_following_id: string }) => r.clerk_following_id)))
 
       setLoading(false)
@@ -263,24 +305,12 @@ export default function ProfilePage() {
   const handleToggleFollow = useCallback(async (targetId: string) => {
     if (!user?.id) { openSignIn(); return }
     const isFollowing = followingIds.has(targetId)
-    setFollowingIds(prev => {
-      const n = new Set(prev)
-      isFollowing ? n.delete(targetId) : n.add(targetId)
-      return n
-    })
+    setFollowingIds(prev => { const n = new Set(prev); isFollowing ? n.delete(targetId) : n.add(targetId); return n })
     if (isFollowing) {
-      await fetch('/api/follows', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target_id: targetId }),
-      })
+      await fetch('/api/follows', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target_id: targetId }) })
       if (targetId === profile?.clerk_user_id) setFollowers(prev => prev.filter(f => f.clerk_user_id !== user.id))
     } else {
-      await fetch('/api/follows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target_id: targetId }),
-      })
+      await fetch('/api/follows', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target_id: targetId }) })
       if (targetId === profile?.clerk_user_id) {
         const { data } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').eq('clerk_user_id', user.id).maybeSingle()
         if (data) setFollowers(prev => [...prev, data])
@@ -294,9 +324,7 @@ export default function ProfilePage() {
         <div style={{ height: 120, background: 'var(--hero-grad)' }} />
         <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 20, marginTop: -8, boxShadow: '0 4px 24px rgba(28,25,23,0.08)', border: '1px solid var(--border)' }}>
-            {[70, 40, 50].map((h, i) => (
-              <div key={i} style={{ height: h, background: 'var(--bg-pill)', borderRadius: 10, marginBottom: 12, opacity: 0.5 }} />
-            ))}
+            {[70, 40, 50].map((h, i) => (<div key={i} style={{ height: h, background: 'var(--bg-pill)', borderRadius: 10, marginBottom: 12, opacity: 0.5 }} />))}
           </div>
         </div>
       </main>
@@ -309,7 +337,7 @@ export default function ProfilePage() {
         <div style={{ textAlign: 'center', padding: 40 }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>✦</div>
           <h2 style={{ fontSize: 18, color: 'var(--text)', fontWeight: 700, margin: '0 0 8px', fontFamily: 'var(--font-playfair, serif)' }}>Profile not found</h2>
-          <Link href="/" style={{ color: 'var(--accent)', fontSize: 13, textDecoration: 'none' }}>← Back to directory</Link>
+          <Link href="/" style={{ color: 'var(--accent)', fontSize: 13, textDecoration: 'none' }}>Back to home</Link>
         </div>
       </main>
     )
@@ -318,7 +346,10 @@ export default function ProfilePage() {
   const displayName        = profile?.display_name || 'Unknown'
   const handle             = profile?.username || ''
   const isFollowingProfile = followingIds.has(profile?.clerk_user_id ?? '')
-  const activeVendors      = activeTab === 'used' ? usedVendors : recVendors
+  const activeVendors      = activeTab === 'used' ? usedVendors  : recVendors
+  const activeServices     = activeTab === 'used' ? usedServices : recServices
+  const totalUsed          = usedVendors.length  + usedServices.length
+  const totalRec           = recVendors.length   + recServices.length
 
   return (
     <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh' }}>
@@ -328,7 +359,7 @@ export default function ProfilePage() {
           <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', opacity: 0.6 }} />
           <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
         </div>
-        <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600 }}>Vendor Profile</div>
+        <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600 }}>Profile</div>
       </div>
 
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
@@ -345,32 +376,10 @@ export default function ProfilePage() {
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Following</div>
               </button>
             </div>
-
-            {/* Edit profile button — now a Link */}
             {isOwner ? (
-              <Link href="/profile/edit" style={{
-                padding: '7px 16px', borderRadius: 20,
-                border: '1px solid var(--border)',
-                background: 'var(--bg-card)',
-                fontSize: 12, fontWeight: 600,
-                color: 'var(--text)', cursor: 'pointer',
-                fontFamily: 'var(--font-jost, sans-serif)',
-                textDecoration: 'none', display: 'inline-block',
-              }}>
-                Edit profile
-              </Link>
+              <Link href="/profile/edit" style={{ padding: '7px 16px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--bg-card)', fontSize: 12, fontWeight: 600, color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font-jost, sans-serif)', textDecoration: 'none', display: 'inline-block' }}>Edit profile</Link>
             ) : (
-              <button
-                onClick={() => { if (!user) { openSignIn(); return }; handleToggleFollow(profile!.clerk_user_id) }}
-                style={{
-                  padding: '7px 16px', borderRadius: 20,
-                  border: isFollowingProfile ? '1px solid var(--border)' : 'none',
-                  background: isFollowingProfile ? 'var(--bg-card)' : 'var(--accent)',
-                  fontSize: 12, fontWeight: 700,
-                  color: isFollowingProfile ? 'var(--text-muted)' : 'white',
-                  cursor: 'pointer', transition: 'all 0.15s',
-                  fontFamily: 'var(--font-jost, sans-serif)',
-                }}>
+              <button onClick={() => { if (!user) { openSignIn(); return }; handleToggleFollow(profile!.clerk_user_id) }} style={{ padding: '7px 16px', borderRadius: 20, border: isFollowingProfile ? '1px solid var(--border)' : 'none', background: isFollowingProfile ? 'var(--bg-card)' : 'var(--accent)', fontSize: 12, fontWeight: 700, color: isFollowingProfile ? 'var(--text-muted)' : 'white', cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'var(--font-jost, sans-serif)' }}>
                 {isFollowingProfile ? 'Following' : 'Follow'}
               </button>
             )}
@@ -384,43 +393,36 @@ export default function ProfilePage() {
 
           <div style={{ display: 'flex', borderTop: '1px solid var(--border)', marginLeft: -20, marginRight: -20 }}>
             {[
-              { key: 'used',        label: '✓ Used',  count: usedVendors.length },
-              { key: 'recommended', label: '⭐ Recs', count: recVendors.length  },
+              { key: 'used',        label: 'Used',  count: totalUsed },
+              { key: 'recommended', label: 'Recs',  count: totalRec  },
             ].map(tab => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key as 'used' | 'recommended')}
-                style={{
-                  flex: 1, padding: '13px 8px', background: 'none', border: 'none', cursor: 'pointer',
-                  borderBottom: activeTab === tab.key ? '2px solid var(--accent)' : '2px solid transparent',
-                  color: activeTab === tab.key ? 'var(--accent)' : 'var(--text-muted)',
-                  fontSize: 12, fontWeight: activeTab === tab.key ? 700 : 500,
-                  transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  fontFamily: 'var(--font-jost, sans-serif)',
-                }}>
+              <button key={tab.key} onClick={() => setActiveTab(tab.key as 'used' | 'recommended')} style={{ flex: 1, padding: '13px 8px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: activeTab === tab.key ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === tab.key ? 'var(--accent)' : 'var(--text-muted)', fontSize: 12, fontWeight: activeTab === tab.key ? 700 : 500, transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'var(--font-jost, sans-serif)' }}>
                 {tab.label}
-                <span style={{ background: activeTab === tab.key ? 'var(--accent-light)' : 'var(--bg-pill)', color: activeTab === tab.key ? 'var(--accent)' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>
-                  {tab.count}
-                </span>
+                <span style={{ background: activeTab === tab.key ? 'var(--accent-light)' : 'var(--bg-pill)', color: activeTab === tab.key ? 'var(--accent)' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>{tab.count}</span>
               </button>
             ))}
           </div>
         </div>
 
         <div style={{ marginTop: 8, paddingBottom: 60 }}>
-          {activeVendors.length === 0 ? (
+          {activeVendors.length === 0 && activeServices.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
               {activeTab === 'used'
-                ? (isOwner ? "You haven't marked any vendors as used yet." : `${displayName.split(' ')[0]} hasn't marked any vendors yet.`)
-                : (isOwner ? "You haven't recommended any vendors yet." : `${displayName.split(' ')[0]} hasn't recommended any vendors yet.`)}
+                ? (isOwner ? "You haven't marked any vendors or stylists as used yet." : displayName.split(' ')[0] + " hasn't marked any yet.")
+                : (isOwner ? "You haven't recommended any vendors or stylists yet." : displayName.split(' ')[0] + " hasn't recommended any yet.")}
             </div>
           ) : (
-            <GroupedVendorList vendors={activeVendors} />
+            <>
+              <GroupedVendorList vendors={activeVendors} />
+              <GroupedServiceList services={activeServices} />
+            </>
           )}
         </div>
       </div>
 
       {sheet && (
         <PeopleSheet
-          title={sheet === 'followers' ? `Followers · ${followers.length}` : `Following · ${following.length}`}
+          title={sheet === 'followers' ? 'Followers - ' + followers.length : 'Following - ' + following.length}
           people={sheet === 'followers' ? followers : following}
           onClose={() => setSheet(null)}
           currentUserId={user?.id}
@@ -430,7 +432,7 @@ export default function ProfilePage() {
       )}
 
       <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-jost, sans-serif)' }}>
-        Made with ♥ for Nigerian brides &amp; families
+        Made with love for Nigerian brides and families
       </footer>
     </main>
   )

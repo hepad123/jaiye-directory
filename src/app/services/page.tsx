@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useSupabase } from '@/hooks/useSupabase'
-import Navbar from '@/components/Navbar'
 
 interface Service {
   id: string
@@ -143,7 +142,6 @@ export default function ServicesPage() {
 
   return (
     <>
-      <Navbar />
       <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: jost }}>
         <div style={{ background: '#1C1917', color: '#fff', padding: '56px 24px 48px', textAlign: 'center' }}>
           <p style={{ fontFamily: play, fontSize: 13, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 12 }}>Beauty and Personal Care</p>

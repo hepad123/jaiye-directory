@@ -52,7 +52,7 @@ function UserSearch() {
       setSearching(false)
     }, 250)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, supabase])
 
   const avatarColours = ['#D97706', '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
   const avatarColour  = (name: string) => avatarColours[name.charCodeAt(0) % avatarColours.length]
@@ -143,8 +143,6 @@ function UserSearch() {
   )
 }
 
-// ── Theme toggle button ────────────────────────────────────────────────────────
-
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
   const isDark = theme === 'dark'
@@ -161,7 +159,6 @@ function ThemeToggle() {
         transition: 'background 0.2s, border-color 0.2s',
         flexShrink: 0,
       }}>
-      {/* Sliding circle with icon */}
       <div style={{
         position: 'absolute', top: 1,
         left: isDark ? 21 : 1,
@@ -173,7 +170,6 @@ function ThemeToggle() {
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       }}>
         {isDark ? (
-          /* Sun — visible in dark mode, click to go light */
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="5"/>
             <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
@@ -182,7 +178,6 @@ function ThemeToggle() {
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
           </svg>
         ) : (
-          /* Moon — visible in light mode, click to go dark */
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
@@ -191,8 +186,6 @@ function ThemeToggle() {
     </button>
   )
 }
-
-// ── Profile dropdown ──────────────────────────────────────────────────────────
 
 function ProfileDropdown({
   user, username, displayName, profileChecked, isActive, signOut,
@@ -234,13 +227,8 @@ function ProfileDropdown({
         }}
       >
         {avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt={displayName || username || 'Profile'}
-            width={32}
-            height={32}
-            style={{ borderRadius: '50%', objectFit: 'cover' }}
-          />
+          <Image src={avatarUrl} alt={displayName || username || 'Profile'} width={32} height={32}
+            style={{ borderRadius: '50%', objectFit: 'cover' }} />
         ) : (
           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-jost, sans-serif)' }}>
             {profileChecked
@@ -260,87 +248,44 @@ function ProfileDropdown({
           width: 220, overflow: 'hidden',
           fontFamily: 'var(--font-jost, sans-serif)',
         }}>
-          {/* User info header */}
           <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 1 }}>
               {displayName || user?.firstName || 'User'}
             </div>
-            {username && (
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>@{username}</div>
-            )}
+            {username && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>@{username}</div>}
           </div>
 
-          {/* Menu items */}
           <div style={{ padding: '6px 0' }}>
             {username && (
-              <Link
-                href={`/profile/${username}`}
-                onClick={() => setOpen(false)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 16px', textDecoration: 'none',
-                  color: 'var(--text)', fontSize: 13,
-                  transition: 'background 0.1s',
-                }}
+              <Link href={`/profile/${username}`} onClick={() => setOpen(false)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', textDecoration: 'none', color: 'var(--text)', fontSize: 13, transition: 'background 0.1s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>👤</span>
-                My Profile
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>👤</span>My Profile
               </Link>
             )}
-
             {username && (
-              <Link
-                href="/profile/edit"
-                onClick={() => setOpen(false)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 16px', textDecoration: 'none',
-                  color: 'var(--text)', fontSize: 13,
-                  transition: 'background 0.1s',
-                }}
+              <Link href="/profile/edit" onClick={() => setOpen(false)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', textDecoration: 'none', color: 'var(--text)', fontSize: 13, transition: 'background 0.1s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>✏️</span>
-                Edit Profile
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>✏️</span>Edit Profile
               </Link>
             )}
-
-            <button
-              onClick={() => { setOpen(false); openUserProfile() }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                padding: '9px 16px', background: 'none', border: 'none',
-                color: 'var(--text)', fontSize: 13, cursor: 'pointer',
-                textAlign: 'left', fontFamily: 'var(--font-jost, sans-serif)',
-                transition: 'background 0.1s',
-              }}
+            <button onClick={() => { setOpen(false); openUserProfile() }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 16px', background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-jost, sans-serif)', transition: 'background 0.1s' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>⚙️</span>
-              Account Settings
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+              <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>⚙️</span>Account Settings
             </button>
           </div>
 
-          {/* Sign out */}
           <div style={{ borderTop: '1px solid var(--border)', padding: '6px 0' }}>
-            <button
-              onClick={() => { setOpen(false); signOut() }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                padding: '9px 16px', background: 'none', border: 'none',
-                color: '#DC2626', fontSize: 13, cursor: 'pointer',
-                textAlign: 'left', fontFamily: 'var(--font-jost, sans-serif)',
-                transition: 'background 0.1s',
-              }}
+            <button onClick={() => { setOpen(false); signOut() }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 16px', background: 'none', border: 'none', color: '#DC2626', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-jost, sans-serif)', transition: 'background 0.1s' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>🚪</span>
-              Sign Out
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+              <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>🚪</span>Sign Out
             </button>
           </div>
         </div>
@@ -357,9 +302,9 @@ export default function Navbar() {
   const { signOut } = useClerk()
   const pathname = usePathname()
   const router = useRouter()
-  const [username, setUsername]       = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [savedCount, setSavedCount]   = useState(0)
+  const [username, setUsername]             = useState('')
+  const [displayName, setDisplayName]       = useState('')
+  const [savedCount, setSavedCount]         = useState(0)
   const [profileChecked, setProfileChecked] = useState(false)
 
   useEffect(() => {
@@ -370,7 +315,6 @@ export default function Navbar() {
           setUsername(data.username)
           setDisplayName(data.display_name || '')
         } else if (pathname !== '/onboarding') {
-          // Signed in but no profile — redirect to onboarding
           router.push('/onboarding')
         }
         setProfileChecked(true)
@@ -404,12 +348,8 @@ export default function Navbar() {
         background: 'var(--bg-card)',
         borderBottom: '1px solid var(--border)',
         padding: '10px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'sticky', top: 0, zIndex: 50,
         transition: 'background 0.2s ease, border-color 0.2s ease',
       }}>
 
@@ -439,6 +379,21 @@ export default function Navbar() {
           }}>
             <span style={{ fontSize: 14 }}>✦</span>
             <span className="nav-label">Directory</span>
+          </Link>
+
+          {/* ── Services link (new) ── */}
+          <Link href="/services" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            padding: '6px 10px', borderRadius: 20,
+            background: isActive('/services') ? 'var(--bg-pill)' : 'transparent',
+            textDecoration: 'none',
+            color: isActive('/services') ? 'var(--text)' : 'var(--text-muted)',
+            fontFamily: 'var(--font-jost, sans-serif)',
+            fontSize: 13, fontWeight: isActive('/services') ? 600 : 400,
+            transition: 'all 0.15s',
+          }}>
+            <span style={{ fontSize: 14 }}>💄</span>
+            <span className="nav-label">Services</span>
           </Link>
 
           {/* Saved */}

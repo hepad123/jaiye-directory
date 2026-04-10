@@ -386,21 +386,22 @@ function ServiceCard({
         {/* Links */}
         <div style={{ display: 'flex', gap: 8 }}>
           {service.instagram && (
-            
-              href={"https://instagram.com/" + service.instagram}
-              target="_blank" rel="noopener noreferrer"
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                padding: 8, background: 'var(--bg)', border: '1px solid var(--border)',
-                borderRadius: 8, fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none',
-                fontFamily: 'var(--font-jost, sans-serif)', transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; ;(e.currentTarget as HTMLElement).style.color = 'var(--accent)' }}
-              onMouseLeave={e => { ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; ;(e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}
-            >
-              <span>📸</span> Instagram
-            </a>
-          )}
+  
+    href={"https://instagram.com/".concat(service.instagram)}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+      padding: 8, background: 'var(--bg)', border: '1px solid var(--border)',
+      borderRadius: 8, fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none',
+      fontFamily: 'var(--font-jost, sans-serif)', transition: 'all 0.15s',
+    }}
+    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }}
+    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}
+  >
+    <span>📸</span> Instagram
+  </a>
+)}
           {service.phone && (
             
               href={`tel:${service.phone}`}

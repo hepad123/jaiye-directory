@@ -9,7 +9,7 @@ interface Service {
   id: string
   name: string
   category: string
-  subcategory: string
+  subcategories: string[]
   city: string
   location: string | null
   instagram: string | null
@@ -17,7 +17,16 @@ interface Service {
   price_from: number | null
   bio: string | null
   verified: boolean
+  website: string | null
 }
+
+const CATEGORIES: Record<string, string[]> = {
+  Hair: ['All', 'Braids', 'Natural Hair', 'Relaxed Hair', 'Sew In', 'Silk Press', 'Textured Hair', 'Wigs', 'Weaves', 'Locs', 'Knotless', 'Faux Locs'],
+  Makeup: ['All', 'Bridal MUA', 'Glam', 'Editorial', 'Airbrush'],
+  Lashes: ['All', 'Extensions', 'Lash Lift', 'Strip Lashes'],
+}
+
+const CITIES = ['All', 'Lagos', 'Abuja', 'Port Harcourt', 'Ibadan']
 
 const SUB_COLOR: Record<string, string> = {
   'Braids': '#7C3AED', 'Wigs': '#DB2777', 'Natural Hair': '#059669', 'Weaves': '#D97706',
@@ -27,29 +36,9 @@ const SUB_COLOR: Record<string, string> = {
   'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#BE185D', 'Textured Hair': '#065F46',
 }
 
-const CITIES = ['All', 'Lagos', 'Abuja', 'Port Harcourt', 'Ibadan']
-
-const CAT_ICON: Record<string, string> = { Hair: 'Hair', Makeup: 'MUA', Lashes: 'Lash' }
-
-const SUB_COLOR: Record<string, string> = {
-  'Braids': '#7C3AED', 'Wigs': '#DB2777', 'Natural Hair': '#059669', 'Weaves': '#D97706',
-  'Locs': '#92400E', 'Knotless': '#6D28D9', 'Faux Locs': '#B45309', 'Bridal MUA': '#BE185D',
-  'Glam': '#DC2626', 'Editorial': '#1D4ED8', 'Airbrush': '#0891B2',
-  'Extensions': '#7C3AED', 'Lash Lift': '#0D9488', 'Strip Lashes': '#9333EA',
-}
-
-const NAIRA = 'N'
-const PIN = 'v'
-const HEART_EMPTY = 'o'
-const HEART_FULL = 'O'
-const CHECK = 'v'
-const IG_LABEL = 'Instagram'
-const CALL_LABEL = 'Call'
-const NO_RESULT_LABELS: Record<string, string> = { Hair: 'Hair', Makeup: 'Makeup', Lashes: 'Lashes' }
-
 function priceStr(price: number | null): string {
   if (!price) return 'Price on request'
-  return NAIRA + price.toLocaleString()
+  return 'N' + price.toLocaleString()
 }
 
 export default function ServicesPage() {
@@ -68,7 +57,7 @@ export default function ServicesPage() {
   const fetchServices = useCallback(async () => {
     setLoading(true)
     let q = supabase.from('services').select('*').eq('category', cat).order('verified', { ascending: false }).order('name')
-    if (sub !== 'All') q = q.eq('subcategory', sub)
+    if (sub !== 'All') q = q.contains('subcategories', [sub])
     if (city !== 'All') q = q.eq('city', city)
     const { data } = await q
     setServices(data || [])
@@ -136,31 +125,17 @@ export default function ServicesPage() {
         </div>
 
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
-          {!loading && (
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24 }}>
-              {services.length} {services.length === 1 ? 'result' : 'results'}
-              {sub !== 'All' ? ' - ' + sub : ''}
-              {city !== 'All' ? ' - ' + city : ''}
-            </p>
-          )}
-          {loading && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-              {[0,1,2,3,4,5].map(i => (
-                <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 12, height: 200, animation: 'pulse 1.5s ease infinite', opacity: 0.5 }} />
-              ))}
-            </div>
-          )}
+          {!loading && (<p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24 }}>{services.length} {services.length === 1 ? 'result' : 'results'}{sub !== 'All' ? ' - ' + sub : ''}{city !== 'All' ? ' - ' + city : ''}</p>)}
+          {loading && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>{[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: 'var(--bg-card)', borderRadius: 12, height: 200, animation: 'pulse 1.5s ease infinite', opacity: 0.5 }} />))}</div>)}
           {!loading && services.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-              <p style={{ fontFamily: play, fontSize: 22, marginBottom: 8 }}>No {NO_RESULT_LABELS[cat]} results found</p>
+              <p style={{ fontFamily: play, fontSize: 22, marginBottom: 8 }}>No results found</p>
               <p style={{ color: 'var(--text-muted)', fontSize: 15 }}>Try a different subcategory or city</p>
             </div>
           )}
           {!loading && services.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-              {services.map(sv => (
-                <Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} isSaving={savingId === sv.id} onToggleSave={() => toggleSave(sv.id)} isLoggedIn={!!user} />
-              ))}
+              {services.map(sv => (<Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} isSaving={savingId === sv.id} onToggleSave={() => toggleSave(sv.id)} isLoggedIn={!!user} />))}
             </div>
           )}
         </div>
@@ -171,9 +146,11 @@ export default function ServicesPage() {
 }
 
 function Card({ service, isSaved, isSaving, onToggleSave, isLoggedIn }: { service: Service; isSaved: boolean; isSaving: boolean; onToggleSave: () => void; isLoggedIn: boolean }) {
-  const ac = SUB_COLOR[service.subcategory] || '#D97706'
+  const subs = service.subcategories || []
+  const ac = SUB_COLOR[subs[0]] || '#D97706'
   const igUrl = service.instagram ? 'https://instagram.com/' + service.instagram : null
   const telUrl = service.phone ? 'tel:' + service.phone : null
+  const webUrl = service.website ? 'https://' + service.website : null
   const loc = [service.location, service.city].filter(Boolean).join(', ')
   const price = priceStr(service.price_from)
   const jost = 'var(--font-jost, sans-serif)'
@@ -186,22 +163,25 @@ function Card({ service, isSaved, isSaving, onToggleSave, isLoggedIn }: { servic
       <div style={{ padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <h3 style={{ fontFamily: play, fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{service.name}</h3>
-              {service.verified && <span style={{ fontSize: 12, color: 'var(--accent)', flexShrink: 0 }}>{CHECK}</span>}
+              {service.verified && <span style={{ fontSize: 12, color: 'var(--accent)', flexShrink: 0 }}>verified</span>}
             </div>
-            <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, background: ac + '18', color: ac, fontSize: 11, fontWeight: 600 }}>{service.subcategory}</span>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, background: (SUB_COLOR[s] || '#D97706') + '18', color: SUB_COLOR[s] || '#D97706', fontSize: 11, fontWeight: 600 }}>{s}</span>))}
+            </div>
           </div>
           <button onClick={onToggleSave} disabled={isSaving || !isLoggedIn} title={!isLoggedIn ? 'Sign in to save' : isSaved ? 'Remove' : 'Save'} style={{ background: isSaved ? 'var(--accent)' : 'transparent', border: '1px solid', borderColor: isSaved ? 'var(--accent)' : 'var(--border)', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isLoggedIn ? 'pointer' : 'default', opacity: isSaving ? 0.5 : 1, transition: 'all 0.15s', flexShrink: 0, marginLeft: 8 }}>
-            <span style={{ fontSize: 14 }}>{isSaved ? HEART_FULL : HEART_EMPTY}</span>
+            <span style={{ fontSize: 14 }}>{isSaved ? 'saved' : 'save'}</span>
           </button>
         </div>
-        {loc && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 10px' }}>{PIN} {loc}</p>}
+        {loc && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 10px' }}>{loc}</p>}
         {service.bio && <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{service.bio}</p>}
         <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: '0 0 14px' }}>{price}{service.price_from && <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}> from</span>}</p>
         <div style={{ display: 'flex', gap: 8 }}>
-          {igUrl && <a href={igUrl} target="_blank" rel="noopener noreferrer" style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>{IG_LABEL}</a>}
-          {telUrl && <a href={telUrl} style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#B45309'; (e.currentTarget as HTMLElement).style.color = '#B45309' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>{CALL_LABEL}</a>}
+          {igUrl && <a href={igUrl} target="_blank" rel="noopener noreferrer" style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>Instagram</a>}
+          {telUrl && <a href={telUrl} style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#B45309'; (e.currentTarget as HTMLElement).style.color = '#B45309' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>Call</a>}
+          {webUrl && <a href={webUrl} target="_blank" rel="noopener noreferrer" style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>Website</a>}
         </div>
       </div>
     </div>

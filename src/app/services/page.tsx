@@ -44,7 +44,7 @@ const SUB_COLOR: Record<string, string> = {
 }
 
 function priceStr(price: number | null): string {
-  if (!price) return 'Price on request'
+  if (!price) return ''
   return 'N' + price.toLocaleString()
 }
 
@@ -228,7 +228,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
         {loc && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 10px' }}>{loc}</p>}
         {service.bio && <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{service.bio}</p>}
-        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: '0 0 14px' }}>{price}{service.price_from && <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}> from</span>}</p>
+        {price && <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: '0 0 14px' }}>{price}<span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}> from</span></p>}
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           {igUrl && <a href={igUrl} target="_blank" rel="noopener noreferrer" style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>Instagram</a>}

@@ -15,7 +15,6 @@ interface Service {
   phone: string | null
   price_from: number | null
   bio: string | null
-  verified: boolean
   website: string | null
 }
 
@@ -245,7 +244,6 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 36, fontFamily: play }}>{service.name}</div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-          {service.verified && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: jost }}>verified</div>}
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: jost }}>{s}</span>))}
         </div>
 

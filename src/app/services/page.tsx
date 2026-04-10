@@ -20,6 +20,13 @@ interface Service {
   website: string | null
 }
 
+type ServiceStats = {
+  usedCount: number
+  recCount: number
+  hasUsed: boolean
+  hasRec: boolean
+}
+
 const CATEGORIES: Record<string, string[]> = {
   Hair: ['All', 'Braids', 'Natural Hair', 'Relaxed Hair', 'Sew In', 'Silk Press', 'Textured Hair', 'Wigs', 'Weaves', 'Locs', 'Knotless', 'Faux Locs'],
   Makeup: ['All', 'Bridal MUA', 'Glam', 'Editorial', 'Airbrush'],
@@ -33,13 +40,15 @@ const SUB_COLOR: Record<string, string> = {
   'Locs': '#92400E', 'Knotless': '#6D28D9', 'Faux Locs': '#B45309', 'Bridal MUA': '#BE185D',
   'Glam': '#DC2626', 'Editorial': '#1D4ED8', 'Airbrush': '#0891B2',
   'Extensions': '#7C3AED', 'Lash Lift': '#0D9488', 'Strip Lashes': '#9333EA',
-  'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#BE185D', 'Textured Hair': '#065F46',
+  'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#9D174D', 'Textured Hair': '#065F46',
 }
 
 function priceStr(price: number | null): string {
   if (!price) return 'Price on request'
   return 'N' + price.toLocaleString()
 }
+
+const emptyStats: ServiceStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 
 export default function ServicesPage() {
   const { user } = useUser()
@@ -50,7 +59,7 @@ export default function ServicesPage() {
   const [sub, setSub] = useState('All')
   const [city, setCity] = useState('All')
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
-  const [savingId, setSavingId] = useState<string | null>(null)
+  const [stats, setStats] = useState<Record<string, ServiceStats>>({})
 
   useEffect(() => { setSub('All') }, [cat])
 
@@ -60,9 +69,30 @@ export default function ServicesPage() {
     if (sub !== 'All') q = q.contains('subcategories', [sub])
     if (city !== 'All') q = q.eq('city', city)
     const { data } = await q
-    setServices(data || [])
+    const rows = data || []
+    setServices(rows)
+
+    if (rows.length > 0) {
+      const ids = rows.map((s: Service) => s.id)
+      const [usedRes, recRes] = await Promise.all([
+        supabase.from('service_used').select('service_id, clerk_user_id').in('service_id', ids),
+        supabase.from('service_recommendations').select('service_id, clerk_user_id').in('service_id', ids),
+      ])
+      const usedRows = usedRes.data || []
+      const recRows  = recRes.data  || []
+      const newStats: Record<string, ServiceStats> = {}
+      rows.forEach((s: Service) => {
+        newStats[s.id] = {
+          usedCount: usedRows.filter((r: {service_id: string}) => r.service_id === s.id).length,
+          recCount:  recRows.filter((r: {service_id: string})  => r.service_id === s.id).length,
+          hasUsed:   user?.id ? usedRows.some((r: {service_id: string; clerk_user_id: string}) => r.service_id === s.id && r.clerk_user_id === user.id) : false,
+          hasRec:    user?.id ? recRows.some((r: {service_id: string; clerk_user_id: string})  => r.service_id === s.id && r.clerk_user_id === user.id) : false,
+        }
+      })
+      setStats(newStats)
+    }
     setLoading(false)
-  }, [supabase, cat, sub, city])
+  }, [supabase, cat, sub, city, user])
 
   const fetchSaved = useCallback(async () => {
     if (!user?.id) { setSavedIds(new Set()); return }
@@ -73,18 +103,40 @@ export default function ServicesPage() {
   useEffect(() => { fetchServices() }, [fetchServices])
   useEffect(() => { fetchSaved() }, [fetchSaved])
 
-  const toggleSave = async (sid: string) => {
+  const toggleSave = useCallback(async (sid: string) => {
     if (!user?.id) return
-    setSavingId(sid)
-    if (savedIds.has(sid)) {
+    const isSaved = savedIds.has(sid)
+    setSavedIds(prev => { const n = new Set(prev); isSaved ? n.delete(sid) : n.add(sid); return n })
+    if (isSaved) {
       await supabase.from('saved_services').delete().eq('clerk_user_id', user.id).eq('service_id', sid)
-      setSavedIds(prev => { const n = new Set(prev); n.delete(sid); return n })
     } else {
       await supabase.from('saved_services').insert({ clerk_user_id: user.id, service_id: sid })
-      setSavedIds(prev => new Set(prev).add(sid))
     }
-    setSavingId(null)
-  }
+  }, [supabase, user, savedIds])
+
+  const toggleUsed = useCallback(async (sid: string) => {
+    if (!user?.id) return
+    const cur = stats[sid] || emptyStats
+    if (cur.hasUsed) {
+      await supabase.from('service_used').delete().eq('clerk_user_id', user.id).eq('service_id', sid)
+      setStats(prev => ({ ...prev, [sid]: { ...prev[sid], hasUsed: false, usedCount: Math.max(0, prev[sid].usedCount - 1) } }))
+    } else {
+      await supabase.from('service_used').insert({ clerk_user_id: user.id, service_id: sid })
+      setStats(prev => ({ ...prev, [sid]: { ...prev[sid], hasUsed: true, usedCount: prev[sid].usedCount + 1 } }))
+    }
+  }, [supabase, user, stats])
+
+  const toggleRec = useCallback(async (sid: string) => {
+    if (!user?.id) return
+    const cur = stats[sid] || emptyStats
+    if (cur.hasRec) {
+      await supabase.from('service_recommendations').delete().eq('clerk_user_id', user.id).eq('service_id', sid)
+      setStats(prev => ({ ...prev, [sid]: { ...prev[sid], hasRec: false, recCount: Math.max(0, prev[sid].recCount - 1) } }))
+    } else {
+      await supabase.from('service_recommendations').insert({ clerk_user_id: user.id, service_id: sid })
+      setStats(prev => ({ ...prev, [sid]: { ...prev[sid], hasRec: true, recCount: prev[sid].recCount + 1 } }))
+    }
+  }, [supabase, user, stats])
 
   const jost = 'var(--font-jost, sans-serif)'
   const play = 'var(--font-playfair, serif)'
@@ -135,7 +187,18 @@ export default function ServicesPage() {
           )}
           {!loading && services.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-              {services.map(sv => (<Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} isSaving={savingId === sv.id} onToggleSave={() => toggleSave(sv.id)} isLoggedIn={!!user} />))}
+              {services.map(sv => (
+                <Card
+                  key={sv.id}
+                  service={sv}
+                  isSaved={savedIds.has(sv.id)}
+                  onToggleSave={() => toggleSave(sv.id)}
+                  stats={stats[sv.id] || emptyStats}
+                  onToggleUsed={() => toggleUsed(sv.id)}
+                  onToggleRec={() => toggleRec(sv.id)}
+                  isLoggedIn={!!user}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -145,44 +208,83 @@ export default function ServicesPage() {
   )
 }
 
-function Card({ service, isSaved, isSaving, onToggleSave, isLoggedIn }: { service: Service; isSaved: boolean; isSaving: boolean; onToggleSave: () => void; isLoggedIn: boolean }) {
+function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec, isLoggedIn }: {
+  service: Service
+  isSaved: boolean
+  onToggleSave: () => void
+  stats: ServiceStats
+  onToggleUsed: () => void
+  onToggleRec: () => void
+  isLoggedIn: boolean
+}) {
+  const [expanded, setExpanded] = useState(false)
   const subs = service.subcategories || []
   const ac = SUB_COLOR[subs[0]] || '#D97706'
-  const igUrl = service.instagram ? 'https://instagram.com/' + service.instagram : null
+  const igUrl  = service.instagram ? 'https://instagram.com/' + service.instagram : null
   const telUrl = service.phone ? 'tel:' + service.phone : null
   const webUrl = service.website ? 'https://' + service.website : null
-  const loc = [service.location, service.city].filter(Boolean).join(', ')
-  const price = priceStr(service.price_from)
-  const jost = 'var(--font-jost, sans-serif)'
-  const play = 'var(--font-playfair, serif)'
+  const loc    = [service.location, service.city].filter(Boolean).join(', ')
+  const price  = priceStr(service.price_from)
+  const jost   = 'var(--font-jost, sans-serif)'
+  const play   = 'var(--font-playfair, serif)'
+  const { usedCount, recCount, hasUsed, hasRec } = stats
+
   const linkBase: React.CSSProperties = { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 8, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: jost, transition: 'all 0.15s' }
+  const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: isLoggedIn ? 'pointer' : 'default', transition: 'all 0.15s', fontFamily: jost, border: '1px solid var(--border)' }
 
   return (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', transition: 'transform 0.15s, box-shadow 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
       <div style={{ height: 4, background: ac }} />
       <div style={{ padding: 20 }}>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <h3 style={{ fontFamily: play, fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{service.name}</h3>
-              {service.verified && <span style={{ fontSize: 12, color: 'var(--accent)', flexShrink: 0 }}>verified</span>}
+              {service.verified && <span style={{ fontSize: 11, color: 'var(--accent)', flexShrink: 0, fontFamily: jost }}>verified</span>}
             </div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, background: (SUB_COLOR[s] || '#D97706') + '18', color: SUB_COLOR[s] || '#D97706', fontSize: 11, fontWeight: 600 }}>{s}</span>))}
             </div>
           </div>
-          <button onClick={onToggleSave} disabled={isSaving || !isLoggedIn} title={!isLoggedIn ? 'Sign in to save' : isSaved ? 'Remove' : 'Save'} style={{ background: isSaved ? 'var(--accent)' : 'transparent', border: '1px solid', borderColor: isSaved ? 'var(--accent)' : 'var(--border)', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isLoggedIn ? 'pointer' : 'default', opacity: isSaving ? 0.5 : 1, transition: 'all 0.15s', flexShrink: 0, marginLeft: 8 }}>
-            <span style={{ fontSize: 14 }}>{isSaved ? 'saved' : 'save'}</span>
+          <button onClick={onToggleSave} disabled={!isLoggedIn} title={!isLoggedIn ? 'Sign in to save' : isSaved ? 'Remove' : 'Save'} style={{ background: isSaved ? 'var(--accent)' : 'transparent', border: '1px solid', borderColor: isSaved ? 'var(--accent)' : 'var(--border)', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isLoggedIn ? 'pointer' : 'default', transition: 'all 0.15s', flexShrink: 0, marginLeft: 8 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={isSaved ? 'white' : 'none'} stroke={isSaved ? 'white' : 'var(--border)'} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </button>
         </div>
+
+        {(usedCount > 0 || recCount > 0) && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: jost }}>used by {usedCount}</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: jost }}>rec by {recCount}</span>}
+          </div>
+        )}
+
         {loc && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 10px' }}>{loc}</p>}
         {service.bio && <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{service.bio}</p>}
         <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: '0 0 14px' }}>{price}{service.price_from && <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}> from</span>}</p>
-        <div style={{ display: 'flex', gap: 8 }}>
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           {igUrl && <a href={igUrl} target="_blank" rel="noopener noreferrer" style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>Instagram</a>}
           {telUrl && <a href={telUrl} style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#B45309'; (e.currentTarget as HTMLElement).style.color = '#B45309' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>Call</a>}
           {webUrl && <a href={webUrl} target="_blank" rel="noopener noreferrer" style={linkBase} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>Website</a>}
         </div>
+
+        {expanded && (
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button onClick={onToggleUsed} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light, #FEF3C7)' : 'var(--bg-card)', borderColor: hasUsed ? 'var(--gold, #B45309)' : 'var(--border)', color: hasUsed ? 'var(--gold, #B45309)' : 'var(--text-muted)' }}>
+              I used this {usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}>- {usedCount}</span>}
+            </button>
+            <button onClick={onToggleRec} style={{ ...btnBase, background: hasRec ? 'var(--accent-light, #FEF3C7)' : 'var(--bg-card)', borderColor: hasRec ? 'var(--gold, #B45309)' : 'var(--border)', color: hasRec ? 'var(--gold, #B45309)' : 'var(--text-muted)' }}>
+              I recommend this {recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}>- {recCount}</span>}
+            </button>
+          </div>
+        )}
+
+        <button onClick={() => setExpanded(!expanded)} style={{ marginTop: expanded ? 12 : 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, padding: '6px 0', fontFamily: jost }}>
+          <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{expanded ? '-' : '+'}</span>
+          {expanded ? 'Less info' : 'More info'}
+        </button>
+
       </div>
     </div>
   )

@@ -19,10 +19,12 @@ interface Service {
   verified: boolean
 }
 
-const CATEGORIES: Record<string, string[]> = {
-  Hair: ['All', 'Braids', 'Wigs', 'Natural Hair', 'Weaves', 'Locs', 'Knotless', 'Faux Locs'],
-  Makeup: ['All', 'Bridal MUA', 'Glam', 'Editorial', 'Airbrush'],
-  Lashes: ['All', 'Extensions', 'Lash Lift', 'Strip Lashes'],
+const SUB_COLOR: Record<string, string> = {
+  'Braids': '#7C3AED', 'Wigs': '#DB2777', 'Natural Hair': '#059669', 'Weaves': '#D97706',
+  'Locs': '#92400E', 'Knotless': '#6D28D9', 'Faux Locs': '#B45309', 'Bridal MUA': '#BE185D',
+  'Glam': '#DC2626', 'Editorial': '#1D4ED8', 'Airbrush': '#0891B2',
+  'Extensions': '#7C3AED', 'Lash Lift': '#0D9488', 'Strip Lashes': '#9333EA',
+  'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#BE185D', 'Textured Hair': '#065F46',
 }
 
 const CITIES = ['All', 'Lagos', 'Abuja', 'Port Harcourt', 'Ibadan']

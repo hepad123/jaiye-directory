@@ -676,6 +676,7 @@ export default function Home() {
         body: JSON.stringify({ vendor_id: vendorId }),
       })
     }
+    window.dispatchEvent(new Event('saved-change'))
   }, [authUser, savedIds])
 
   const handleStatChange = useCallback((vendorId: string, patch: Partial<VendorStats>) => {

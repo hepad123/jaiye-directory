@@ -471,6 +471,7 @@ export default function SavedPage() {
         body: JSON.stringify({ vendor_id: vendorId }),
       })
     }
+    window.dispatchEvent(new Event('saved-change'))
   }, [user, savedIds])
 
   function handleQuoteChange(vendorId: string, name: string, amount: number | null) {

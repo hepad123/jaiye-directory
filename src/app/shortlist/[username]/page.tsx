@@ -1,11 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseServer = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-)
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 type Vendor = {
   id: string
@@ -45,7 +40,7 @@ const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params
-  const { data: profile } = await supabaseServer
+  const { data: profile } = await supabaseAdmin
     .from('profiles').select('display_name, username')
     .eq('username', username).maybeSingle()
 
@@ -59,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ShortlistPage({ params }: Props) {
   const { username } = await params
 
-  const { data: profile } = await supabaseServer
+  const { data: profile } = await supabaseAdmin
     .from('profiles').select('clerk_user_id, display_name, username')
     .eq('username', username).maybeSingle()
 
@@ -76,7 +71,7 @@ export default async function ShortlistPage({ params }: Props) {
     )
   }
 
-  const { data: savedRows } = await supabaseServer
+  const { data: savedRows } = await supabaseAdmin
     .from('saved_vendors').select('vendor_id')
     .eq('clerk_user_id', profile.clerk_user_id)
 
@@ -84,7 +79,7 @@ export default async function ShortlistPage({ params }: Props) {
 
   let vendors: Vendor[] = []
   if (vendorIds.length > 0) {
-    const { data: vendorData } = await supabaseServer
+    const { data: vendorData } = await supabaseAdmin
       .from('vendors')
       .select('id, name, category, location, instagram, price_from, phone, website')
       .in('id', vendorIds)

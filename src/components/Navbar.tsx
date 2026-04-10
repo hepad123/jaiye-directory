@@ -375,9 +375,20 @@ export default function Navbar() {
         }
         setProfileChecked(true)
       })
+    refreshSavedCount()
+  }, [user, pathname, router])
+
+  function refreshSavedCount() {
+    if (!user?.id) return
     supabase.from('saved_vendors').select('vendor_id', { count: 'exact' }).eq('clerk_user_id', user.id)
       .then(({ count }) => setSavedCount(count ?? 0))
-  }, [user, pathname, router])
+  }
+
+  useEffect(() => {
+    const handler = () => refreshSavedCount()
+    window.addEventListener('saved-change', handler)
+    return () => window.removeEventListener('saved-change', handler)
+  }, [user, supabase])
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/')
 

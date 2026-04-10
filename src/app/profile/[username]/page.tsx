@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { supabase } from '@/lib/supabase'
+import { useSupabase } from '@/hooks/useSupabase'
 
 type Profile = {
   clerk_user_id: string
@@ -191,6 +191,7 @@ function PeopleSheet({ title, people, onClose, currentUserId, onToggleFollow, fo
 }
 
 export default function ProfilePage() {
+  const supabase = useSupabase()
   const params   = useParams()
   const username = params?.username as string
   const { user } = useUser()

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
-import { supabase } from '@/lib/supabase'
+import { useSupabase } from '@/hooks/useSupabase'
 import { sanitizeText, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
 type Vendor = {
@@ -40,6 +40,7 @@ type Photo = {
 }
 
 export default function VendorDashboard() {
+  const supabase = useSupabase()
   const { id }   = useParams() as { id: string }
   const router   = useRouter()
   const { user } = useUser()

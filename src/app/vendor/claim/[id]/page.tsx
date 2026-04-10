@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { supabase } from '@/lib/supabase'
+import { useSupabase } from '@/hooks/useSupabase'
 
 type Vendor = {
   id: string
@@ -16,6 +16,7 @@ type Vendor = {
 }
 
 export default function ClaimVendorPage() {
+  const supabase = useSupabase()
   const { id }   = useParams() as { id: string }
   const router   = useRouter()
   const { user } = useUser()

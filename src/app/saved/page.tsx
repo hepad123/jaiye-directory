@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { supabase } from '@/lib/supabase'
+import { useSupabase } from '@/hooks/useSupabase'
 import { sanitizeNote, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
 type Vendor = {
@@ -248,6 +248,7 @@ function MyNotes({ vendorId, userId, initialNote, initialQuotedPrice, onQuoteCha
 }
 
 function ReviewSection({ vendor }: { vendor: Vendor }) {
+  const supabase = useSupabase()
   const [reviews, setReviews] = useState<Review[]>([])
   useEffect(() => {
     supabase.from('reviews').select('*').eq('vendor_id', vendor.id)
@@ -284,6 +285,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote, savedQuotedP
   savedQuotedPrice: number | null
   onQuoteChange: (vendorId: string, name: string, amount: number | null) => void
 }) {
+  const supabase = useSupabase()
   const [expanded, setExpanded]   = useState(false)
   const [copied, setCopied]       = useState(false)
   const [avgRating, setAvgRating] = useState<number | null>(null)
@@ -392,6 +394,7 @@ function VendorCard({ v, savedIds, onToggleSave, userId, savedNote, savedQuotedP
 }
 
 export default function SavedPage() {
+  const supabase = useSupabase()
   const { user, isLoaded } = useUser()
   const { openSignIn } = useClerk()
   const [displayName, setDisplayName]     = useState('')

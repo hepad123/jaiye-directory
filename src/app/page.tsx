@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { supabase } from '@/lib/supabase'
+import { useSupabase } from '@/hooks/useSupabase'
 import { sanitizeReviewComment, sanitizeSearch, isValidRating, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
 type Vendor = {
@@ -51,7 +51,7 @@ type FollowProfile = {
 }
 
 type SearchProfile = {
-  id: string
+  clerk_user_id: string
   username: string
   display_name: string
   bio?: string
@@ -106,6 +106,7 @@ const isNewVendor = (v: Vendor) => {
 }
 
 function UserSearch() {
+  const supabase = useSupabase()
   const [open, setOpen]           = useState(false)
   const [query, setQuery]         = useState('')
   const [results, setResults]     = useState<SearchProfile[]>([])
@@ -133,7 +134,7 @@ function UserSearch() {
       setSearching(true)
       const { data } = await supabase
         .from('profiles')
-        .select('id, username, display_name, bio')
+        .select('clerk_user_id, username, display_name, bio')
         .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
         .limit(8)
       setResults(data ?? [])
@@ -193,7 +194,7 @@ function UserSearch() {
               const initials = (p.display_name || p.username || '?').split(' ').map((x: string) => x[0]).slice(0, 2).join('').toUpperCase()
               const colour   = avatarColour(p.display_name || p.username || 'a')
               return (
-                <Link key={p.id} href={`/profile/${p.username}`}
+                <Link key={p.clerk_user_id} href={`/profile/${p.username}`}
                   onClick={() => { setOpen(false); setQuery(''); setResults([]) }}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid var(--border)', textDecoration: 'none' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')}
@@ -259,6 +260,7 @@ function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) =
 function ReviewSection({ vendor, currentUser, onOpenAuth }: {
   vendor: Vendor; currentUser: CurrentUser | null; onOpenAuth: () => void
 }) {
+  const supabase = useSupabase()
   const [reviews, setReviews]       = useState<Review[]>([])
   const [rating, setRating]         = useState(0)
   const [comment, setComment]       = useState('')
@@ -559,6 +561,7 @@ function VendorCard({
 }
 
 export default function Home() {
+  const supabase = useSupabase()
   const { user: authUser } = useUser()
   const { openSignIn } = useClerk()
   const openAuthModal = () => openSignIn()

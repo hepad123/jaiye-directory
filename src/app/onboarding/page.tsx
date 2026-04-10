@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
-import { supabase } from '@/lib/supabase'
+import { useSupabase } from '@/hooks/useSupabase'
 import {
   sanitizeDisplayName, sanitizeUsername,
   isValidUsername, LIMITS,
@@ -12,6 +12,7 @@ import {
 type ProfileType = 'customer' | 'vendor'
 
 export default function OnboardingPage() {
+  const supabase = useSupabase()
   const { user, isLoaded } = useUser()
   const router = useRouter()
 

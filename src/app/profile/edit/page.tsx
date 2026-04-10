@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { supabase } from '@/lib/supabase'
+import { useSupabase } from '@/hooks/useSupabase'
 import {
   sanitizeUsername, sanitizeText,
   isValidUsername, LIMITS,
 } from '@/lib/sanitize'
 
 export default function EditProfilePage() {
+  const supabase = useSupabase()
   const { user, isLoaded } = useUser()
   const { openUserProfile } = useClerk()
   const router = useRouter()

@@ -5,11 +5,11 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useUser, useClerk, SignInButton, Show } from '@clerk/nextjs'
 import Image from 'next/image'
 import { useTheme } from '@/hooks/useTheme'
-import { supabase } from '@/lib/supabase'
+import { useSupabase } from '@/hooks/useSupabase'
 import { useEffect, useState, useRef } from 'react'
 
 type SearchProfile = {
-  id: string
+  clerk_user_id: string
   username: string
   display_name: string
   bio?: string
@@ -17,6 +17,7 @@ type SearchProfile = {
 }
 
 function UserSearch() {
+  const supabase = useSupabase()
   const [open, setOpen]           = useState(false)
   const [query, setQuery]         = useState('')
   const [results, setResults]     = useState<SearchProfile[]>([])
@@ -44,7 +45,7 @@ function UserSearch() {
       setSearching(true)
       const { data } = await supabase
         .from('profiles')
-        .select('id, username, display_name, bio, avatar_url')
+        .select('clerk_user_id, username, display_name, bio, avatar_url')
         .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
         .limit(8)
       setResults(data ?? [])
@@ -111,7 +112,7 @@ function UserSearch() {
               const initials = (p.display_name || p.username || '?').split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase()
               const colour   = avatarColour(p.display_name || p.username || 'a')
               return (
-                <Link key={p.id} href={`/profile/${p.username}`}
+                <Link key={p.clerk_user_id} href={`/profile/${p.username}`}
                   onClick={() => { setOpen(false); setQuery(''); setResults([]) }}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid var(--border)', textDecoration: 'none' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')}
@@ -351,6 +352,7 @@ function ProfileDropdown({
 // ── Navbar ─────────────────────────────────────────────────────────────────────
 
 export default function Navbar() {
+  const supabase = useSupabase()
   const { user } = useUser()
   const { signOut } = useClerk()
   const pathname = usePathname()

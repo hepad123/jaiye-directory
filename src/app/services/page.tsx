@@ -387,7 +387,7 @@ function ServiceCard({
         <div style={{ display: 'flex', gap: 8 }}>
           {service.instagram && (
             
-              href={`https://instagram.com/${service.instagram}`}
+              href={"https://instagram.com/" + service.instagram}
               target="_blank" rel="noopener noreferrer"
               style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,

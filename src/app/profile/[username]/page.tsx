@@ -88,6 +88,13 @@ function Avatar({ name, size = 64, imageUrl }: { name: string; size?: number; im
   )
 }
 
+function InstagramIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+    </svg>
+  )
+}
 function VendorRow({ vendor }: { vendor: Vendor }) {
   const colour   = getColour(vendor.category)
   const igHandle = vendor.instagram?.replace('@', '').trim()
@@ -98,7 +105,9 @@ function VendorRow({ vendor }: { vendor: Vendor }) {
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{vendor.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {vendor.location && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>{vendor.location}</span>}
-          {igHandle && <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)', textDecoration: 'none' }}>@{igHandle}</a>}
+          {igHandle && <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, fontSize: 10, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)', fontWeight: 500 }}>
+  <InstagramIcon />@{igHandle}
+</a>}
         </div>
       </div>
       {vendor.price_from && (<div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>N{vendor.price_from}</div>)}
@@ -117,7 +126,9 @@ function ServiceRow({ service }: { service: ServiceRow }) {
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{service.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {loc && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>{loc}</span>}
-          {igHandle && <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)', textDecoration: 'none' }}>@{igHandle}</a>}
+          {igHandle && <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, fontSize: 10, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: 'var(--font-jost, sans-serif)', fontWeight: 500 }}>
+  <InstagramIcon />@{igHandle}
+</a>}
         </div>
       </div>
     </div>

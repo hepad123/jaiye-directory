@@ -117,7 +117,7 @@ function ServiceRow({ service }: { service: ServiceRow }) {
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{service.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {loc && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>{loc}</span>}
-          {igHandle && <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)' }}>@{igHandle}</span>}
+          {igHandle && <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)', textDecoration: 'none' }}>@{igHandle}</a>}
         </div>
       </div>
     </div>

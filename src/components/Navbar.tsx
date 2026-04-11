@@ -46,7 +46,7 @@ function UserSearch() {
       const { data } = await supabase
         .from('profiles')
         .select('clerk_user_id, username, display_name, bio, avatar_url')
-        .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+        .or('username.ilike.%' + query + '%,display_name.ilike.%' + query + '%')
         .limit(8)
       setResults(data ?? [])
       setSearching(false)
@@ -74,7 +74,7 @@ function UserSearch() {
           <div style={{ maxHeight: 320, overflowY: 'auto' }}>
             {!query && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Type to search for people</div>}
             {query && searching && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Searching...</div>}
-            {query && !searching && results.length === 0 && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>No users found for "{query}"</div>}
+            {query && !searching && results.length === 0 && <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>No users found for &quot;{query}&quot;</div>}
             {results.map(p => {
               const initials = (p.display_name || p.username || '?').split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase()
               const colour = avatarColour(p.display_name || p.username || 'a')
@@ -147,12 +147,12 @@ function ProfileDropdown({ user, username, displayName, profileChecked, isActive
             {username && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>@{username}</div>}
           </div>
           <div style={{ padding: '6px 0' }}>
-            {username && <Link href={'/profile/' + username} onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', textDecoration: 'none', color: 'var(--text)', fontSize: 13, transition: 'background 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}><span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>👤</span>My Profile</Link>}
-            {username && <Link href="/profile/edit" onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', textDecoration: 'none', color: 'var(--text)', fontSize: 13, transition: 'background 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}><span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>✏️</span>Edit Profile</Link>}
-            <button onClick={() => { setOpen(false); openUserProfile() }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 16px', background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-jost, sans-serif)', transition: 'background 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}><span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>⚙️</span>Account Settings</button>
+            {username && <Link href={'/profile/' + username} onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', textDecoration: 'none', color: 'var(--text)', fontSize: 13, transition: 'background 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}><span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>&#128100;</span>My Profile</Link>}
+            {username && <Link href="/profile/edit" onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', textDecoration: 'none', color: 'var(--text)', fontSize: 13, transition: 'background 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}><span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>&#9999;&#65039;</span>Edit Profile</Link>}
+            <button onClick={() => { setOpen(false); openUserProfile() }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 16px', background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-jost, sans-serif)', transition: 'background 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}><span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>&#9881;&#65039;</span>Account Settings</button>
           </div>
           <div style={{ borderTop: '1px solid var(--border)', padding: '6px 0' }}>
-            <button onClick={() => { setOpen(false); signOut() }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 16px', background: 'none', border: 'none', color: '#DC2626', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-jost, sans-serif)', transition: 'background 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}><span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>🚪</span>Sign Out</button>
+            <button onClick={() => { setOpen(false); signOut() }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 16px', background: 'none', border: 'none', color: '#DC2626', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-jost, sans-serif)', transition: 'background 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}><span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>&#128682;</span>Sign Out</button>
           </div>
         </div>
       )}
@@ -207,32 +207,30 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
 
         <div style={{ flex: 1 }}>
           {sectionLabel('Explore')}
-{navItem('Home', '/')}
+          {navItem('Home', '/')}
 
-{expandableItem('Services', servicesOpen, () => setServicesOpen(o => !o))}
-<div style={{ maxHeight: servicesOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
-  {subItem('Hair', '/services?cat=Hair')}
-  {subItem('Makeup', '/services?cat=Makeup')}
-  {subItem('Lashes', '/services?cat=Lashes')}
-  {subItem('Nails', '/services?cat=Nails')}
-  {subItem('Brows', '/services?cat=Brows')}
-</div>
+          {expandableItem('Services', servicesOpen, () => setServicesOpen(o => !o))}
+          <div style={{ maxHeight: servicesOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
+            {subItem('Hair', '/services?cat=Hair')}
+            {subItem('Makeup', '/services?cat=Makeup')}
+            {subItem('Lashes', '/services?cat=Lashes')}
+            {subItem('Nails', '/services?cat=Nails')}
+            {subItem('Brows', '/services?cat=Brows')}
+          </div>
 
-{expandableItem('Bridal & Events', bridalOpen, () => setBridalOpen(o => !o))}
-<div style={{ maxHeight: bridalOpen ? 200 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
-  {subItem('All Vendors', '/directory')}
-  {subItem('Event Planning', '/directory?cat=Event Planning')}
-  {subItem('Decor & Venue', '/directory?cat=Decor & Venue')}
-  {subItem('Photography', '/directory?cat=Photography')}
-  {subItem('Outfits', '/directory?cat=Outfits')}
-</div>
+          {expandableItem('Bridal & Events', bridalOpen, () => setBridalOpen(o => !o))}
+          <div style={{ maxHeight: bridalOpen ? 200 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
+            {subItem('All Vendors', '/directory')}
+            {subItem('Event Planning', '/directory?cat=Event Planning')}
+            {subItem('Decor & Venue', '/directory?cat=Decor & Venue')}
+            {subItem('Photography', '/directory?cat=Photography')}
+            {subItem('Outfits', '/directory?cat=Outfits')}
+          </div>
 
-{navItem('Community', '/saved')}
+          {navItem('Community', '/community', { soon: true })}
 
-<div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
-{sectionLabel('You')}
-{navItem('Saved', '/saved', { count: savedCount })}
-{navItem('My Profile', '/profile/edit')}
+          <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
+          {sectionLabel('You')}
           {navItem('Saved', '/saved', { count: savedCount })}
           {navItem('My Profile', '/profile/edit')}
         </div>
@@ -299,7 +297,7 @@ export default function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Show when="signed-in">
             <Link href="/saved" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 20, background: isActive('/saved') ? 'var(--bg-pill)' : 'transparent', textDecoration: 'none', color: isActive('/saved') ? 'var(--text)' : 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)', fontSize: 13, fontWeight: isActive('/saved') ? 600 : 400, transition: 'all 0.15s', position: 'relative' }}>
-              <span style={{ fontSize: 14 }}>♡</span>
+              <span style={{ fontSize: 14 }}>&#9825;</span>
               <span className="nav-label">Saved</span>
               {savedCount > 0 && <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'var(--accent)', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{savedCount}</span>}
             </Link>
@@ -307,7 +305,7 @@ export default function Navbar() {
           <Show when="signed-out">
             <SignInButton mode="modal">
               <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 20, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)', fontSize: 13 }}>
-                <span style={{ fontSize: 14 }}>♡</span>
+                <span style={{ fontSize: 14 }}>&#9825;</span>
                 <span className="nav-label">Saved</span>
               </button>
             </SignInButton>
@@ -327,7 +325,7 @@ export default function Navbar() {
           </Show>
         </div>
       </div>
-      <style>{`@media (max-width: 640px) { .nav-label { display: none !important; } }`}</style>
+      <style>{'.nav-label {} @media (max-width: 640px) { .nav-label { display: none !important; } }'}</style>
     </>
   )
 }

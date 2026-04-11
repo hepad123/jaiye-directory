@@ -115,6 +115,12 @@ function UserSearch() {
   const containerRef              = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get("search");
+  if (q) setSearch(q);
+}, []);
+  
+  useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false); setQuery(''); setResults([])

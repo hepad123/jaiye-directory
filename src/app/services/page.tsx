@@ -187,7 +187,7 @@ useEffect(() => {
       </div>
 
       <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
           {Object.keys(CATEGORIES).map(c => {
             const meta = CATEGORY_META[c] || { emoji: '✦', colour: '#D97706' }
             return (<button key={c} onClick={() => setCat(c)} style={{ padding: '16px 24px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + meta.colour : '2px solid transparent', color: cat === c ? meta.colour : 'var(--text-muted)', fontFamily: jost, fontSize: 14, fontWeight: cat === c ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 14 }}>{meta.emoji}</span>{c}</button>)

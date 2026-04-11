@@ -178,7 +178,7 @@ export default function HomePage() {
       }
     }
     document.addEventListener("mouseup", handleClick);
-return () => document.removeEventListener("mouseup", handleClick);
+    return () => document.removeEventListener("mouseup", handleClick);
   }, []);
 
   const revealBase: React.CSSProperties = {
@@ -204,8 +204,122 @@ return () => document.removeEventListener("mouseup", handleClick);
 
   return (
     <div style={{ background: "#faf9f6", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", overflowX: "hidden", position: "relative" }}>
+
+      <style>{`
+        @keyframes jaiye-ticker {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .hero-content {
+          position: relative;
+          zIndex: 2;
+          width: 100%;
+          padding: 0 1.5rem;
+          max-width: 680px;
+        }
+        @media (min-width: 768px) {
+          .hero-content {
+            padding: 0 3rem;
+          }
+        }
+        .category-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          max-width: 560px;
+        }
+        @media (min-width: 768px) {
+          .category-grid {
+            max-width: 760px;
+            gap: 1.25rem;
+          }
+        }
+        @media (min-width: 1024px) {
+          .category-grid {
+            max-width: 960px;
+            gap: 1.5rem;
+          }
+        }
+        .featured-scroll {
+          display: flex;
+          overflow-x: auto;
+          gap: 1.25rem;
+          padding: 0.5rem 1.5rem 1.5rem;
+          scrollbar-width: none;
+        }
+        @media (min-width: 768px) {
+          .featured-scroll {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            overflow-x: visible;
+            padding: 0.5rem 1.5rem 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+          }
+        }
+        .featured-card {
+          flex-shrink: 0;
+          width: 272px;
+          background: #ffffff;
+          border-radius: 16px;
+          overflow: hidden;
+          border: 1px solid #F0EBE3;
+        }
+        @media (min-width: 768px) {
+          .featured-card {
+            width: 100%;
+            flex-shrink: unset;
+          }
+        }
+        .section-inner {
+          padding: 0 1.5rem;
+        }
+        @media (min-width: 768px) {
+          .section-inner {
+            padding: 0 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+          }
+        }
+        .featured-header {
+          padding: 0 1.5rem;
+          max-width: 1200px;
+          margin: 0 auto 2rem;
+        }
+        @media (min-width: 768px) {
+          .featured-header {
+            padding: 0 3rem;
+          }
+        }
+        .hero-section {
+          position: relative;
+          min-height: 92vh;
+          display: flex;
+          align-items: flex-end;
+          padding-bottom: 3rem;
+          overflow: visible;
+        }
+        @media (min-width: 768px) {
+          .hero-section {
+            min-height: 88vh;
+            align-items: center;
+            padding-bottom: 0;
+          }
+          .hero-content {
+            padding-left: 5vw;
+            max-width: 700px;
+          }
+        }
+        @media (min-width: 1024px) {
+          .hero-content {
+            padding-left: 7vw;
+            max-width: 760px;
+          }
+        }
+      `}</style>
+
       {/* HERO */}
-      <section style={{ position: "relative", minHeight: "92vh", display: "flex", alignItems: "flex-end", paddingBottom: "3rem", overflow: "visible" }}>
+      <section className="hero-section">
         <img
           src={UNSPLASH_HERO}
           alt="Editorial portrait"
@@ -217,7 +331,7 @@ return () => document.removeEventListener("mouseup", handleClick);
           Jaiye Directory &mdash; Est. 2025
         </div>
 
-        <div style={{ position: "relative", zIndex: 2, width: "100%", padding: "0 1.5rem", maxWidth: "680px" }}>
+        <div className="hero-content">
           <p data-reveal style={{ ...revealBase, fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#D97706", fontWeight: 600, marginBottom: "1rem" }}>
             The Nigerian Wedding & Beauty Edit
           </p>
@@ -247,7 +361,7 @@ return () => document.removeEventListener("mouseup", handleClick);
             </button>
 
             {searchOpen && (searchResults.vendors.length > 0 || searchResults.services.length > 0) && (
-      <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 100 }}>
+              <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 100 }}>
                 {searchResults.vendors.length > 0 && (
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B45309", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>
@@ -298,12 +412,6 @@ return () => document.removeEventListener("mouseup", handleClick);
 
       {/* TICKER */}
       <div style={{ background: "#8d4b00", overflow: "hidden", padding: "0.75rem 0", whiteSpace: "nowrap", position: "relative", zIndex: 1 }}>
-        <style>{`
-          @keyframes jaiye-ticker {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-        `}</style>
         <div style={{ display: "inline-flex", gap: "3rem", animation: "jaiye-ticker 28s linear infinite", fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>
           {[...tickerItems, ...tickerItems].map((t, i) => (
             <span key={i}>{t}<span style={{ margin: "0 1.5rem", opacity: 0.4 }}>&bull;</span></span>
@@ -313,57 +421,59 @@ return () => document.removeEventListener("mouseup", handleClick);
 
       {/* CATEGORIES */}
       <section style={{ padding: "5rem 1.5rem", background: "#faf9f6" }}>
-        <div data-reveal style={revealBase}>
-          <p style={{ fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#D97706", fontWeight: 700, marginBottom: "0.5rem" }}>
-            Curation
-          </p>
-          <h2 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(1.8rem, 5vw, 2.5rem)", fontWeight: 700, color: "#1C1917", letterSpacing: "-0.02em", marginBottom: "2.5rem", lineHeight: 1.15 }}>
-            Where would you<br />like to start?
-          </h2>
-        </div>
+        <div className="section-inner">
+          <div data-reveal style={revealBase}>
+            <p style={{ fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#D97706", fontWeight: 700, marginBottom: "0.5rem" }}>
+              Curation
+            </p>
+            <h2 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(1.8rem, 5vw, 2.5rem)", fontWeight: 700, color: "#1C1917", letterSpacing: "-0.02em", marginBottom: "2.5rem", lineHeight: 1.15 }}>
+              Where would you<br />like to start?
+            </h2>
+          </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", maxWidth: "560px" }}>
-          {CATEGORIES.map((cat, i) => (
-            <Link
-              key={cat.label}
-              href={cat.href}
-              data-reveal
-              style={{
-                ...revealDelay(i * 80),
-                display: "flex",
-                flexDirection: cat.wide ? "row" : "column",
-                justifyContent: "space-between",
-                alignItems: cat.wide ? "center" : undefined,
-                gap: cat.wide ? "1.5rem" : undefined,
-                padding: "1.5rem",
-                borderRadius: "16px",
-                background: cat.featured ? "#8d4b00" : "#F5F0E8",
-                color: cat.featured ? "#ffffff" : "#1C1917",
-                aspectRatio: cat.wide ? "auto" : "1 / 1",
-                gridColumn: cat.wide ? "span 2" : "span 1",
-                textDecoration: "none",
-                minHeight: cat.wide ? "110px" : undefined,
-                transition: "transform 0.2s ease",
-              }}
-            >
-              <div style={{ color: cat.featured ? "rgba(255,255,255,0.85)" : "#B45309", flexShrink: 0, marginBottom: cat.wide ? 0 : "auto" }}>
-                {ICONS[cat.label]}
-              </div>
-              <div>
-                <p style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.2rem", color: cat.featured ? "#ffffff" : "#1C1917" }}>
-                  {cat.label}
-                </p>
-                <p style={{ fontSize: "11px", color: cat.featured ? "rgba(255,255,255,0.6)" : "#78716C", fontWeight: 500 }}>
-                  {cat.sub}
-                </p>
-              </div>
-            </Link>
-          ))}
+          <div className="category-grid">
+            {CATEGORIES.map((cat, i) => (
+              <Link
+                key={cat.label}
+                href={cat.href}
+                data-reveal
+                style={{
+                  ...revealDelay(i * 80),
+                  display: "flex",
+                  flexDirection: cat.wide ? "row" : "column",
+                  justifyContent: "space-between",
+                  alignItems: cat.wide ? "center" : undefined,
+                  gap: cat.wide ? "1.5rem" : undefined,
+                  padding: "1.5rem",
+                  borderRadius: "16px",
+                  background: cat.featured ? "#8d4b00" : "#F5F0E8",
+                  color: cat.featured ? "#ffffff" : "#1C1917",
+                  aspectRatio: cat.wide ? "auto" : "1 / 1",
+                  gridColumn: cat.wide ? "span 2" : "span 1",
+                  textDecoration: "none",
+                  minHeight: cat.wide ? "110px" : undefined,
+                  transition: "transform 0.2s ease",
+                }}
+              >
+                <div style={{ color: cat.featured ? "rgba(255,255,255,0.85)" : "#B45309", flexShrink: 0, marginBottom: cat.wide ? 0 : "auto" }}>
+                  {ICONS[cat.label]}
+                </div>
+                <div>
+                  <p style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.2rem", color: cat.featured ? "#ffffff" : "#1C1917" }}>
+                    {cat.label}
+                  </p>
+                  <p style={{ fontSize: "11px", color: cat.featured ? "rgba(255,255,255,0.6)" : "#78716C", fontWeight: 500 }}>
+                    {cat.sub}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* DIVIDER */}
-      <div style={{ padding: "0 1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+      <div className="section-inner" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <div style={{ flex: 1, height: "1px", background: "#E8E3DC" }} />
         <span style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.1rem", color: "#D97706" }}>&#10022;</span>
         <div style={{ flex: 1, height: "1px", background: "#E8E3DC" }} />
@@ -371,7 +481,7 @@ return () => document.removeEventListener("mouseup", handleClick);
 
       {/* FEATURED VENDORS */}
       <section style={{ padding: "5rem 0" }}>
-        <div data-reveal style={{ ...revealBase, padding: "0 1.5rem", display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "2rem" }}>
+        <div className="featured-header" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
           <div>
             <p style={{ fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#D97706", fontWeight: 700, marginBottom: "0.4rem" }}>Featured</p>
             <h2 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(1.8rem, 5vw, 2.4rem)", fontWeight: 700, color: "#1C1917", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
@@ -383,9 +493,9 @@ return () => document.removeEventListener("mouseup", handleClick);
           </Link>
         </div>
 
-        <div style={{ display: "flex", overflowX: "auto", gap: "1.25rem", padding: "0.5rem 1.5rem 1.5rem", scrollbarWidth: "none" }}>
+        <div className="featured-scroll">
           {FEATURED_VENDORS.map((vendor, i) => (
-            <div key={vendor.name} data-reveal style={{ ...revealDelay(i * 100), flexShrink: 0, width: "272px", background: "#ffffff", borderRadius: "16px", overflow: "hidden", border: "1px solid #F0EBE3" }}>
+            <div key={vendor.name} data-reveal className="featured-card" style={{ ...revealDelay(i * 100) }}>
               <div style={{ position: "relative", height: "220px", background: "#F5F0E8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
                 <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#8d4b00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)" }}>
                   {vendor.name.charAt(0)}

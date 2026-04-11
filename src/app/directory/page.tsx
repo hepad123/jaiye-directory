@@ -113,12 +113,6 @@ function UserSearch() {
   const [searching, setSearching] = useState(false)
   const inputRef                  = useRef<HTMLInputElement>(null)
   const containerRef              = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const q = params.get("search");
-  if (q) setSearch(q);
-}, []);
   
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -584,7 +578,12 @@ export default function Home() {
   const [savedIds, setSavedIds]             = useState<Set<string>>(new Set())
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
   const [vendorStats, setVendorStats]       = useState<Record<string, VendorStats>>({})
-
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search)
+  const q = params.get('search')
+  if (q) setSearch(q)
+}, [])
+  
   useEffect(() => {
     if (!authUser?.id) { setCurrentUser(null); return }
     supabase.from('profiles').select('username, display_name').eq('clerk_user_id', authUser.id).maybeSingle()

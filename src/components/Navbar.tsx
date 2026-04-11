@@ -207,22 +207,32 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
 
         <div style={{ flex: 1 }}>
           {sectionLabel('Explore')}
-          {navItem('Home', '/')}
+{navItem('Home', '/')}
 
-          {expandableItem('Services', servicesOpen, () => setServicesOpen(o => !o))}
-          <div style={{ maxHeight: servicesOpen ? 200 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
-            {subItem('Hair', '/services?cat=Hair')}
-            {subItem('Makeup', '/services?cat=Makeup')}
-            {subItem('Lashes', '/services?cat=Lashes')}
-          </div>
+{expandableItem('Services', servicesOpen, () => setServicesOpen(o => !o))}
+<div style={{ maxHeight: servicesOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
+  {subItem('Hair', '/services?cat=Hair')}
+  {subItem('Makeup', '/services?cat=Makeup')}
+  {subItem('Lashes', '/services?cat=Lashes')}
+  {subItem('Nails', '/services?cat=Nails')}
+  {subItem('Brows', '/services?cat=Brows')}
+</div>
 
-          {expandableItem('Bridal and Events', bridalOpen, () => setBridalOpen(o => !o))}
-          <div style={{ maxHeight: bridalOpen ? 200 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
-            {subItem('Directory', '/directory')}
-          </div>
+{expandableItem('Bridal & Events', bridalOpen, () => setBridalOpen(o => !o))}
+<div style={{ maxHeight: bridalOpen ? 200 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
+  {subItem('All Vendors', '/directory')}
+  {subItem('Event Planning', '/directory?cat=Event Planning')}
+  {subItem('Decor & Venue', '/directory?cat=Decor & Venue')}
+  {subItem('Photography', '/directory?cat=Photography')}
+  {subItem('Outfits', '/directory?cat=Outfits')}
+</div>
 
-          <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
-          {sectionLabel('You')}
+{navItem('Community', '/saved')}
+
+<div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
+{sectionLabel('You')}
+{navItem('Saved', '/saved', { count: savedCount })}
+{navItem('My Profile', '/profile/edit')}
           {navItem('Saved', '/saved', { count: savedCount })}
           {navItem('My Profile', '/profile/edit')}
         </div>

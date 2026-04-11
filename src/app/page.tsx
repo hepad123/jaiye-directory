@@ -47,6 +47,7 @@ const CATEGORIES = [
     href: "/services",
     featured: false,
     wide: false,
+    image: "/pexels-services.jpg",
   },
   {
     label: "Bridal & Events",
@@ -54,6 +55,7 @@ const CATEGORIES = [
     href: "/directory",
     featured: true,
     wide: false,
+    image: "/pexels-bridal.jpg",
   },
   {
     label: "Community",
@@ -433,40 +435,50 @@ export default function HomePage() {
 
           <div className="category-grid">
             {CATEGORIES.map((cat, i) => (
-              <Link
-                key={cat.label}
-                href={cat.href}
-                data-reveal
-                style={{
-                  ...revealDelay(i * 80),
-                  display: "flex",
-                  flexDirection: cat.wide ? "row" : "column",
-                  justifyContent: "space-between",
-                  alignItems: cat.wide ? "center" : undefined,
-                  gap: cat.wide ? "1.5rem" : undefined,
-                  padding: "1.5rem",
-                  borderRadius: "16px",
-                  background: cat.featured ? "#8d4b00" : "#F5F0E8",
-                  color: cat.featured ? "#ffffff" : "#1C1917",
-                  aspectRatio: cat.wide ? "auto" : "1 / 1",
-                  gridColumn: cat.wide ? "span 2" : "span 1",
-                  textDecoration: "none",
-                  minHeight: cat.wide ? "110px" : undefined,
-                  transition: "transform 0.2s ease",
-                }}
-              >
-                <div style={{ color: cat.featured ? "rgba(255,255,255,0.85)" : "#B45309", flexShrink: 0, marginBottom: cat.wide ? 0 : "auto" }}>
-                  {ICONS[cat.label]}
-                </div>
-                <div>
-                  <p style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.2rem", color: cat.featured ? "#ffffff" : "#1C1917" }}>
-                    {cat.label}
-                  </p>
-                  <p style={{ fontSize: "11px", color: cat.featured ? "rgba(255,255,255,0.6)" : "#78716C", fontWeight: 500 }}>
-                    {cat.sub}
-                  </p>
-                </div>
-              </Link>
+             <Link
+  key={cat.label}
+  href={cat.href}
+  data-reveal
+  style={{
+    ...revealDelay(i * 80),
+    display: "flex",
+    flexDirection: cat.wide ? "row" : "column",
+    justifyContent: "space-between",
+    alignItems: cat.wide ? "center" : undefined,
+    gap: cat.wide ? "1.5rem" : undefined,
+    padding: "1.5rem",
+    borderRadius: "16px",
+    background: cat.image
+      ? "transparent"
+      : cat.featured ? "#8d4b00" : "#F5F0E8",
+    backgroundImage: cat.image ? "url(" + cat.image + ")" : undefined,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    color: cat.featured ? "#ffffff" : "#1C1917",
+    aspectRatio: cat.wide ? "auto" : "1 / 1",
+    gridColumn: cat.wide ? "span 2" : "span 1",
+    textDecoration: "none",
+    minHeight: cat.wide ? "110px" : undefined,
+    transition: "transform 0.2s ease",
+    position: "relative",
+    overflow: "hidden",
+  }}
+>
+  {cat.image && (
+    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(15,10,5,0.75) 0%, rgba(15,10,5,0.2) 60%, transparent 100%)", borderRadius: "16px" }} />
+  )}
+  <div style={{ position: "relative", zIndex: 1, color: cat.image ? "rgba(255,255,255,0.85)" : cat.featured ? "rgba(255,255,255,0.85)" : "#B45309", flexShrink: 0, marginBottom: cat.wide ? 0 : "auto" }}>
+    {ICONS[cat.label]}
+  </div>
+  <div style={{ position: "relative", zIndex: 1 }}>
+    <p style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.2rem", color: cat.image ? "#ffffff" : cat.featured ? "#ffffff" : "#1C1917" }}>
+      {cat.label}
+    </p>
+    <p style={{ fontSize: "11px", color: cat.image ? "rgba(255,255,255,0.7)" : cat.featured ? "rgba(255,255,255,0.6)" : "#78716C", fontWeight: 500 }}>
+      {cat.sub}
+    </p>
+  </div>
+</Link>
             ))}
           </div>
         </div>

@@ -206,7 +206,7 @@ export default function HomePage() {
     <div style={{ background: "#faf9f6", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", overflowX: "hidden" }}>
 
       {/* HERO */}
-      <section style={{ position: "relative", minHeight: "92vh", display: "flex", alignItems: "flex-end", paddingBottom: "3rem", overflow: "hidden" }}>
+      <section style={{ position: "relative", minHeight: "92vh", display: "flex", alignItems: "flex-end", paddingBottom: "3rem", overflow: "visible" }}>
         <img
           src={UNSPLASH_HERO}
           alt="Editorial portrait"
@@ -298,7 +298,7 @@ export default function HomePage() {
       </section>
 
       {/* TICKER */}
-      <div style={{ background: "#8d4b00", overflow: "hidden", padding: "0.75rem 0", whiteSpace: "nowrap", position: "relative", zIndex: 0 }}>
+      <div style={{ background: "#8d4b00", overflow: "hidden", padding: "0.75rem 0", whiteSpace: "nowrap", position: "relative", zIndex: -1 }}>
         <style>{`
           @keyframes jaiye-ticker {
             0% { transform: translateX(0); }

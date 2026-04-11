@@ -205,7 +205,7 @@ return () => document.removeEventListener("mouseup", handleClick);
   return (
     <div style={{ background: "#faf9f6", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", overflowX: "hidden", position: "relative" }}>
       {/* HERO */}
-      <section style={{ position: "relative", minHeight: "92vh", display: "flex", alignItems: "flex-end", paddingBottom: "3rem", overflow: "visible" }}>
+      <section style={{ position: "relative", minHeight: "92vh", display: "flex", alignItems: "flex-end", paddingBottom: "3rem", overflow: "hidden" }}>
         <img
           src={UNSPLASH_HERO}
           alt="Editorial portrait"
@@ -247,7 +247,7 @@ return () => document.removeEventListener("mouseup", handleClick);
             </button>
 
             {searchOpen && (searchResults.vendors.length > 0 || searchResults.services.length > 0) && (
-              <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 100 }}>
+      <div style={{ position: "fixed", top: "auto", left: "1.5rem", right: "1.5rem", background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 100 }}>        
                 {searchResults.vendors.length > 0 && (
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B45309", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>

@@ -26,9 +26,11 @@ type ServiceStats = {
 }
 
 const CATEGORIES: Record<string, string[]> = {
-  Hair: ['All', 'Braids', 'Natural Hair', 'Relaxed Hair', 'Sew In', 'Silk Press', 'Textured Hair', 'Wigs', 'Weaves', 'Locs', 'Knotless', 'Faux Locs'],
+  Hair:   ['All', 'Braids', 'Cornrows', 'Natural Hair', 'Ponytail', 'Relaxed Hair', 'Sew In', 'Silk Press', 'Textured Hair', 'Treatment', 'Wigs', 'Weaves', 'Locs', 'Knotless', 'Faux Locs'],
   Makeup: ['All', 'Bridal MUA', 'Glam', 'Editorial', 'Airbrush'],
   Lashes: ['All', 'Extensions', 'Lash Lift', 'Strip Lashes'],
+  Nails:  ['All', 'Biab', 'Gel', 'Acrylic'],
+  Brows:  ['All'],
 }
 
 const CITIES = ['All', 'Lagos', 'Abuja', 'Port Harcourt', 'Ibadan']
@@ -38,13 +40,16 @@ const SUB_COLOR: Record<string, string> = {
   'Locs': '#92400E', 'Knotless': '#6D28D9', 'Faux Locs': '#B45309', 'Bridal MUA': '#BE185D',
   'Glam': '#DC2626', 'Editorial': '#1D4ED8', 'Airbrush': '#0891B2',
   'Extensions': '#7C3AED', 'Lash Lift': '#0D9488', 'Strip Lashes': '#9333EA',
-  'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#9D174D', 'Textured Hair': '#065F46',
+  'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#9D174D', 'Textured Hair': '#065F46', 'Cornrows': '#0891B2', 'Ponytail': '#6D28D9', 'Treatment': '#065F46',
+'Biab': '#7C3AED', 'Gel': '#0D9488', 'Acrylic': '#DB2777',
 }
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Hair':   { emoji: '💇🏾', colour: '#D97706' },
   'Makeup': { emoji: '💄',   colour: '#DB2777' },
   'Lashes': { emoji: '✨',   colour: '#0D9488' },
+  'Nails':  { emoji: '💅',   colour: '#7C3AED' },
+  'Brows':  { emoji: '🪮',   colour: '#92400E' },
 }
 
 const emptyStats: ServiceStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }

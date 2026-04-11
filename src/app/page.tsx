@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSupabase } from "@/hooks/useSupabase";
+import { useRouter } from "next/navigation";
 
 const UNSPLASH_HERO = "/pexels1";
 
@@ -11,7 +13,6 @@ const FEATURED_VENDORS = [
     category: "Bridal & Events",
     location: "Lagos",
     tier: "Verified",
-    cover: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&q=80&auto=format&fit=crop",
     instagram: "zapphaire",
     rating: "4.9",
     reviews: 214,
@@ -22,7 +23,6 @@ const FEATURED_VENDORS = [
     category: "Makeup",
     location: "Abuja",
     tier: "Premium",
-    cover: "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600&q=80&auto=format&fit=crop",
     instagram: "glambyomoye",
     rating: "5.0",
     reviews: 189,
@@ -33,7 +33,6 @@ const FEATURED_VENDORS = [
     category: "Hair",
     location: "Lagos",
     tier: "Studio",
-    cover: "/pexels2",
     instagram: "crownbraidsco",
     rating: "4.8",
     reviews: 97,
@@ -47,12 +46,14 @@ const CATEGORIES = [
     sub: "Hair, Makeup, Lashes & more",
     href: "/services",
     featured: false,
+    wide: false,
   },
   {
     label: "Bridal & Events",
     sub: "Planners, venues & styling",
     href: "/directory",
     featured: true,
+    wide: false,
   },
   {
     label: "Community",
@@ -62,6 +63,37 @@ const CATEGORIES = [
     wide: true,
   },
 ];
+
+function useSearchDropdown(
+  searchVal: string,
+  setSearchResults: (r: { vendors: {id:string;name:string;location:string}[]; services: {id:string;name:string;category:string}[] }) => void,
+  setSearchOpen: (o: boolean) => void,
+  setSearchLoading: (l: boolean) => void,
+  supabase: ReturnType<typeof useSupabase>
+) {
+  useEffect(() => {
+    if (!searchVal.trim() || searchVal.length < 2) {
+      setSearchResults({ vendors: [], services: [] });
+      setSearchOpen(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      const q = searchVal.toLowerCase();
+      const [vendorRes, serviceRes] = await Promise.all([
+        supabase.from("vendors").select("id, name, location").ilike("name", "%" + q + "%").limit(5),
+        supabase.from("services").select("id, name, category").ilike("name", "%" + q + "%").limit(5),
+      ]);
+      setSearchResults({
+        vendors: vendorRes.data || [],
+        services: serviceRes.data || [],
+      });
+      setSearchOpen(true);
+      setSearchLoading(false);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [searchVal]);
+}
 
 function useScrollReveal() {
   useEffect(() => {
@@ -124,7 +156,30 @@ const SearchIcon = () => (
 
 export default function HomePage() {
   useScrollReveal();
+
+  const supabase = useSupabase();
+  const router = useRouter();
+  const searchRef = useRef<HTMLDivElement>(null);
+
   const [searchVal, setSearchVal] = useState("");
+  const [searchResults, setSearchResults] = useState<{
+    vendors: { id: string; name: string; location: string }[];
+    services: { id: string; name: string; category: string }[];
+  }>({ vendors: [], services: [] });
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  useSearchDropdown(searchVal, setSearchResults, setSearchOpen, setSearchLoading, supabase);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const revealBase: React.CSSProperties = {
     opacity: 0,
@@ -176,17 +231,64 @@ export default function HomePage() {
             Discover the finest beauty and wedding artisans in the Nigerian community.
           </p>
 
-          <div data-reveal style={{ ...revealDelay(320), position: "relative", maxWidth: "520px" }}>
+          <div data-reveal ref={searchRef} style={{ ...revealDelay(320), position: "relative", maxWidth: "520px" }}>
             <input
               type="text"
               placeholder="Search vendors, services, locations..."
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
+              onFocus={() => { if (searchVal.trim().length >= 2) setSearchOpen(true); }}
               style={{ width: "100%", background: "rgba(255,255,255,0.96)", border: "none", borderRadius: "14px", padding: "1.1rem 5rem 1.1rem 1.4rem", fontSize: "0.95rem", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", boxShadow: "0 8px 40px rgba(0,0,0,0.3)", outline: "none", boxSizing: "border-box" }}
             />
-            <button style={{ position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)", background: "#8d4b00", border: "none", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <button
+              onClick={() => { if (searchVal.trim()) router.push("/directory?search=" + encodeURIComponent(searchVal)); }}
+              style={{ position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)", background: "#8d4b00", border: "none", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+            >
               <SearchIcon />
             </button>
+
+            {searchOpen && (searchResults.vendors.length > 0 || searchResults.services.length > 0) && (
+              <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 100 }}>
+                {searchResults.vendors.length > 0 && (
+                  <div>
+                    <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B45309", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>
+                      Weddings &amp; Events
+                    </div>
+                    {searchResults.vendors.map((v) => (
+                      <button
+                        key={v.id}
+                        onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/directory?search=" + encodeURIComponent(v.name)); }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#FDF8F3"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
+                      >
+                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#1C1917", fontFamily: "var(--font-jost, sans-serif)" }}>{v.name}</span>
+                        {v.location && <span style={{ fontSize: "11px", color: "#A8A29E" }}>{v.location}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {searchResults.services.length > 0 && (
+                  <div>
+                    <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#0D9488", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>
+                      Services
+                    </div>
+                    {searchResults.services.map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/services?search=" + encodeURIComponent(s.name) + "&cat=" + encodeURIComponent(s.category)); }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#F0FAFA"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
+                      >
+                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#1C1917", fontFamily: "var(--font-jost, sans-serif)" }}>{s.name}</span>
+                        <span style={{ fontSize: "11px", color: "#A8A29E" }}>{s.category}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -286,13 +388,13 @@ export default function HomePage() {
           {FEATURED_VENDORS.map((vendor, i) => (
             <div key={vendor.name} data-reveal style={{ ...revealDelay(i * 100), flexShrink: 0, width: "272px", background: "#ffffff", borderRadius: "16px", overflow: "hidden", border: "1px solid #F0EBE3" }}>
               <div style={{ position: "relative", height: "220px", background: "#F5F0E8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
-  <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#8d4b00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)" }}>
-    {vendor.name.charAt(0)}
-  </div>
-  <div style={{ position: "absolute", top: "0.9rem", left: "0.9rem", background: "rgba(255,255,255,0.92)", borderRadius: "999px", padding: "4px 12px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8d4b00" }}>
-    {vendor.badge}
-  </div>
-</div>
+                <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#8d4b00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)" }}>
+                  {vendor.name.charAt(0)}
+                </div>
+                <div style={{ position: "absolute", top: "0.9rem", left: "0.9rem", background: "rgba(255,255,255,0.92)", borderRadius: "999px", padding: "4px 12px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8d4b00" }}>
+                  {vendor.badge}
+                </div>
+              </div>
               <div style={{ padding: "1.25rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "0.5rem" }}>
                   <StarIcon />

@@ -94,6 +94,12 @@ export default function ServicesPage() {
 
   useEffect(() => { setSub('All') }, [cat])
 
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search)
+  const c = params.get('cat')
+  if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
+}, [])
+
   const fetchServices = useCallback(async () => {
     setLoading(true)
     let q = supabase.from('services').select('*').eq('category', cat).order('verified', { ascending: false }).order('name')

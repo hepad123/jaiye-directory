@@ -55,16 +55,8 @@ const CATEGORIES = [
     href: "/directory",
     featured: true,
     wide: false,
-    image: "/pexels-bridal.jpg",
+    image: "/pexels-bridal1.jpg",
   },
-  {
-    label: "Community",
-    sub: "Reviews, shortlists & profiles",
-    href: "/saved",
-    featured: false,
-    wide: true,
-  },
-];
 
 function useSearchDropdown(
   searchVal: string,

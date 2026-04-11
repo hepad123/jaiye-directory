@@ -285,16 +285,14 @@ export default function HomePage() {
         <div style={{ display: "flex", overflowX: "auto", gap: "1.25rem", padding: "0.5rem 1.5rem 1.5rem", scrollbarWidth: "none" }}>
           {FEATURED_VENDORS.map((vendor, i) => (
             <div key={vendor.name} data-reveal style={{ ...revealDelay(i * 100), flexShrink: 0, width: "272px", background: "#ffffff", borderRadius: "16px", overflow: "hidden", border: "1px solid #F0EBE3" }}>
-              <div style={{ position: "relative", height: "300px", overflow: "hidden" }}>
-                <img
-                  src={vendor.cover}
-                  alt={vendor.name}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-                <div style={{ position: "absolute", top: "0.9rem", left: "0.9rem", background: "rgba(255,255,255,0.92)", borderRadius: "999px", padding: "4px 12px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8d4b00" }}>
-                  {vendor.badge}
-                </div>
-              </div>
+              <div style={{ position: "relative", height: "220px", background: "#F5F0E8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
+  <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#8d4b00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)" }}>
+    {vendor.name.charAt(0)}
+  </div>
+  <div style={{ position: "absolute", top: "0.9rem", left: "0.9rem", background: "rgba(255,255,255,0.92)", borderRadius: "999px", padding: "4px 12px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8d4b00" }}>
+    {vendor.badge}
+  </div>
+</div>
               <div style={{ padding: "1.25rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "0.5rem" }}>
                   <StarIcon />

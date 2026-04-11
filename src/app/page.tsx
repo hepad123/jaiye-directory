@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-const UNSPLASH_HERO = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1200&q=80&auto=format&fit=crop";
+const UNSPLASH_HERO = "/pexels1";
 
 const FEATURED_VENDORS = [
   {
@@ -33,7 +33,7 @@ const FEATURED_VENDORS = [
     category: "Hair",
     location: "Lagos",
     tier: "Studio",
-    cover: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&q=80&auto=format&fit=crop",
+    cover: "/pexels2",
     instagram: "crownbraidsco",
     rating: "4.8",
     reviews: 97,

@@ -98,7 +98,7 @@ function VendorRow({ vendor }: { vendor: Vendor }) {
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2, fontFamily: 'var(--font-playfair, serif)' }}>{vendor.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {vendor.location && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)' }}>{vendor.location}</span>}
-          {igHandle && <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)' }}>@{igHandle}</span>}
+          {igHandle && <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-jost, sans-serif)', textDecoration: 'none' }}>@{igHandle}</a>}
         </div>
       </div>
       {vendor.price_from && (<div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-jost, sans-serif)' }}>N{vendor.price_from}</div>)}

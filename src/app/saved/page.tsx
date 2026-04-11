@@ -455,4 +455,170 @@ export default function SavedPage() {
     }
   }, [user, savedServiceIds, supabase])
 
-  function
+  function handleQuoteChange(vendorId: string, name: string, amount: number | null) {
+    setSavedQuotes(prev => ({ ...prev, [vendorId]: amount }))
+    if (name) setVendorNames(prev => ({ ...prev, [vendorId]: name }))
+  }
+
+  const namedQuotes: Record<string, number> = {}
+  Object.entries(savedQuotes).forEach(([vid, amount]) => {
+    if (amount !== null && amount > 0) namedQuotes[vendorNames[vid] || vid] = amount
+  })
+
+  const grouped = CATEGORY_ORDER.reduce<Record<string, Vendor[]>>((acc, cat) => {
+    const inCat = savedVendors.filter(v => v.category === cat)
+    if (inCat.length > 0) acc[cat] = inCat
+    return acc
+  }, {})
+  savedVendors.forEach(v => {
+    if (!CATEGORY_ORDER.includes(v.category)) {
+      if (!grouped[v.category]) grouped[v.category] = []
+      if (!grouped[v.category].find(x => x.id === v.id)) grouped[v.category].push(v)
+    }
+  })
+
+  const groupedServices = ['Hair', 'Makeup', 'Lashes', 'Nails', 'Brows'].reduce<Record<string, Service[]>>((acc, cat) => {
+    const inCat = savedServices.filter(s => s.category === cat)
+    if (inCat.length > 0) acc[cat] = inCat
+    return acc
+  }, {})
+
+  const totalSaved = savedVendors.length + savedServices.length
+  const firstName = displayName.split(' ')[0]
+  const isLoading = !isLoaded || loading
+
+  const tabStyle = (tab: Tab) => ({
+    flex: 1,
+    padding: '10px 0',
+    background: 'none',
+    border: 'none',
+    borderBottom: '2px solid ' + (activeTab === tab ? 'var(--accent)' : 'transparent'),
+    color: activeTab === tab ? 'var(--accent)' : 'var(--text-muted)',
+    fontSize: 13,
+    fontWeight: activeTab === tab ? 700 : 400,
+    cursor: 'pointer',
+    fontFamily: jost,
+    transition: 'all 0.15s',
+  })
+
+  return (
+    <main style={{ fontFamily: jost, background: 'var(--bg)', minHeight: '100vh' }}>
+      <div style={{ background: 'var(--hero-grad)', textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) 20px clamp(28px, 4vw, 36px)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 18 }}>
+          <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
+          <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', opacity: 0.6 }} />
+          <div style={{ height: 1, width: 44, background: 'var(--accent)', opacity: 0.4 }} />
+        </div>
+        <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, marginBottom: 10 }}>Your Shortlist</div>
+        <h1 style={{ fontFamily: play, fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1, margin: '0 0 6px' }}>{firstName ? firstName + "'s" : 'Saved'}</h1>
+        <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-pill)', marginBottom: 16 }}>Saved Vendors</div>
+        <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, marginBottom: 16 }}>{isLoading ? 'Loading...' : totalSaved > 0 ? totalSaved + ' saved' : 'Your shortlist, all in one place'}</div>
+        {!isLoading && user && totalSaved > 0 && username && (<div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><ShareButton username={username} /></div>)}
+        <div style={{ marginTop: 16, height: 1, background: 'linear-gradient(to right, transparent, var(--accent) 30%, var(--accent) 70%, transparent)', opacity: 0.4 }} />
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px 60px' }}>
+
+        {!isLoading && user && totalSaved > 0 && (
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 24, marginTop: 0, background: 'var(--bg-card)', position: 'sticky', top: 54, zIndex: 10 }}>
+            <button style={tabStyle('vendors')} onClick={() => setActiveTab('vendors')}>
+              Bridal &amp; Events {savedVendors.length > 0 && <span style={{ marginLeft: 6, fontSize: 10, background: activeTab === 'vendors' ? 'var(--accent)' : 'var(--bg-pill)', color: activeTab === 'vendors' ? 'white' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{savedVendors.length}</span>}
+            </button>
+            <button style={tabStyle('services')} onClick={() => setActiveTab('services')}>
+              Services {savedServices.length > 0 && <span style={{ marginLeft: 6, fontSize: 10, background: activeTab === 'services' ? 'var(--accent)' : 'var(--bg-pill)', color: activeTab === 'services' ? 'white' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{savedServices.length}</span>}
+            </button>
+          </div>
+        )}
+
+        {isLoading && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 12, marginTop: 24 }}>{Array.from({ length: 6 }).map((_, i) => (<div key={i} style={{ background: 'var(--bg-card)', borderRadius: 14, height: 120, opacity: 0.3, border: '1px solid var(--border)' }} />))}</div>)}
+
+        {!isLoading && !user && (
+          <div style={{ textAlign: 'center', padding: '60px 16px' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
+            <h2 style={{ fontSize: 18, color: 'var(--text)', fontWeight: 700, margin: '0 0 8px', fontFamily: play }}>Sign in to see your saved vendors</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px' }}>Head back to the directory and sign in to start saving.</p>
+            <button onClick={() => openSignIn()} style={{ padding: '10px 24px', background: 'var(--accent)', color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: jost }}>Sign in</button>
+          </div>
+        )}
+
+        {!isLoading && user && totalSaved === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 16px' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>✦</div>
+            <h2 style={{ fontSize: 18, color: 'var(--text)', fontWeight: 700, margin: '0 0 8px', fontFamily: play }}>No saved vendors yet</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px' }}>Browse the directory and tap the heart on vendors you love.</p>
+            <Link href="/directory" style={{ display: 'inline-block', padding: '10px 24px', background: 'var(--accent)', color: 'white', borderRadius: 24, textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: jost }}>Browse vendors</Link>
+          </div>
+        )}
+
+        {!isLoading && user && totalSaved > 0 && (
+          <div>
+            <BudgetBar quotes={namedQuotes} />
+
+            {activeTab === 'vendors' && (
+              <div>
+                {savedVendors.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 16px' }}>
+                    <div style={{ fontSize: 36, marginBottom: 10 }}>💍</div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: jost }}>No bridal vendors saved yet.</p>
+                    <Link href="/directory" style={{ display: 'inline-block', marginTop: 12, padding: '9px 22px', borderRadius: 24, background: 'var(--accent)', color: 'white', fontSize: 12, textDecoration: 'none', fontWeight: 700, fontFamily: jost }}>Browse vendors</Link>
+                  </div>
+                ) : (
+                  <div>
+                    {Object.entries(grouped).map(([cat, vendors]) => (
+                      <div key={cat} style={{ marginBottom: 32 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: getColour(cat), color: 'white', fontSize: 12, fontWeight: 600, fontFamily: jost }}>{getEmoji(cat)} {cat}</span>
+                          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{vendors.length} vendor{vendors.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 12 }}>
+                          {vendors.map(v => (<VendorCard key={v.id} v={v} savedIds={savedIds} onToggleSave={handleToggleSave} savedNote={savedNotes[v.id] ?? ''} savedQuotedPrice={savedQuotes[v.id] ?? null} onQuoteChange={handleQuoteChange} />))}
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ textAlign: 'center', marginTop: 8 }}>
+                      <Link href="/directory" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: jost }}>Browse more vendors</Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'services' && (
+              <div>
+                {savedServices.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 16px' }}>
+                    <div style={{ fontSize: 36, marginBottom: 10 }}>💇🏾</div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: jost }}>No services saved yet.</p>
+                    <Link href="/services" style={{ display: 'inline-block', marginTop: 12, padding: '9px 22px', borderRadius: 24, background: 'var(--accent)', color: 'white', fontSize: 12, textDecoration: 'none', fontWeight: 700, fontFamily: jost }}>Browse services</Link>
+                  </div>
+                ) : (
+                  <div>
+                    {Object.entries(groupedServices).map(([cat, services]) => {
+                      const meta = SERVICE_CATEGORY_META[cat] || { emoji: '✦', colour: '#D97706' }
+                      return (
+                        <div key={cat} style={{ marginBottom: 32 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: meta.colour, color: 'white', fontSize: 12, fontWeight: 600, fontFamily: jost }}>{meta.emoji} {cat}</span>
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{services.length} stylist{services.length !== 1 ? 's' : ''}</span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 12 }}>
+                            {services.map(s => (<ServiceCard key={s.id} service={s} savedIds={savedServiceIds} onToggleSave={handleToggleServiceSave} />))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    <div style={{ textAlign: 'center', marginTop: 8 }}>
+                      <Link href="/services" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: jost }}>Browse more services</Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, fontFamily: jost }}>Made with love for Nigerian brides and families</footer>
+    </main>
+  )
+}

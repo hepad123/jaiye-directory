@@ -203,8 +203,7 @@ return () => document.removeEventListener("mouseup", handleClick);
   ];
 
   return (
-    <div style={{ background: "#faf9f6", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", overflowX: "hidden" }}>
-
+    <div style={{ background: "#faf9f6", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", overflowX: "hidden", position: "relative" }}>
       {/* HERO */}
       <section style={{ position: "relative", minHeight: "92vh", display: "flex", alignItems: "flex-end", paddingBottom: "3rem", overflow: "visible" }}>
         <img

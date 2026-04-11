@@ -297,7 +297,7 @@ return () => document.removeEventListener("mouseup", handleClick);
       </section>
 
       {/* TICKER */}
-      <div style={{ background: "#8d4b00", overflow: "hidden", padding: "0.75rem 0", whiteSpace: "nowrap", position: "relative", zIndex: -1 }}>
+      <div style={{ background: "#8d4b00", overflow: "hidden", padding: "0.75rem 0", whiteSpace: "nowrap", position: "relative", zIndex: 1 }}>
         <style>{`
           @keyframes jaiye-ticker {
             0% { transform: translateX(0); }

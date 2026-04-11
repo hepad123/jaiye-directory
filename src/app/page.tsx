@@ -57,6 +57,7 @@ const CATEGORIES = [
     wide: false,
     image: "/pexels-bridal1.jpg",
   },
+  ];
 
 function useSearchDropdown(
   searchVal: string,

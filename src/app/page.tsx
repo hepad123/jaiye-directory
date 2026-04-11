@@ -339,7 +339,7 @@ export default function HomePage() {
             Discover the finest beauty and wedding artisans in the Nigerian community.
           </p>
 
-          <div data-reveal ref={searchRef} style={{ ...revealDelay(320), position: "relative", maxWidth: "520px" }}>
+          <div data-reveal ref={searchRef} style={{ ...revealDelay(320), position: "relative", maxWidth: "520px", zIndex: 9999 }}>
             <input
               type="text"
               placeholder="Search vendors, services, locations..."
@@ -356,7 +356,7 @@ export default function HomePage() {
             </button>
 
             {searchOpen && (searchResults.vendors.length > 0 || searchResults.services.length > 0) && (
-              <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 100 }}>
+            <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 9999 }}>  
                 {searchResults.vendors.length > 0 && (
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B45309", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>

@@ -179,7 +179,7 @@ useEffect(() => {
   const catMeta = CATEGORY_META[cat] || { emoji: '✦', colour: '#D97706' }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: jost }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: jost, overflowX: 'hidden' }}>
       <div style={{ background: '#1C1917', color: '#fff', padding: '56px 24px 48px', textAlign: 'center' }}>
         <p style={{ fontFamily: play, fontSize: 13, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 12 }}>Beauty and Personal Care</p>
         <h1 style={{ fontFamily: play, fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 700, lineHeight: 1.15, margin: '0 0 16px' }}>Find Your Glam</h1>

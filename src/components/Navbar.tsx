@@ -162,37 +162,34 @@ function ProfileDropdown({ user, username, displayName, profileChecked, isActive
 
 function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onClose: () => void; pathname: string; savedCount: number }) {
   const [servicesOpen, setServicesOpen] = useState(false)
-  const [bridalOpen, setBridalOpen] = useState(false)
-  const jost = 'var(--font-jost, sans-serif)'
+  const [eventsOpen, setEventsOpen] = useState(false)
+  const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const play = 'var(--font-playfair, serif)'
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/')
 
-  const navItem = (label: string, href: string, opts?: { soon?: boolean; count?: number }) => (
-    <Link href={href} onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', fontSize: 13, fontWeight: isActive(href) ? 600 : 400, color: isActive(href) ? 'var(--accent)' : 'var(--text)', textDecoration: 'none', borderLeft: isActive(href) ? '2px solid var(--accent)' : '2px solid transparent', transition: 'all 0.1s', fontFamily: jost, background: isActive(href) ? 'var(--bg-pill)' : 'transparent' }} onMouseEnter={e => { if (!isActive(href)) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (!isActive(href)) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+  const navItem = (label: string, href: string, opts?: { count?: number }) => (
+    <Link href={href} onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: isActive(href) ? '#B4690E' : 'var(--text)', textDecoration: 'none', borderLeft: isActive(href) ? '2px solid #B4690E' : '2px solid transparent', transition: 'all 0.1s', fontFamily: manrope, background: isActive(href) ? 'var(--bg-pill)' : 'transparent' }} onMouseEnter={e => { if (!isActive(href)) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (!isActive(href)) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
       <span>{label}</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        {opts?.count !== undefined && opts.count > 0 && <span style={{ fontSize: 10, background: 'var(--accent)', color: '#fff', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{opts.count}</span>}
-        {opts?.soon && <span style={{ fontSize: 10, background: 'var(--bg-pill)', color: 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', border: '1px solid var(--border)' }}>Soon</span>}
-      </div>
+      {opts?.count !== undefined && opts.count > 0 && <span style={{ fontSize: 10, background: 'var(--accent)', color: '#fff', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{opts.count}</span>}
     </Link>
   )
 
   const subItem = (label: string, href: string) => (
-    <Link key={label} href={href} onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px 8px 32px', fontSize: 12, color: isActive(href) ? 'var(--accent)' : 'var(--text-muted)', textDecoration: 'none', fontFamily: jost, transition: 'color 0.1s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={e => { if (!isActive(href)) e.currentTarget.style.color = 'var(--text-muted)' }}>
-      <div style={{ width: 4, height: 4, borderRadius: '50%', background: isActive(href) ? 'var(--accent)' : 'var(--border)', flexShrink: 0 }} />
+    <Link key={label} href={href} onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px 8px 32px', fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: isActive(href) ? '#B4690E' : 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 600, transition: 'color 0.1s' }} onMouseEnter={e => (e.currentTarget.style.color = '#B4690E')} onMouseLeave={e => { if (!isActive(href)) e.currentTarget.style.color = 'var(--text-muted)' }}>
+      <div style={{ width: 3, height: 3, borderRadius: '50%', background: isActive(href) ? '#B4690E' : 'var(--border)', flexShrink: 0 }} />
       {label}
     </Link>
   )
 
   const sectionLabel = (label: string) => (
-    <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '14px 20px 4px', fontFamily: jost }}>{label}</div>
+    <div style={{ fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: 'var(--text-muted)', padding: '16px 20px 4px', fontFamily: manrope, fontWeight: 600, opacity: 0.6 }}>{label}</div>
   )
 
   const expandableItem = (label: string, isOpen: boolean, onToggle: () => void) => (
-    <button onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px 20px', fontSize: 13, fontWeight: 400, color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: jost, borderLeft: '2px solid transparent', transition: 'all 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+    <button onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope, borderLeft: '2px solid transparent', transition: 'all 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
       <span>{label}</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}><polyline points="9 18 15 12 9 6"/></svg>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
     </button>
   )
 
@@ -202,7 +199,7 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
       <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 260, zIndex: 50, background: 'var(--bg-card)', borderRight: '1px solid var(--border)', transform: open ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.22s ease', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <div style={{ fontFamily: play, fontSize: 22, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em' }}>Jaiye</div>
-          <div style={{ fontFamily: jost, fontSize: 11, color: 'var(--text-muted)', marginTop: 3, letterSpacing: '0.04em' }}>Nigerian wedding and event directory</div>
+          <div style={{ fontFamily: manrope, fontSize: 10, color: 'var(--text-muted)', marginTop: 3, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Nigerian wedding and event directory</div>
         </div>
 
         <div style={{ flex: 1 }}>
@@ -218,16 +215,11 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
             {subItem('Brows', '/services?cat=Brows')}
           </div>
 
-          {expandableItem('Bridal & Events', bridalOpen, () => setBridalOpen(o => !o))}
-          <div style={{ maxHeight: bridalOpen ? 200 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
-            {subItem('All Vendors', '/directory')}
-            {subItem('Event Planning', '/directory?cat=Event Planning')}
-            {subItem('Decor & Venue', '/directory?cat=Decor & Venue')}
-            {subItem('Photography', '/directory?cat=Photography')}
-            {subItem('Outfits', '/directory?cat=Outfits')}
+          {expandableItem('Events', eventsOpen, () => setEventsOpen(o => !o))}
+          <div style={{ maxHeight: eventsOpen ? 120 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
+            {subItem('Wedding', '/directory?occasion=Wedding')}
+            {subItem('Baby Shower', '/directory?occasion=Baby Shower')}
           </div>
-
-          {navItem('Community', '/community', { soon: true })}
 
           <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
           {sectionLabel('You')}
@@ -235,10 +227,11 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
           {navItem('My Profile', '/profile/edit')}
         </div>
 
-        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', fontFamily: jost, fontSize: 11, color: 'var(--text-muted)' }}>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', fontFamily: manrope, fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Made with love for Nigerian brides
         </div>
       </div>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap');`}</style>
     </>
   )
 }
@@ -284,7 +277,6 @@ export default function Navbar() {
     <>
       <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} pathname={pathname || ''} savedCount={savedCount} />
       <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 30, transition: 'background 0.2s ease, border-color 0.2s ease' }}>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => setDrawerOpen(o => !o)} style={{ width: 32, height: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 8, flexShrink: 0, transition: 'background 0.15s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
             <div style={{ width: 18, height: 1.5, background: 'var(--text)', borderRadius: 2, transition: 'all 0.2s', transform: drawerOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }} />
@@ -310,11 +302,9 @@ export default function Navbar() {
               </button>
             </SignInButton>
           </Show>
-
           <div style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 2px' }} />
           <ThemeToggle />
           <UserSearch />
-
           <Show when="signed-in">
             <ProfileDropdown user={user} username={username} displayName={displayName} profileChecked={profileChecked} isActive={isActive} signOut={signOut} />
           </Show>

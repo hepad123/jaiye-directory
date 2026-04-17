@@ -342,19 +342,18 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         {v.location   && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, fontFamily: manrope }}>&#128205; {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 3, fontFamily: manrope }}>From &#8358;{v.price_from}</div>}
 
-        {igHandle && (
-          <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border)', background: '#fff8f5', fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', marginBottom: 6, fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
-            <InstagramIcon />@{igHandle}
-          </a>
-        )}
-
-        {whatsappUrl && (
-          <div style={{ marginBottom: 6 }}>
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, background: '#25D366', color: 'white', fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: manrope }}>
-              <WhatsAppIcon /> WhatsApp
-            </a>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+  {igHandle && (
+    <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+      <InstagramIcon />Instagram
+    </a>
+  )}
+  {whatsappUrl && (
+    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+      <WhatsAppIcon />WhatsApp
+    </a>
+  )}
+</div>
 
         {v.discount_code && (
           <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>

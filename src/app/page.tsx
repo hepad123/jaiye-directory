@@ -10,7 +10,7 @@ const UNSPLASH_HERO = "/pexels1";
 const FEATURED_VENDORS = [
   {
     name: "Zapphaire Events",
-    category: "Bridal & Events",
+    category: "Events",
     location: "Lagos",
     tier: "Verified",
     instagram: "zapphaire",
@@ -50,7 +50,7 @@ const CATEGORIES = [
     image: "/pexels-services.jpg",
   },
   {
-    label: "Bridal & Events",
+    label: "Events",
     sub: "Planners, venues & styling",
     href: "/directory",
     featured: true,
@@ -132,7 +132,7 @@ const CommunityIcon = () => (
 
 const ICONS: Record<string, React.ReactNode> = {
   "Services": <ServicesIcon />,
-  "Bridal & Events": <BridalIcon />,
+  "Events": <BridalIcon />,
   "Community": <CommunityIcon />,
 };
 
@@ -328,7 +328,7 @@ export default function HomePage() {
 
         <div className="hero-content">
           <p data-reveal style={{ ...revealBase, fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#D97706", fontWeight: 600, marginBottom: "1rem" }}>
-            The Nigerian Wedding & Beauty Edit
+            The Nigerian Beauty Services & Events Edit
           </p>
 
           <h1 data-reveal style={{ ...revealDelay(100), fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(2.8rem, 8vw, 4.5rem)", fontWeight: 700, color: "#ffffff", lineHeight: 1.05, letterSpacing: "-0.02em", marginBottom: "1.25rem" }}>
@@ -336,7 +336,7 @@ export default function HomePage() {
           </h1>
 
           <p data-reveal style={{ ...revealDelay(200), color: "rgba(255,255,255,0.78)", fontSize: "1.05rem", lineHeight: 1.6, fontWeight: 300, marginBottom: "2rem", maxWidth: "400px" }}>
-            Discover the finest beauty and wedding artisans in the Nigerian community.
+            Discover the finest beauty services and events vendors in the Nigerian community
           </p>
 
           <div data-reveal ref={searchRef} style={{ ...revealDelay(320), position: "relative", maxWidth: "520px", zIndex: 9999 }}>
@@ -539,7 +539,7 @@ export default function HomePage() {
             &ldquo;
           </div>
           <blockquote style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(1.2rem, 4vw, 1.5rem)", fontWeight: 400, color: "#1C1917", lineHeight: 1.5, marginBottom: "2rem", letterSpacing: "-0.01em", fontStyle: "italic" }}>
-            I finally found a space that celebrates Nigerian beauty. The artisans here actually understand my hair and my vision for my big day.
+            I finally found a space that allows me to discover new beauty providers. No longer keeping saved folders on Instagram and TikTok that I can never find
           </blockquote>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.85rem" }}>
             <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)", flexShrink: 0 }}>
@@ -562,14 +562,14 @@ export default function HomePage() {
           Crafting Tradition
         </p>
         <div style={{ display: "flex", justifyContent: "center", gap: "2rem", flexWrap: "wrap", marginBottom: "2rem" }}>
-          {["Directory", "Services", "Community", "Contact"].map((link) => (
+          {["Services", "Events", "Community", "Contact"].map((link) => (
             <a key={link} href="#" style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
               {link}
             </a>
           ))}
         </div>
         <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)" }}>
-          &copy; 2025 Jaiye Directory. All rights reserved.
+          &copy; 2026 Jaiye Directory. All rights reserved.
         </p>
       </footer>
 

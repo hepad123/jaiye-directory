@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useSupabase } from '@/hooks/useSupabase'
 
@@ -40,7 +40,8 @@ const SUB_COLOR: Record<string, string> = {
   'Locs': '#92400E', 'Knotless': '#6D28D9', 'Faux Locs': '#B45309', 'Bridal MUA': '#BE185D',
   'Glam': '#DC2626', 'Editorial': '#1D4ED8', 'Airbrush': '#0891B2',
   'Extensions': '#7C3AED', 'Lash Lift': '#0D9488', 'Strip Lashes': '#9333EA',
-  'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#9D174D', 'Textured Hair': '#065F46', 'Cornrows': '#0891B2', 'Ponytail': '#6D28D9', 'Treatment': '#065F46',
+  'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#9D174D',
+  'Textured Hair': '#065F46', 'Cornrows': '#0891B2', 'Ponytail': '#6D28D9', 'Treatment': '#065F46',
   'Biab': '#7C3AED', 'Gel': '#0D9488', 'Acrylic': '#DB2777',
 }
 
@@ -71,6 +72,38 @@ function HeartIcon({ filled }: { filled: boolean }) {
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'var(--accent)' : 'none'} stroke={filled ? 'var(--accent)' : 'var(--border)'} strokeWidth="2" style={{ flexShrink: 0, transition: 'all 0.15s ease' }}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
     </svg>
+  )
+}
+
+function SubcategoryDropdown({ cat, sub, setSub, manrope }: { cat: string; sub: string; setSub: (s: string) => void; manrope: string }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const sorted = ['All', ...CATEGORIES[cat].filter(s => s !== 'All').sort()]
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mouseup', handleClick)
+    return () => document.removeEventListener('mouseup', handleClick)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1px solid', borderColor: sub !== 'All' ? CATEGORY_ACCENT : 'var(--border)', background: sub !== 'All' ? CATEGORY_ACCENT : 'transparent', color: sub !== 'All' ? '#fff' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+        {sub === 'All' ? 'All Styles' : sub}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 180, maxHeight: 260, overflowY: 'auto' }}>
+          {sorted.map(s => (
+            <button key={s} onClick={() => { setSub(s); setOpen(false) }} style={{ display: 'block', width: '100%', padding: '9px 16px', background: sub === s ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: sub === s ? 700 : 400, color: sub === s ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s', letterSpacing: '0.02em' }} onMouseEnter={e => { if (sub !== s) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (sub !== s) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+              {s === 'All' ? 'All Styles' : s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -176,13 +209,13 @@ export default function ServicesPage() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} }`}</style>
 
       <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
-  <img src="/pexels-services-hero.jpg" alt="Services" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
-</div>
+        <img src="/pexels-services-hero.jpg" alt="Services" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+      </div>
 
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
           {Object.keys(CATEGORIES).map(c => (
-            <button key={c} onClick={() => setCat(c)} style={{ padding: '18px 24px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+            <button key={c} onClick={() => setCat(c)} style={{ padding: '18px 24px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
               {c}
             </button>
           ))}
@@ -190,16 +223,11 @@ export default function ServicesPage() {
       </div>
 
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '12px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {CATEGORIES[cat].map(s => (
-              <button key={s} onClick={() => setSub(s)} style={{ padding: '5px 14px', borderRadius: 999, border: '1px solid', borderColor: sub === s ? CATEGORY_ACCENT : 'var(--border)', background: sub === s ? CATEGORY_ACCENT : 'transparent', color: sub === s ? '#fff' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: sub === s ? 700 : 500, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.04em' }}>{s}</button>
-            ))}
-          </div>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <SubcategoryDropdown cat={cat} sub={sub} setSub={setSub} manrope={manrope} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: manrope, fontWeight: 600 }}>City:</span>
             {CITIES.map(ci => (
-              <button key={ci} onClick={() => setCity(ci)} style={{ padding: '4px 12px', borderRadius: 999, border: '1px solid', borderColor: city === ci ? '#B45309' : 'var(--border)', background: city === ci ? 'rgba(180,83,9,0.08)' : 'transparent', color: city === ci ? '#B45309' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: city === ci ? 700 : 500, cursor: 'pointer', transition: 'all 0.15s' }}>{ci}</button>
+              <button key={ci} onClick={() => setCity(ci)} style={{ padding: '7px 14px', borderRadius: 999, border: '1px solid', borderColor: city === ci ? CATEGORY_ACCENT : 'var(--border)', background: city === ci ? 'rgba(180,105,14,0.08)' : 'transparent', color: city === ci ? CATEGORY_ACCENT : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: city === ci ? 700 : 500, cursor: 'pointer', transition: 'all 0.15s' }}>{ci}</button>
             ))}
           </div>
         </div>
@@ -208,7 +236,7 @@ export default function ServicesPage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
         {!loading && (<p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20, fontFamily: manrope, letterSpacing: '0.04em' }}>{services.length} {services.length === 1 ? 'result' : 'results'}{sub !== 'All' ? ' - ' + sub : ''}{city !== 'All' ? ' - ' + city : ''}</p>)}
         {loading && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>{[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: 'var(--bg-card)', borderRadius: 14, height: 180, animation: 'pulse 1.5s ease infinite', opacity: 0.4, border: '1px solid var(--border)' }} />))}</div>)}
-        {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8, fontStyle: 'italic' }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different subcategory or city</p></div>)}
+        {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different subcategory or city</p></div>)}
         {!loading && services.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>
             {services.map(sv => (<Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} onToggleSave={() => toggleSave(sv.id)} stats={stats[sv.id] || emptyStats} onToggleUsed={() => toggleUsed(sv.id)} onToggleRec={() => toggleRec(sv.id)} isLoggedIn={!!user} onOpenAuth={openSignIn} />))}
@@ -245,7 +273,9 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 5, fontFamily: manrope }}>
           {service.category}
         </div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 36, fontFamily: newsreader, fontStyle: 'normal' }}>{service.name}</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 36, fontFamily: newsreader }}>
+          {service.name}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: manrope, letterSpacing: '0.04em' }}>{s}</span>))}
         </div>
@@ -287,7 +317,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           </div>
         )}
 
-        <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
           <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{expanded ? '-' : '+'}</span>
           {expanded ? 'Less info' : 'More info'}
         </button>

@@ -33,8 +33,6 @@ const CATEGORIES: Record<string, string[]> = {
   Brows:  ['All'],
 }
 
-const CITIES = ['All', 'Lagos', 'Abuja', 'Port Harcourt', 'Ibadan']
-
 const SUB_COLOR: Record<string, string> = {
   'Braids': '#7C3AED', 'Wigs': '#DB2777', 'Natural Hair': '#059669', 'Weaves': '#D97706',
   'Locs': '#92400E', 'Knotless': '#6D28D9', 'Faux Locs': '#B45309', 'Bridal MUA': '#BE185D',
@@ -75,10 +73,10 @@ function HeartIcon({ filled }: { filled: boolean }) {
   )
 }
 
-function SubcategoryDropdown({ cat, sub, setSub, manrope }: { cat: string; sub: string; setSub: (s: string) => void; manrope: string }) {
+function SubcategoryDropdown({ cat, subs, setSubs, manrope }: { cat: string; subs: string[]; setSubs: (s: string[]) => void; manrope: string }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const sorted = ['All', ...CATEGORIES[cat].filter(s => s !== 'All').sort()]
+  const sorted = CATEGORIES[cat].filter(s => s !== 'All').sort()
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -88,17 +86,63 @@ function SubcategoryDropdown({ cat, sub, setSub, manrope }: { cat: string; sub: 
     return () => document.removeEventListener('mouseup', handleClick)
   }, [])
 
+  const toggle = (s: string) => {
+    if (subs.includes(s)) { setSubs(subs.filter(x => x !== s)) } else { setSubs([...subs, s]) }
+  }
+
+  const label = subs.length === 0 ? 'All Styles' : subs.length === 1 ? subs[0] : subs.length + ' Styles'
+  const isFiltered = subs.length > 0
+
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1px solid', borderColor: sub !== 'All' ? CATEGORY_ACCENT : 'var(--border)', background: sub !== 'All' ? CATEGORY_ACCENT : 'transparent', color: sub !== 'All' ? '#fff' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-        {sub === 'All' ? 'All Styles' : sub}
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: isFiltered ? CATEGORY_ACCENT : 'transparent', color: isFiltered ? '#fff' : CATEGORY_ACCENT, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+        {label}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 180, maxHeight: 260, overflowY: 'auto' }}>
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 200, maxHeight: 280, overflowY: 'auto' }}>
+          <button onClick={() => { setSubs([]); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: subs.length === 0 ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', borderBottom: '1px solid var(--border)', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: subs.length === 0 ? 700 : 400, color: subs.length === 0 ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer' }}>
+            All Styles
+          </button>
           {sorted.map(s => (
-            <button key={s} onClick={() => { setSub(s); setOpen(false) }} style={{ display: 'block', width: '100%', padding: '9px 16px', background: sub === s ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: sub === s ? 700 : 400, color: sub === s ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s', letterSpacing: '0.02em' }} onMouseEnter={e => { if (sub !== s) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (sub !== s) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
-              {s === 'All' ? 'All Styles' : s}
+            <button key={s} onClick={() => toggle(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: subs.includes(s) ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: subs.includes(s) ? 700 : 400, color: subs.includes(s) ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (!subs.includes(s)) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (!subs.includes(s)) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+              {s}
+              {subs.includes(s) && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CityDropdown({ city, setCity, manrope }: { city: string; setCity: (c: string) => void; manrope: string }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const cities = ['All', 'Lagos', 'Abuja']
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mouseup', handleClick)
+    return () => document.removeEventListener('mouseup', handleClick)
+  }, [])
+
+  const isFiltered = city !== 'All'
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: isFiltered ? CATEGORY_ACCENT : 'transparent', color: isFiltered ? '#fff' : CATEGORY_ACCENT, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+        {city === 'All' ? 'All Locations' : city}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 160, overflow: 'hidden' }}>
+          {cities.map(c => (
+            <button key={c} onClick={() => { setCity(c); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: city === c ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: city === c ? 700 : 400, color: city === c ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (city !== c) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (city !== c) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+              {c === 'All' ? 'All Locations' : c}
+              {city === c && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
             </button>
           ))}
         </div>
@@ -114,12 +158,12 @@ export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [cat, setCat] = useState('Hair')
-  const [sub, setSub] = useState('All')
+  const [subs, setSubs] = useState<string[]>([])
   const [city, setCity] = useState('All')
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState<Record<string, ServiceStats>>({})
 
-  useEffect(() => { setSub('All') }, [cat])
+  useEffect(() => { setSubs([]) }, [cat])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -130,10 +174,12 @@ export default function ServicesPage() {
   const fetchServices = useCallback(async () => {
     setLoading(true)
     let q = supabase.from('services').select('*').eq('category', cat).order('verified', { ascending: false }).order('name')
-    if (sub !== 'All') q = q.contains('subcategories', [sub])
     if (city !== 'All') q = q.eq('city', city)
     const { data } = await q
-    const rows = data || []
+    let rows = data || []
+    if (subs.length > 0) {
+      rows = rows.filter((s: Service) => subs.some(sub => s.subcategories?.includes(sub)))
+    }
     setServices(rows)
     if (rows.length > 0) {
       const ids = rows.map((s: Service) => s.id)
@@ -155,7 +201,7 @@ export default function ServicesPage() {
       setStats(newStats)
     }
     setLoading(false)
-  }, [supabase, cat, sub, city, user])
+  }, [supabase, cat, subs, city, user])
 
   const fetchSaved = useCallback(async () => {
     if (!user?.id) { setSavedIds(new Set()); return }
@@ -223,18 +269,14 @@ export default function ServicesPage() {
       </div>
 
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '12px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <SubcategoryDropdown cat={cat} sub={sub} setSub={setSub} manrope={manrope} />
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            {CITIES.map(ci => (
-              <button key={ci} onClick={() => setCity(ci)} style={{ padding: '7px 14px', borderRadius: 999, border: '1px solid', borderColor: city === ci ? CATEGORY_ACCENT : 'var(--border)', background: city === ci ? 'rgba(180,105,14,0.08)' : 'transparent', color: city === ci ? CATEGORY_ACCENT : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: city === ci ? 700 : 500, cursor: 'pointer', transition: 'all 0.15s' }}>{ci}</button>
-            ))}
-          </div>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <SubcategoryDropdown cat={cat} subs={subs} setSubs={setSubs} manrope={manrope} />
+          <CityDropdown city={city} setCity={setCity} manrope={manrope} />
         </div>
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
-        {!loading && (<p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20, fontFamily: manrope, letterSpacing: '0.04em' }}>{services.length} {services.length === 1 ? 'result' : 'results'}{sub !== 'All' ? ' - ' + sub : ''}{city !== 'All' ? ' - ' + city : ''}</p>)}
+        {!loading && (<p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20, fontFamily: manrope, letterSpacing: '0.04em' }}>{services.length} {services.length === 1 ? 'result' : 'results'}{subs.length > 0 ? ' - ' + subs.join(', ') : ''}{city !== 'All' ? ' - ' + city : ''}</p>)}
         {loading && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>{[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: 'var(--bg-card)', borderRadius: 14, height: 180, animation: 'pulse 1.5s ease infinite', opacity: 0.4, border: '1px solid var(--border)' }} />))}</div>)}
         {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different subcategory or city</p></div>)}
         {!loading && services.length > 0 && (

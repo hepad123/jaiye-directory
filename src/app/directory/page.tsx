@@ -334,12 +334,12 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         {(avgRating !== null || usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
             {avgRating !== null && <span style={{ fontSize: 11, color: 'var(--gold)', fontFamily: manrope }}>&#9733; {avgRating}</span>}
-            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used</span>}
-            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used &#128075;</span>}
+{recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
           </div>
         )}
 
-        {v.location   && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, fontFamily: manrope }}>&#128205; {v.location}</div>}
+        {v.location   && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 3, fontFamily: manrope }}>&#128205; {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 3, fontFamily: manrope }}>From &#8358;{v.price_from}</div>}
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>

@@ -389,13 +389,13 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
 
             <div style={{ marginTop: 4 }}>
               <button onClick={toggleUsed} disabled={usedSubmitting} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)', opacity: usedSubmitting ? 0.6 : 1 }}>
-                {hasUsed ? 'Used this' : 'I used this vendor'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {usedCount}</span>}
-              </button>
+  &#128075; {hasUsed ? 'Used this' : 'I used this vendor'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {usedCount}</span>}
+</button>
             </div>
             <div style={{ marginTop: 4 }}>
               <button onClick={toggleRecommend} disabled={recSubmitting} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)', opacity: recSubmitting ? 0.6 : 1 }}>
-                {hasRec ? 'Recommended' : 'I recommend this'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {recCount}</span>}
-              </button>
+  &#11088; {hasRec ? 'Recommended' : 'I recommend this'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {recCount}</span>}
+</button>
             </div>
             <ReviewSection vendor={v} currentUser={currentUser} onOpenAuth={onOpenAuth} />
           </div>

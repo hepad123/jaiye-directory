@@ -175,13 +175,9 @@ export default function ServicesPage() {
     <div style={{ minHeight: '100vh', background: '#fff8f5', color: 'var(--text)', fontFamily: manrope, overflowX: 'hidden' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} }`}</style>
 
-      <div style={{ background: '#1C1917', color: '#fff', padding: '56px 24px 48px', textAlign: 'center' }}>
-        <p style={{ fontFamily: manrope, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: CATEGORY_ACCENT, marginBottom: 14, fontWeight: 600 }}>Beauty and Personal Care</p>
-        <h1 style={{ fontFamily: newsreader, fontSize: 'clamp(36px, 6vw, 56px)', fontWeight: 700, fontStyle: 'italic', lineHeight: 1.1, margin: '0 0 16px', color: '#fff' }}>
-          Find Your <span style={{ color: CATEGORY_ACCENT }}>Glam</span>
-        </h1>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7, fontFamily: manrope, fontWeight: 400, letterSpacing: '0.02em' }}>Hair stylists, makeup artists and lash technicians across Nigeria</p>
-      </div>
+      <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
+  <img src="/pexels-services-hero.jpg" alt="Services" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+</div>
 
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>

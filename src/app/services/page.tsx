@@ -41,16 +41,10 @@ const SUB_COLOR: Record<string, string> = {
   'Glam': '#DC2626', 'Editorial': '#1D4ED8', 'Airbrush': '#0891B2',
   'Extensions': '#7C3AED', 'Lash Lift': '#0D9488', 'Strip Lashes': '#9333EA',
   'Relaxed Hair': '#0284C7', 'Sew In': '#7C2D12', 'Silk Press': '#9D174D', 'Textured Hair': '#065F46', 'Cornrows': '#0891B2', 'Ponytail': '#6D28D9', 'Treatment': '#065F46',
-'Biab': '#7C3AED', 'Gel': '#0D9488', 'Acrylic': '#DB2777',
+  'Biab': '#7C3AED', 'Gel': '#0D9488', 'Acrylic': '#DB2777',
 }
 
-const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
-  'Hair':   { emoji: '💇🏾', colour: '#D97706' },
-  'Makeup': { emoji: '💄',   colour: '#DB2777' },
-  'Lashes': { emoji: '✨',   colour: '#0D9488' },
-  'Nails':  { emoji: '💅',   colour: '#7C3AED' },
-  'Brows':  { emoji: '🪮',   colour: '#92400E' },
-}
+const CATEGORY_ACCENT = '#B4690E'
 
 const emptyStats: ServiceStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 
@@ -94,11 +88,11 @@ export default function ServicesPage() {
 
   useEffect(() => { setSub('All') }, [cat])
 
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search)
-  const c = params.get('cat')
-  if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
-}, [])
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const c = params.get('cat')
+    if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
+  }, [])
 
   const fetchServices = useCallback(async () => {
     setLoading(true)
@@ -174,50 +168,57 @@ useEffect(() => {
     }
   }, [supabase, user, stats, openSignIn])
 
-  const jost = 'var(--font-jost, sans-serif)'
-  const play = 'var(--font-playfair, serif)'
-  const catMeta = CATEGORY_META[cat] || { emoji: '✦', colour: '#D97706' }
+  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const newsreader = "'Newsreader', var(--font-playfair, serif)"
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: jost, overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#fff8f5', color: 'var(--text)', fontFamily: manrope, overflowX: 'hidden' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} }`}</style>
+
       <div style={{ background: '#1C1917', color: '#fff', padding: '56px 24px 48px', textAlign: 'center' }}>
-        <p style={{ fontFamily: play, fontSize: 13, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 12 }}>Beauty and Personal Care</p>
-        <h1 style={{ fontFamily: play, fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 700, lineHeight: 1.15, margin: '0 0 16px' }}>Find Your Glam</h1>
-        <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', maxWidth: 480, margin: '0 auto', lineHeight: 1.6 }}>Hair stylists, makeup artists and lash technicians across Nigeria</p>
+        <p style={{ fontFamily: manrope, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: CATEGORY_ACCENT, marginBottom: 14, fontWeight: 600 }}>Beauty and Personal Care</p>
+        <h1 style={{ fontFamily: newsreader, fontSize: 'clamp(36px, 6vw, 56px)', fontWeight: 700, fontStyle: 'italic', lineHeight: 1.1, margin: '0 0 16px', color: '#fff' }}>
+          Find Your <span style={{ color: CATEGORY_ACCENT }}>Glam</span>
+        </h1>
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7, fontFamily: manrope, fontWeight: 400, letterSpacing: '0.02em' }}>Hair stylists, makeup artists and lash technicians across Nigeria</p>
       </div>
 
-      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {Object.keys(CATEGORIES).map(c => {
-            const meta = CATEGORY_META[c] || { emoji: '✦', colour: '#D97706' }
-            return (<button key={c} onClick={() => setCat(c)} style={{ padding: '16px 24px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + meta.colour : '2px solid transparent', color: cat === c ? meta.colour : 'var(--text-muted)', fontFamily: jost, fontSize: 14, fontWeight: cat === c ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 14 }}>{meta.emoji}</span>{c}</button>)
-          })}
+          {Object.keys(CATEGORIES).map(c => (
+            <button key={c} onClick={() => setCat(c)} style={{ padding: '18px 24px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+              {c}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '12px 24px' }}>
+      <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '12px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {CATEGORIES[cat].map(s => (<button key={s} onClick={() => setSub(s)} style={{ padding: '5px 14px', borderRadius: 999, border: '1px solid', borderColor: sub === s ? catMeta.colour : 'var(--border)', background: sub === s ? catMeta.colour : 'transparent', color: sub === s ? '#fff' : 'var(--text-muted)', fontSize: 12, fontFamily: jost, fontWeight: sub === s ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>{s}</button>))}
+            {CATEGORIES[cat].map(s => (
+              <button key={s} onClick={() => setSub(s)} style={{ padding: '5px 14px', borderRadius: 999, border: '1px solid', borderColor: sub === s ? CATEGORY_ACCENT : 'var(--border)', background: sub === s ? CATEGORY_ACCENT : 'transparent', color: sub === s ? '#fff' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: sub === s ? 700 : 500, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.04em' }}>{s}</button>
+            ))}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase' }}>City:</span>
-            {CITIES.map(ci => (<button key={ci} onClick={() => setCity(ci)} style={{ padding: '4px 12px', borderRadius: 999, border: '1px solid', borderColor: city === ci ? '#B45309' : 'var(--border)', background: city === ci ? 'rgba(180,83,9,0.08)' : 'transparent', color: city === ci ? '#B45309' : 'var(--text-muted)', fontSize: 12, fontFamily: jost, fontWeight: city === ci ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>{ci}</button>))}
+            <span style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: manrope, fontWeight: 600 }}>City:</span>
+            {CITIES.map(ci => (
+              <button key={ci} onClick={() => setCity(ci)} style={{ padding: '4px 12px', borderRadius: 999, border: '1px solid', borderColor: city === ci ? '#B45309' : 'var(--border)', background: city === ci ? 'rgba(180,83,9,0.08)' : 'transparent', color: city === ci ? '#B45309' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: city === ci ? 700 : 500, cursor: 'pointer', transition: 'all 0.15s' }}>{ci}</button>
+            ))}
           </div>
         </div>
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
-        {!loading && (<p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20 }}>{services.length} {services.length === 1 ? 'result' : 'results'}{sub !== 'All' ? ' - ' + sub : ''}{city !== 'All' ? ' - ' + city : ''}</p>)}
+        {!loading && (<p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20, fontFamily: manrope, letterSpacing: '0.04em' }}>{services.length} {services.length === 1 ? 'result' : 'results'}{sub !== 'All' ? ' - ' + sub : ''}{city !== 'All' ? ' - ' + city : ''}</p>)}
         {loading && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>{[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: 'var(--bg-card)', borderRadius: 14, height: 180, animation: 'pulse 1.5s ease infinite', opacity: 0.4, border: '1px solid var(--border)' }} />))}</div>)}
-        {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: play, fontSize: 22, marginBottom: 8 }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 15 }}>Try a different subcategory or city</p></div>)}
+        {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8, fontStyle: 'italic' }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different subcategory or city</p></div>)}
         {!loading && services.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>
             {services.map(sv => (<Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} onToggleSave={() => toggleSave(sv.id)} stats={stats[sv.id] || emptyStats} onToggleUsed={() => toggleUsed(sv.id)} onToggleRec={() => toggleRec(sv.id)} isLoggedIn={!!user} onOpenAuth={openSignIn} />))}
           </div>
         )}
       </div>
-      <style>{`@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} }`}</style>
     </div>
   )
 }
@@ -228,55 +229,47 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   isLoggedIn: boolean; onOpenAuth: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
-  const [copied, setCopied] = useState(false)
   const subs = service.subcategories || []
-  const catMeta = CATEGORY_META[service.category] || { emoji: '✦', colour: '#D97706' }
-  const ac = SUB_COLOR[subs[0]] || catMeta.colour
-  const igUrl  = service.instagram ? 'https://instagram.com/' + service.instagram : null
-  const waUrl  = service.phone ? 'https://wa.me/' + service.phone.replace(/\D/g, '') : null
-  const loc    = [service.location, service.city].filter(Boolean).join(', ')
+  const ac = SUB_COLOR[subs[0]] || CATEGORY_ACCENT
+  const igUrl = service.instagram ? 'https://instagram.com/' + service.instagram : null
+  const waUrl = service.phone ? 'https://wa.me/' + service.phone.replace(/\D/g, '') : null
+  const loc = [service.location, service.city].filter(Boolean).join(', ')
   const { usedCount, recCount, hasUsed, hasRec } = stats
-  const jost = 'var(--font-jost, sans-serif)'
-  const play = 'var(--font-playfair, serif)'
-  const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: jost, border: '1px solid var(--border)' }
+  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const newsreader = "'Newsreader', var(--font-playfair, serif)"
+  const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
 
   return (
-    <div style={{ background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: 'var(--shadow-card)' }}>
-
-      <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? 'var(--accent-light)' : 'var(--bg-card)', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s', zIndex: 1 }}>
+    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
+      <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s', zIndex: 1 }}>
         <HeartIcon filled={isSaved} />
       </button>
 
       <div style={{ padding: '14px 14px 12px' }}>
-        <div style={{ fontSize: 9, fontWeight: 600, color: catMeta.colour, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontFamily: jost, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 11 }}>{catMeta.emoji}</span>{service.category}
+        <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 5, fontFamily: manrope }}>
+          {service.category}
         </div>
-
-        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 36, fontFamily: play }}>{service.name}</div>
-
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 36, fontFamily: newsreader, fontStyle: 'italic' }}>{service.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-          {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: jost }}>{s}</span>))}
+          {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: manrope, letterSpacing: '0.04em' }}>{s}</span>))}
         </div>
-
         {(usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: jost }}>used {usedCount}</span>}
-            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: jost }}>rec {recCount}</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>used {usedCount}</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>rec {recCount}</span>}
           </div>
         )}
-
-        {loc && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, fontFamily: jost }}>📍 {loc}</div>}
-
-        {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: jost }}>{service.bio}</p>}
+        {loc && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
+        {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
 
         <div style={{ display: 'flex', gap: 6, marginBottom: expanded ? 10 : 0 }}>
           {igUrl && (
-            <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: jost, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+            <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <InstagramIcon />Instagram
             </a>
           )}
           {waUrl && (
-            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: jost, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <WhatsAppIcon />WhatsApp
             </a>
           )}
@@ -284,21 +277,21 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {service.website && <a href={'https://' + service.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: jost }}>🌐 {service.website}</a>}
+            {service.website && <a href={'https://' + service.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: manrope }}>&#127760; {service.website}</a>}
             <div style={{ marginTop: 2 }}>
-              <button onClick={onToggleUsed} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : 'var(--bg-card)', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)', marginBottom: 6 }}>
-                👋 {hasUsed ? 'Used this stylist' : 'I used this stylist'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {usedCount}</span>}
+              <button onClick={onToggleUsed} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)', marginBottom: 6 }}>
+                {hasUsed ? 'Used this stylist' : 'I used this stylist'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {usedCount}</span>}
               </button>
             </div>
             <div>
-              <button onClick={onToggleRec} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : 'var(--bg-card)', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)' }}>
-                ⭐ {hasRec ? 'Recommended' : 'I recommend this stylist'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {recCount}</span>}
+              <button onClick={onToggleRec} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)' }}>
+                {hasRec ? 'Recommended' : 'I recommend this stylist'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {recCount}</span>}
               </button>
             </div>
           </div>
         )}
 
-        <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, padding: '6px 0', fontFamily: jost }}>
+        <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{expanded ? '-' : '+'}</span>
           {expanded ? 'Less info' : 'More info'}
         </button>

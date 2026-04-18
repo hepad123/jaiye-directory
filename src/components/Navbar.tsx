@@ -158,7 +158,7 @@ function ProfileDropdown({ user, username, displayName, profileChecked, isActive
 }
 
 function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onClose: () => void; pathname: string; savedCount: number }) {
-  const [servicesOpen, setServicesOpen] = useState(false)
+  const [beautyservicesOpen, setBeautyServicesOpen] = useState(false)
   const [eventsOpen, setEventsOpen] = useState(false)
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const play = 'var(--font-playfair, serif)'
@@ -196,20 +196,20 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
       <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 260, zIndex: 50, background: 'var(--bg-card)', borderRight: '1px solid var(--border)', transform: open ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.22s ease', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <div style={{ fontFamily: play, fontSize: 22, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em' }}>Jaiye</div>
-          <div style={{ fontFamily: manrope, fontSize: 10, color: 'var(--text-muted)', marginTop: 3, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Nigerian services and events directory</div>
+          <div style={{ fontFamily: manrope, fontSize: 10, color: 'var(--text-muted)', marginTop: 3, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Nigerian beauty services and events directory</div>
         </div>
 
         <div style={{ flex: 1 }}>
           {sectionLabel('Explore')}
           {navItem('Home', '/')}
 
-          {expandableItem('Services', servicesOpen, () => setServicesOpen(o => !o))}
-          <div style={{ maxHeight: servicesOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
-            {subItem('Hair', '/services?cat=Hair')}
-            {subItem('Makeup', '/services?cat=Makeup')}
-            {subItem('Lashes', '/services?cat=Lashes')}
-            {subItem('Nails', '/services?cat=Nails')}
-            {subItem('Brows', '/services?cat=Brows')}
+          {expandableItem('Beauty Services', beautyservicesOpen, () => setBeautyServicesOpen(o => !o))}
+          <div style={{ maxHeight: beautyservicesOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
+            {subItem('Hair', '/beautyservices?cat=Hair')}
+            {subItem('Makeup', '/beautyservices?cat=Makeup')}
+            {subItem('Lashes', '/beautyservices?cat=Lashes')}
+            {subItem('Nails', '/beautyservices?cat=Nails')}
+            {subItem('Brows', '/beautyservices?cat=Brows')}
           </div>
 
           {expandableItem('Events', eventsOpen, () => setEventsOpen(o => !o))}

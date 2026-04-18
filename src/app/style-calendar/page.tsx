@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { useSupabase } from '@/hooks/useSupabase';
 
 const newsreader = "'Newsreader', var(--font-playfair, serif)";
@@ -37,9 +37,7 @@ function StyleCard({ entry, onDelete }: { entry: StyleEntry; onDelete: (id: stri
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function startPress() {
-    pressTimer.current = setTimeout(() => {
-      setShowDelete(true);
-    }, 600);
+    pressTimer.current = setTimeout(() => { setShowDelete(true); }, 600);
   }
 
   function endPress() {
@@ -70,7 +68,6 @@ function StyleCard({ entry, onDelete }: { entry: StyleEntry; onDelete: (id: stri
         </div>
       )}
       <span className="cat-pill">{entry.category}</span>
-
       {showDelete && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10 }}>
           <button
@@ -79,7 +76,6 @@ function StyleCard({ entry, onDelete }: { entry: StyleEntry; onDelete: (id: stri
           >&#128465; Delete</button>
         </div>
       )}
-
       <div className="note-bar">
         <p className="entry-name">{entry.style_name}</p>
         {entry.note && <p style={{ marginTop: 2, margin: 0, fontFamily: manrope, fontSize: 12, color: '#fff', lineHeight: '1.3' }}>{entry.note}</p>}
@@ -90,6 +86,7 @@ function StyleCard({ entry, onDelete }: { entry: StyleEntry; onDelete: (id: stri
 
 export default function StyleCalendarPage() {
   const { user, isLoaded } = useUser();
+  const { openSignIn } = useClerk();
   const supabase = useSupabase();
 
   const [entries, setEntries] = useState<StyleEntry[]>([]);
@@ -101,7 +98,7 @@ export default function StyleCalendarPage() {
   const [category, setCategory] = useState('Hair');
   const [note, setNote] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [imageTab, setImageTab] = useState<'upload' | 'url'>('upload');
+  const [showUrlInput, setShowUrlInput] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState('');
@@ -123,9 +120,7 @@ export default function StyleCalendarPage() {
   }
 
   function toggleMonth(m: number) {
-    setOpenMonths(prev =>
-      prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
-    );
+    setOpenMonths(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
   }
 
   function openAddModal(month: number) {
@@ -135,7 +130,7 @@ export default function StyleCalendarPage() {
     setNote('');
     setImageUrl('');
     setUploadedUrl('');
-    setImageTab('upload');
+    setShowUrlInput(false);
   }
 
   function closeModal() {
@@ -161,13 +156,13 @@ export default function StyleCalendarPage() {
   async function handleSave() {
     if (!user || !modal.month || !styleName.trim()) return;
     setSaving(true);
-    const finalUrl = imageTab === 'upload' ? uploadedUrl : imageUrl;
+    const finalUrl = uploadedUrl || imageUrl || null;
     await supabase.from('style_calendar').insert({
       clerk_user_id: user.id,
       month: modal.month,
       style_name: styleName.trim(),
       category,
-      image_url: finalUrl || null,
+      image_url: finalUrl,
       note: note.trim() || null,
     });
     await fetchEntries();
@@ -188,9 +183,20 @@ export default function StyleCalendarPage() {
 
   if (!user) {
     return (
-      <div style={{ background: BG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ fontFamily: manrope, color: '#92400E' }}>Please sign in to view your style calendar.</p>
-      </div>
+      <>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Manrope:wght@400;500;600;700&display=swap');`}</style>
+        <div style={{ background: BG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', padding: '60px 16px' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>&#9825;</div>
+            <h2 style={{ fontSize: 22, color: '#1C1917', fontWeight: 600, margin: '0 0 10px', fontFamily: newsreader }}>Sign in to view your Style Calendar</h2>
+            <p style={{ color: '#78716c', fontSize: 14, margin: '0 0 28px', fontFamily: manrope, lineHeight: 1.6 }}>Save your looks month by month and build your beauty diary.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+              <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: manrope, width: 220 }}>Sign in</button>
+              <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: '#fff', color: ACCENT, borderRadius: 24, border: '1.5px solid ' + ACCENT, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: manrope, width: 220 }}>Create account</button>
+            </div>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -208,17 +214,21 @@ export default function StyleCalendarPage() {
         .style-card img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
         .note-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.55); padding: 8px 10px; }
         .entry-name { color: #fff; font-size: 13px; font-weight: 600; margin: 0; font-family: ${manrope}; line-height: 1.3; }
-        .cat-pill { position: absolute; top: 8px; left: 8px; background: ${ACCENT}; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; font-family: ${manrope}; letter-spacing: 0.05em; }
+        .cat-pill { position: absolute; top: 8px; left: 8px; background: ${ACCENT}; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; font-family: ${manrope}; letter-spacing: 0.05em; pointer-events: none; }
         .no-image { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #f5ede6; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-box { background: #fff; border-radius: 16px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 28px 24px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
+        @media(min-width: 640px) { .modal-overlay { align-items: center; } }
+        .modal-box { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 28px 24px 40px; }
+        @media(min-width: 640px) { .modal-box { border-radius: 16px; padding: 28px 24px; } }
         .modal-title { font-family: ${newsreader}; font-size: 22px; color: #1C1917; margin: 0 0 20px; }
         .field-label { font-family: ${manrope}; font-size: 12px; font-weight: 700; color: #1C1917; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; display: block; }
         .field-input { width: 100%; border: 1px solid ${BORDER}; border-radius: 8px; padding: 10px 12px; font-family: ${manrope}; font-size: 14px; color: #1C1917; background: #fff; box-sizing: border-box; outline: none; }
         .field-input:focus { border-color: ${ACCENT}; }
-        .tab-row { display: flex; gap: 8px; margin-bottom: 10px; }
-        .tab-btn { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid ${BORDER}; font-family: ${manrope}; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: #78716c; }
-        .tab-btn.active { background: ${ACCENT}; color: #fff; border-color: ${ACCENT}; }
+        .img-btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .img-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid ${BORDER}; font-family: ${manrope}; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: #78716c; text-align: center; }
+        .img-btn.uploaded { background: #f0fdf4; border-color: #16a34a; color: #16a34a; }
+        .img-btn.uploading { opacity: 0.6; cursor: not-allowed; }
+        .img-btn.url-active { background: ${ACCENT}; color: #fff; border-color: ${ACCENT}; }
         .save-btn { width: 100%; padding: 13px; background: ${ACCENT}; color: #fff; border: none; border-radius: 10px; font-family: ${manrope}; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
         .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .cancel-link { display: block; text-align: center; margin-top: 12px; font-family: ${manrope}; font-size: 13px; color: #78716c; cursor: pointer; }
@@ -230,7 +240,7 @@ export default function StyleCalendarPage() {
         <div style={{ padding: '32px 20px 8px', maxWidth: 720, margin: '0 auto' }}>
           <p style={{ fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT, margin: '0 0 6px' }}>Your Beauty Diary</p>
           <h1 style={{ fontFamily: newsreader, fontSize: 34, fontWeight: 600, color: '#1C1917', margin: '0 0 4px' }}>Style Calendar</h1>
-          <p style={{ fontFamily: manrope, fontSize: 14, color: '#78716c', margin: 0 }}>Save your looks, month by month. Long-press a photo to delete.</p>
+          <p style={{ fontFamily: manrope, fontSize: 14, color: '#78716c', margin: 0 }}>Save your looks, month by month. Hold a photo to delete.</p>
         </div>
 
         <div style={{ maxWidth: 720, margin: '24px auto 0', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -304,20 +314,24 @@ export default function StyleCalendarPage() {
 
             <div style={{ marginBottom: 16 }}>
               <label className="field-label">Style Image</label>
-              <div className="tab-row">
-                <button className={'tab-btn' + (imageTab === 'upload' ? ' active' : '')} onClick={() => setImageTab('upload')}>&#128247; Upload</button>
-                <button className={'tab-btn' + (imageTab === 'url' ? ' active' : '')} onClick={() => setImageTab('url')}>&#128279; URL / Instagram</button>
+              <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
+              <div className="img-btn-row">
+                <button
+                  className={'img-btn' + (uploading ? ' uploading' : uploadedUrl ? ' uploaded' : '')}
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading...' : uploadedUrl ? '\u2713 Photo uploaded' : '\uD83D\uDCF7 Upload photo'}
+                </button>
+                <button
+                  className={'img-btn' + (showUrlInput ? ' url-active' : '')}
+                  onClick={() => setShowUrlInput(!showUrlInput)}
+                >
+                  {'\uD83D\uDD17 Paste URL'}
+                </button>
               </div>
-              {imageTab === 'upload' ? (
-                <div>
-                  <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
-                  <button
-                    onClick={() => fileRef.current?.click()}
-                    style={{ width: '100%', padding: '10px', border: '1px dashed ' + BORDER, borderRadius: 8, background: '#fdf6f0', fontFamily: manrope, fontSize: 13, color: '#78716c', cursor: 'pointer' }}
-                  >{uploading ? 'Uploading...' : uploadedUrl ? 'Image uploaded \u2014 tap to replace' : 'Choose a photo from your device'}</button>
-                  {uploadedUrl && <img src={uploadedUrl} alt="preview" className="upload-preview" />}
-                </div>
-              ) : (
+              {uploadedUrl && !showUrlInput && <img src={uploadedUrl} alt="preview" className="upload-preview" />}
+              {showUrlInput && (
                 <div>
                   <input
                     className="field-input"

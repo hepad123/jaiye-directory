@@ -23,7 +23,7 @@ const CATEGORIES = [
   {
     label: "Services",
     sub: "Hair, Makeup, Lashes & more",
-    href: "/services",
+    href: "/beautyservices",
     featured: false,
     wide: false,
     image: "/pexels-services.jpg",
@@ -43,7 +43,7 @@ const HOW_IT_WORKS = [
     icon: "✦",
     title: "Discover",
     pills: [
-      { label: "Browse Services", href: "/services" },
+      { label: "Browse Services", href: "/beautyservices" },
       { label: "Browse Events", href: "/directory" },
     ],
     body: "Browse hundreds of verified Nigerian event vendors and beauty stylists — all in one place. Filter by category, location, and what the community recommends.",
@@ -52,7 +52,7 @@ const HOW_IT_WORKS = [
     icon: "★",
     title: "Vouch & Verify",
     pills: [
-      { label: "Browse Services", href: "/services" },
+      { label: "Browse Services", href: "/beautyservices" },
       { label: "Browse Events", href: "/directory" },
     ],
     body: "Mark vendors and stylists you've used and recommend the ones you love. Real experiences from real people in the community",
@@ -78,7 +78,7 @@ const HOW_IT_WORKS = [
     icon: "↗",
     title: "Book Directly",
     pills: [
-      { label: "Browse Services", href: "/services" },
+      { label: "Browse Services", href: "/beautyservices" },
     ],
     body: "Some vendors and stylists offer direct booking links — go straight from discovery to booking",
   },

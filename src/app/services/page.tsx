@@ -1,9 +1,13 @@
+Here's the complete `src/app/services/page.tsx`:
+
+```tsx
 'use client'
 
 import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useSupabase } from '@/hooks/useSupabase'
 import { useSearchParams } from 'next/navigation'
+import SuggestVendorModal from '@/components/SuggestVendorModal'
 
 interface Service {
   id: string
@@ -117,10 +121,11 @@ function SubcategoryDropdown({ cat, subs, setSubs, manrope }: { cat: string; sub
   )
 }
 
-function CityDropdown({ city, setCity, manrope }: { city: string; setCity: (c: string) => void; manrope: string }) {
+function CityDropdown({ city, setCity, subCity, setSubCity, manrope }: { city: string; setCity: (c: string) => void; subCity: string; setSubCity: (s: string) => void; manrope: string }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const cities = ['All', 'Lagos', 'Abuja', 'London']
+  const topLevel = ['All', 'Lagos', 'Abuja', 'London']
+  const londonAreas = ['All London', 'North London', 'South London', 'East London', 'West London']
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -131,20 +136,33 @@ function CityDropdown({ city, setCity, manrope }: { city: string; setCity: (c: s
   }, [])
 
   const isFiltered = city !== 'All'
+  const label = city === 'All' ? 'All Locations' : subCity && subCity !== 'All London' ? subCity : city
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: isFiltered ? CATEGORY_ACCENT : 'transparent', color: isFiltered ? '#fff' : CATEGORY_ACCENT, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-        {city === 'All' ? 'All Locations' : city}
+        {label}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 160, overflow: 'hidden' }}>
-          {cities.map(c => (
-            <button key={c} onClick={() => { setCity(c); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: city === c ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: city === c ? 700 : 400, color: city === c ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (city !== c) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (city !== c) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
-              {c === 'All' ? 'All Locations' : c}
-              {city === c && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-            </button>
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 200, overflow: 'hidden' }}>
+          {topLevel.map(l => (
+            <div key={l}>
+              <button onClick={() => { setCity(l); setSubCity(l === 'London' ? 'All London' : ''); if (l !== 'London') setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: city === l ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: city === l ? 700 : 400, color: city === l ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (city !== l) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (city !== l) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                {l === 'All' ? 'All Locations' : l}
+                {l === 'London' && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>}
+              </button>
+              {l === 'London' && city === 'London' && (
+                <div style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                  {londonAreas.map(area => (
+                    <button key={area} onClick={() => { setSubCity(area); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 16px 8px 28px', background: subCity === area ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 11, fontFamily: manrope, fontWeight: subCity === area ? 700 : 400, color: subCity === area ? CATEGORY_ACCENT : 'var(--text-muted)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (subCity !== area) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (subCity !== area) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                      {area}
+                      {subCity === area && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -162,11 +180,14 @@ function ServicesPage() {
   const [cat, setCat] = useState('Hair')
   const [subs, setSubs] = useState<string[]>([])
   const [city, setCity] = useState('All')
+  const [subCity, setSubCity] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('most_rec')
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState<Record<string, ServiceStats>>({})
+  const [suggestOpen, setSuggestOpen] = useState(false)
 
   useEffect(() => { setSubs([]) }, [cat])
+  useEffect(() => { if (city !== 'London') setSubCity('') }, [city])
 
   useEffect(() => {
     const c = searchParams.get('cat')
@@ -176,7 +197,14 @@ function ServicesPage() {
   const fetchServices = useCallback(async () => {
     setLoading(true)
     let q = supabase.from('services').select('*').eq('category', cat).order('verified', { ascending: false }).order('name')
-    if (city !== 'All') q = q.eq('city', city)
+    if (city === 'London') {
+      q = q.eq('city', 'London')
+      if (subCity && subCity !== 'All London') {
+        q = q.ilike('location', '%' + subCity + '%')
+      }
+    } else if (city !== 'All') {
+      q = q.eq('city', city)
+    }
     const { data } = await q
     let rows = data || []
     if (subs.length > 0) {
@@ -203,7 +231,7 @@ function ServicesPage() {
       setStats(newStats)
     }
     setLoading(false)
-  }, [supabase, cat, subs, city, user])
+  }, [supabase, cat, subs, city, subCity, user])
 
   const fetchSaved = useCallback(async () => {
     if (!user?.id) { setSavedIds(new Set()); return }
@@ -283,7 +311,7 @@ function ServicesPage() {
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '12px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <SubcategoryDropdown cat={cat} subs={subs} setSubs={setSubs} manrope={manrope} />
-          <CityDropdown city={city} setCity={setCity} manrope={manrope} />
+          <CityDropdown city={city} setCity={setCity} subCity={subCity} setSubCity={setSubCity} manrope={manrope} />
           <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
           {sortPills.map(pill => (
             <button key={pill.key} onClick={() => setSortMode(pill.key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 999, border: '1.5px solid ' + (sortMode === pill.key ? CATEGORY_ACCENT : 'var(--border)'), background: sortMode === pill.key ? CATEGORY_ACCENT : 'transparent', color: sortMode === pill.key ? '#fff' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
@@ -295,15 +323,22 @@ function ServicesPage() {
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
-        {!loading && (<p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20, fontFamily: manrope, letterSpacing: '0.04em' }}>{services.length} {services.length === 1 ? 'result' : 'results'}{subs.length > 0 ? ' - ' + subs.join(', ') : ''}{city !== 'All' ? ' - ' + city : ''}</p>)}
+        {!loading && (<p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20, fontFamily: manrope, letterSpacing: '0.04em' }}>{services.length} {services.length === 1 ? 'result' : 'results'}{subs.length > 0 ? ' - ' + subs.join(', ') : ''}{city !== 'All' ? ' - ' + (subCity && subCity !== 'All London' ? subCity : city) : ''}</p>)}
         {loading && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>{[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: 'var(--bg-card)', borderRadius: 14, height: 180, animation: 'pulse 1.5s ease infinite', opacity: 0.4, border: '1px solid var(--border)' }} />))}</div>)}
-        {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different subcategory or city</p></div>)}
+        {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different subcategory or location</p></div>)}
         {!loading && services.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>
             {sortedServices.map(sv => (<Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} onToggleSave={() => toggleSave(sv.id)} stats={stats[sv.id] || emptyStats} onToggleUsed={() => toggleUsed(sv.id)} onToggleRec={() => toggleRec(sv.id)} isLoggedIn={!!user} onOpenAuth={openSignIn} />))}
           </div>
         )}
+
+        <div style={{ textAlign: 'center', padding: '40px 0 20px', borderTop: '1px solid var(--border)', marginTop: 40 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, fontFamily: manrope }}>Know a stylist who should be here?</p>
+          <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 22px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 13, fontWeight: 700, fontFamily: manrope, cursor: 'pointer' }}>{'✦ Suggest a stylist'}</button>
+        </div>
       </div>
+
+      <SuggestVendorModal open={suggestOpen} onClose={() => setSuggestOpen(false)} />
     </div>
   )
 }
@@ -398,3 +433,4 @@ export default function ServicesPageWrapper() {
     </Suspense>
   )
 }
+```

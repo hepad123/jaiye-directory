@@ -52,7 +52,7 @@ const HOW_IT_WORKS = [
   {
     icon: "♡",
     title: "Save & Note",
-    body: "Build your personal shortlist and leave private notes to yourself on each vendor and/or stylist. Your thoughts, your budget, all in one place",
+    body: "Build your personal shortlist and leave private notes to yourself on each vendor and/or stylist. Your thoughts all in one place",
   },
   {
     icon: "◎",

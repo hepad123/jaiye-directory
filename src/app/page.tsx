@@ -9,34 +9,13 @@ const UNSPLASH_HERO = "/pexels1";
 
 const FEATURED_VENDORS = [
   {
-    name: "Zapphaire Events",
-    category: "Events",
-    location: "Lagos",
+    name: "K Mari",
+    category: "Entertainment",
+    location: "Nigeria",
     tier: "Verified",
-    instagram: "zapphaire",
-    rating: "4.9",
-    reviews: 214,
+    instagram: "kmariverse",
+    image: "/kmari.jpg",
     badge: "Top Rated",
-  },
-  {
-    name: "Glam by Omoye",
-    category: "Makeup",
-    location: "Abuja",
-    tier: "Premium",
-    instagram: "glambyomoye",
-    rating: "5.0",
-    reviews: 189,
-    badge: "Editors Pick",
-  },
-  {
-    name: "Crown & Braids Co.",
-    category: "Hair",
-    location: "Lagos",
-    tier: "Studio",
-    instagram: "crownbraidsco",
-    rating: "4.8",
-    reviews: 97,
-    badge: "Community Fave",
   },
 ];
 
@@ -57,7 +36,7 @@ const CATEGORIES = [
     wide: false,
     image: "/pexels-bridal1.jpg",
   },
-  ];
+];
 
 function useSearchDropdown(
   searchVal: string,
@@ -135,12 +114,6 @@ const ICONS: Record<string, React.ReactNode> = {
   "Events": <BridalIcon />,
   "Community": <CommunityIcon />,
 };
-
-const StarIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="#D97706" stroke="none">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
 
 const SearchIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -237,34 +210,16 @@ export default function HomePage() {
         }
         .featured-scroll {
           display: flex;
-          overflow-x: auto;
-          gap: 1.25rem;
+          justify-content: center;
           padding: 0.5rem 1.5rem 1.5rem;
-          scrollbar-width: none;
-        }
-        @media (min-width: 768px) {
-          .featured-scroll {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            overflow-x: visible;
-            padding: 0.5rem 1.5rem 1.5rem;
-            max-width: 1200px;
-            margin: 0 auto;
-          }
         }
         .featured-card {
-          flex-shrink: 0;
           width: 272px;
           background: #ffffff;
           border-radius: 16px;
           overflow: hidden;
           border: 1px solid #F0EBE3;
-        }
-        @media (min-width: 768px) {
-          .featured-card {
-            width: 100%;
-            flex-shrink: unset;
-          }
+          box-shadow: 0 4px 24px rgba(141,75,0,0.07);
         }
         .section-inner {
           padding: 0 1.5rem;
@@ -356,7 +311,7 @@ export default function HomePage() {
             </button>
 
             {searchOpen && (searchResults.vendors.length > 0 || searchResults.services.length > 0) && (
-            <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 9999 }}>  
+              <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#ffffff", borderRadius: "14px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", overflow: "hidden", zIndex: 9999 }}>
                 {searchResults.vendors.length > 0 && (
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B45309", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>
@@ -428,50 +383,48 @@ export default function HomePage() {
 
           <div className="category-grid">
             {CATEGORIES.map((cat, i) => (
-             <Link
-  key={cat.label}
-  href={cat.href}
-  data-reveal
-  style={{
-    ...revealDelay(i * 80),
-    display: "flex",
-    flexDirection: cat.wide ? "row" : "column",
-    justifyContent: "space-between",
-    alignItems: cat.wide ? "center" : undefined,
-    gap: cat.wide ? "1.5rem" : undefined,
-    padding: "1.5rem",
-    borderRadius: "16px",
-    background: cat.image
-      ? "transparent"
-      : cat.featured ? "#8d4b00" : "#F5F0E8",
-    backgroundImage: cat.image ? "url(" + cat.image + ")" : undefined,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    color: cat.featured ? "#ffffff" : "#1C1917",
-    aspectRatio: cat.wide ? "auto" : "1 / 1",
-    gridColumn: cat.wide ? "span 2" : "span 1",
-    textDecoration: "none",
-    minHeight: cat.wide ? "110px" : undefined,
-    transition: "transform 0.2s ease",
-    position: "relative",
-    overflow: "hidden",
-  }}
->
-  {cat.image && (
-    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(15,10,5,0.75) 0%, rgba(15,10,5,0.2) 60%, transparent 100%)", borderRadius: "16px" }} />
-  )}
-  <div style={{ position: "relative", zIndex: 1, color: cat.image ? "rgba(255,255,255,0.85)" : cat.featured ? "rgba(255,255,255,0.85)" : "#B45309", flexShrink: 0, marginBottom: cat.wide ? 0 : "auto" }}>
-    {ICONS[cat.label]}
-  </div>
-  <div style={{ position: "relative", zIndex: 1 }}>
-    <p style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.2rem", color: cat.image ? "#ffffff" : cat.featured ? "#ffffff" : "#1C1917" }}>
-      {cat.label}
-    </p>
-    <p style={{ fontSize: "11px", color: cat.image ? "rgba(255,255,255,0.7)" : cat.featured ? "rgba(255,255,255,0.6)" : "#78716C", fontWeight: 500 }}>
-      {cat.sub}
-    </p>
-  </div>
-</Link>
+              <Link
+                key={cat.label}
+                href={cat.href}
+                data-reveal
+                style={{
+                  ...revealDelay(i * 80),
+                  display: "flex",
+                  flexDirection: cat.wide ? "row" : "column",
+                  justifyContent: "space-between",
+                  alignItems: cat.wide ? "center" : undefined,
+                  gap: cat.wide ? "1.5rem" : undefined,
+                  padding: "1.5rem",
+                  borderRadius: "16px",
+                  background: cat.image ? "transparent" : cat.featured ? "#8d4b00" : "#F5F0E8",
+                  backgroundImage: cat.image ? "url(" + cat.image + ")" : undefined,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  color: cat.featured ? "#ffffff" : "#1C1917",
+                  aspectRatio: cat.wide ? "auto" : "1 / 1",
+                  gridColumn: cat.wide ? "span 2" : "span 1",
+                  textDecoration: "none",
+                  minHeight: cat.wide ? "110px" : undefined,
+                  transition: "transform 0.2s ease",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {cat.image && (
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(15,10,5,0.75) 0%, rgba(15,10,5,0.2) 60%, transparent 100%)", borderRadius: "16px" }} />
+                )}
+                <div style={{ position: "relative", zIndex: 1, color: cat.image ? "rgba(255,255,255,0.85)" : cat.featured ? "rgba(255,255,255,0.85)" : "#B45309", flexShrink: 0, marginBottom: cat.wide ? 0 : "auto" }}>
+                  {ICONS[cat.label]}
+                </div>
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <p style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.2rem", color: cat.image ? "#ffffff" : cat.featured ? "#ffffff" : "#1C1917" }}>
+                    {cat.label}
+                  </p>
+                  <p style={{ fontSize: "11px", color: cat.image ? "rgba(255,255,255,0.7)" : cat.featured ? "rgba(255,255,255,0.6)" : "#78716C", fontWeight: 500 }}>
+                    {cat.sub}
+                  </p>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -501,31 +454,56 @@ export default function HomePage() {
         <div className="featured-scroll">
           {FEATURED_VENDORS.map((vendor, i) => (
             <div key={vendor.name} data-reveal className="featured-card" style={{ ...revealDelay(i * 100) }}>
-              <div style={{ position: "relative", height: "220px", background: "#F5F0E8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
-                <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#8d4b00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)" }}>
-                  {vendor.name.charAt(0)}
-                </div>
-                <div style={{ position: "absolute", top: "0.9rem", left: "0.9rem", background: "rgba(255,255,255,0.92)", borderRadius: "999px", padding: "4px 12px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8d4b00" }}>
-                  {vendor.badge}
+              <div style={{ position: "relative", height: "220px", background: "#F5F0E8", overflow: "hidden" }}>
+                {vendor.image
+                  ? (
+                    <img
+                      src={vendor.image}
+                      alt={vendor.name}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+                    />
+                  )
+                  : (
+                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#8d4b00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)" }}>
+                        {vendor.name.charAt(0)}
+                      </div>
+                    </div>
+                  )
+                }
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#8d4b00", padding: "7px 14px", display: "flex", alignItems: "center", gap: "7px" }}>
+                  <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#ffffff" }}>Top Rated</span>
+                  <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.45)" }}>&#10022;</span>
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.65)", fontWeight: 500, letterSpacing: "0.08em" }}>Jaiye Directory</span>
                 </div>
               </div>
               <div style={{ padding: "1.25rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "0.5rem" }}>
-                  <StarIcon />
-                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#1C1917" }}>{vendor.rating}</span>
-                  <span style={{ fontSize: "11px", color: "#A8A29E" }}>({vendor.reviews} reviews)</span>
-                </div>
                 <h3 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.1rem", fontWeight: 700, color: "#1C1917", marginBottom: "0.2rem" }}>
                   {vendor.name}
                 </h3>
                 <p style={{ fontSize: "0.82rem", color: "#78716C", marginBottom: "1rem" }}>{vendor.category}</p>
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
                   {[vendor.location, vendor.tier].map((tag) => (
                     <span key={tag} style={{ padding: "3px 10px", background: "#F5F0E8", borderRadius: "999px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#78716C" }}>
                       {tag}
                     </span>
                   ))}
                 </div>
+                {vendor.instagram && (
+                  
+                    href={"https://instagram.com/" + vendor.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "999px", border: "1.5px solid #E8E3DC", fontSize: "11px", fontWeight: 600, color: "#1C1917", textDecoration: "none", letterSpacing: "0.04em" }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                      <circle cx="12" cy="12" r="4" />
+                      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                    </svg>
+                    {"@" + vendor.instagram}
+                  </a>
+                )}
               </div>
             </div>
           ))}

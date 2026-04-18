@@ -302,7 +302,7 @@ export default function Navbar() {
           </Show>
         </div>
       </div>
-      <style>{'.nav-label {} @media (max-width: 640px) { .nav-label { display: none !important; } }'}</style>
+      <style>{'.nav-label {}'}</style>
     </>
   )
 }

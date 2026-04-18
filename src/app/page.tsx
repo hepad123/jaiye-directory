@@ -69,7 +69,7 @@ const HOW_IT_WORKS = [
     icon: "◎",
     title: "Follow Your Circle",
     pills: [
-      { label: "Find Friends", href: "/directory" },
+      { label: "Find Friends", href: "/?find=true" },
       { label: "My Profile", href: "/profile/edit" },
     ],
     body: "Follow people you trust to see who they've used, and would recommend",

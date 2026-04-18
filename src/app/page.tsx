@@ -491,11 +491,11 @@ export default function HomePage() {
                 </div>
                 {vendor.instagram && (
                   
-                    href={"https://instagram.com/" + vendor.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "999px", border: "1.5px solid #E8E3DC", fontSize: "11px", fontWeight: 600, color: "#1C1917", textDecoration: "none", letterSpacing: "0.04em" }}
-                  >
+                    href={"https://instagram.com/".concat(vendor.instagram)}
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "999px", border: "1.5px solid #E8E3DC", fontSize: "11px", fontWeight: 600, color: "#1C1917", textDecoration: "none", letterSpacing: "0.04em" }}
+>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                       <circle cx="12" cy="12" r="4" />

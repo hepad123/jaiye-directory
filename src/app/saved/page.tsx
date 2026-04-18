@@ -92,7 +92,6 @@ const manrope = "'Manrope', var(--font-jost, sans-serif)"
 const newsreader = "'Newsreader', var(--font-playfair, serif)"
 
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
-const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
 function formatNaira(n: number) {
   return 'N' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 })
@@ -166,7 +165,7 @@ function BudgetBar({ quotes }: { quotes: Record<string, number> }) {
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: '#0D9488', fontFamily: newsreader }}>{formatNaira(total)}</div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{entries.length} vendor{entries.length !== 1 ? 's' : ''} quoted</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{entries.length} quoted</div>
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -232,6 +231,55 @@ function MyNotes({ vendorId, initialNote, initialQuotedPrice, onQuoteChange }: {
       </div>
       {!isEditing && !note && (<button onClick={() => setIsEditing(true)} style={{ width: '100%', padding: '4px 0', background: 'none', border: 'none', cursor: 'text', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic', fontFamily: manrope }}>+ Add a private note...</button>)}
       {(isEditing || !!note) && (<textarea autoFocus={isEditing && !note} placeholder="e.g. Quoted N250k, follow up in March..." value={note} onChange={e => handleNoteChange(e.target.value)} onFocus={() => setIsEditing(true)} rows={3} maxLength={LIMITS.note} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: 'var(--text)', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box' as const, fontFamily: manrope, padding: 0 }} />)}
+    </div>
+  )
+}
+
+function ServiceNotes({ serviceId, initialNote, initialQuotedPrice, onQuoteChange }: { serviceId: string; initialNote: string; initialQuotedPrice: number | null; onQuoteChange: (serviceId: string, name: string, amount: number | null) => void }) {
+  const supabase = useSupabase()
+  const { user } = useUser()
+  const [note, setNote] = useState(initialNote)
+  const [price, setPrice] = useState(initialQuotedPrice?.toString() ?? '')
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [isEditing, setIsEditing] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function scheduleSave(newNote: string, newPrice: string) {
+    setSaveStatus('saving')
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      if (!user?.id) return
+      const parsedPrice = parseFloat(newPrice.replace(/[^0-9.]/g, ''))
+      const priceVal = isNaN(parsedPrice) ? null : parsedPrice
+      await supabase.from('saved_services').update({ notes: newNote, quoted_price: priceVal }).eq('clerk_user_id', user.id).eq('service_id', serviceId)
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 1800)
+    }, 800)
+  }
+
+  function handleNoteChange(val: string) { const clean = sanitizeNote(val); setNote(clean); scheduleSave(clean, price) }
+  function handlePriceChange(val: string) {
+    const clean = val.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
+    setPrice(clean)
+    const parsed = parseFloat(clean)
+    onQuoteChange(serviceId, '', isNaN(parsed) ? null : parsed)
+    scheduleSave(note, clean)
+  }
+
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
+
+  return (
+    <div style={{ marginTop: 10, background: 'var(--bg-pill)', border: '1px dashed var(--border)', borderRadius: 10, padding: '8px 10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gold)', letterSpacing: 0.4, fontFamily: manrope }}>My notes</span>
+        <span style={{ fontSize: 9, fontWeight: 600, fontFamily: manrope, color: saveStatus === 'saving' ? 'var(--text-muted)' : saveStatus === 'saved' ? '#16A34A' : 'transparent' }}>{saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : '.'}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, flexShrink: 0 }}>Quoted price N</span>
+        <input type="text" inputMode="numeric" placeholder="e.g. 80000" value={price} onChange={e => handlePriceChange(e.target.value)} style={{ flex: 1, minWidth: 0, border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 11, background: '#fff', color: 'var(--text)', outline: 'none', fontFamily: manrope }} />
+      </div>
+      {!isEditing && !note && (<button onClick={() => setIsEditing(true)} style={{ width: '100%', padding: '4px 0', background: 'none', border: 'none', cursor: 'text', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic', fontFamily: manrope }}>+ Add a private note...</button>)}
+      {(isEditing || !!note) && (<textarea autoFocus={isEditing && !note} placeholder="e.g. Booked for June, deposit paid..." value={note} onChange={e => handleNoteChange(e.target.value)} onFocus={() => setIsEditing(true)} rows={3} maxLength={LIMITS.note} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: 'var(--text)', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box' as const, fontFamily: manrope, padding: 0 }} />)}
     </div>
   )
 }
@@ -303,7 +351,6 @@ function VendorCard({ v, savedIds, onToggleSave, savedNote, savedQuotedPrice, on
         )}
         {v.location && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, fontFamily: manrope }}>&#128205; {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 6, fontFamily: manrope }}>From &#8358;{v.price_from}</div>}
-
         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
           {igHandle && (
             <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
@@ -316,16 +363,13 @@ function VendorCard({ v, savedIds, onToggleSave, savedNote, savedQuotedPrice, on
             </a>
           )}
         </div>
-
         {v.discount_code && (
           <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: 'var(--text)', color: 'var(--accent-light)', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: manrope }}>&#127991; {v.discount_code}</span>
             <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)', background: copied ? 'var(--accent-light)' : '#fff', fontSize: 10, color: copied ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: manrope }}>{copied ? 'Copied!' : 'Copy'}</button>
           </div>
         )}
-
         <MyNotes vendorId={v.id} initialNote={savedNote} initialQuotedPrice={savedQuotedPrice} onQuoteChange={(vid, _name, amount) => onQuoteChange(vid, v.name, amount)} />
-
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
@@ -347,7 +391,7 @@ function VendorCard({ v, savedIds, onToggleSave, savedNote, savedQuotedPrice, on
   )
 }
 
-function ServiceCard({ service, savedIds, onToggleSave }: { service: Service; savedIds: Set<string>; onToggleSave: (id: string) => void }) {
+function ServiceCard({ service, savedIds, onToggleSave, savedNote, savedQuotedPrice, onQuoteChange }: { service: Service; savedIds: Set<string>; onToggleSave: (id: string) => void; savedNote: string; savedQuotedPrice: number | null; onQuoteChange: (serviceId: string, name: string, amount: number | null) => void }) {
   const isSaved = savedIds.has(service.id)
   const subs = service.subcategories || []
   const catMeta = SERVICE_CATEGORY_META[service.category] || { emoji: '✦', colour: '#D97706' }
@@ -366,9 +410,9 @@ function ServiceCard({ service, savedIds, onToggleSave }: { service: Service; sa
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || catMeta.colour) + '18', color: SUB_COLOR[s] || catMeta.colour, fontSize: 10, fontWeight: 600, fontFamily: manrope }}>{s}</span>))}
         </div>
-        {loc && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
+        {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
         {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
           {igUrl && (
             <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <InstagramIcon />Instagram
@@ -380,6 +424,7 @@ function ServiceCard({ service, savedIds, onToggleSave }: { service: Service; sa
             </a>
           )}
         </div>
+        <ServiceNotes serviceId={service.id} initialNote={savedNote} initialQuotedPrice={savedQuotedPrice} onQuoteChange={(sid, _name, amount) => onQuoteChange(sid, service.name, amount)} />
       </div>
     </div>
   )
@@ -400,7 +445,10 @@ export default function SavedPage() {
   const [savedServiceIds, setSavedServiceIds] = useState<Set<string>>(new Set())
   const [savedNotes, setSavedNotes] = useState<Record<string, string>>({})
   const [savedQuotes, setSavedQuotes] = useState<Record<string, number | null>>({})
+  const [savedServiceNotes, setSavedServiceNotes] = useState<Record<string, string>>({})
+  const [savedServiceQuotes, setSavedServiceQuotes] = useState<Record<string, number | null>>({})
   const [vendorNames, setVendorNames] = useState<Record<string, string>>({})
+  const [serviceNames, setServiceNames] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -419,21 +467,37 @@ export default function SavedPage() {
       setLoading(true)
       const [savedVendorRows, savedServiceRows] = await Promise.all([
         supabase.from('saved_vendors').select('vendor_id, notes, quoted_price').eq('clerk_user_id', user!.id),
-        supabase.from('saved_services').select('service_id').eq('clerk_user_id', user!.id),
+        supabase.from('saved_services').select('service_id, notes, quoted_price').eq('clerk_user_id', user!.id),
       ])
       const vendorRows = savedVendorRows.data || []
       const serviceRows = savedServiceRows.data || []
+
       setSavedIds(new Set(vendorRows.map((r: {vendor_id: string}) => r.vendor_id)))
       setSavedServiceIds(new Set(serviceRows.map((r: {service_id: string}) => r.service_id)))
+
       const notesMap: Record<string, string> = {}
       const quotesMap: Record<string, number | null> = {}
-      vendorRows.forEach((r: {vendor_id: string; notes: string; quoted_price: number | null}) => { notesMap[r.vendor_id] = r.notes ?? ''; quotesMap[r.vendor_id] = r.quoted_price ?? null })
+      vendorRows.forEach((r: {vendor_id: string; notes: string; quoted_price: number | null}) => {
+        notesMap[r.vendor_id] = r.notes ?? ''
+        quotesMap[r.vendor_id] = r.quoted_price ?? null
+      })
       setSavedNotes(notesMap)
       setSavedQuotes(quotesMap)
+
+      const serviceNotesMap: Record<string, string> = {}
+      const serviceQuotesMap: Record<string, number | null> = {}
+      serviceRows.forEach((r: {service_id: string; notes: string; quoted_price: number | null}) => {
+        serviceNotesMap[r.service_id] = r.notes ?? ''
+        serviceQuotesMap[r.service_id] = r.quoted_price ?? null
+      })
+      setSavedServiceNotes(serviceNotesMap)
+      setSavedServiceQuotes(serviceQuotesMap)
+
       const [vendorData, serviceData] = await Promise.all([
         vendorRows.length > 0 ? supabase.from('vendors').select('*').in('id', vendorRows.map((r: {vendor_id: string}) => r.vendor_id)) : Promise.resolve({ data: [] }),
         serviceRows.length > 0 ? supabase.from('services').select('*').in('id', serviceRows.map((r: {service_id: string}) => r.service_id)) : Promise.resolve({ data: [] }),
       ])
+
       if (vendorData.data) {
         const mapped = vendorData.data.map((v: Vendor) => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
         setSavedVendors(mapped)
@@ -441,7 +505,14 @@ export default function SavedPage() {
         mapped.forEach((v: Vendor) => { names[v.id] = v.name })
         setVendorNames(names)
       }
-      if (serviceData.data) setSavedServices(serviceData.data)
+
+      if (serviceData.data) {
+        setSavedServices(serviceData.data)
+        const svcNames: Record<string, string> = {}
+        serviceData.data.forEach((s: Service) => { svcNames[s.id] = s.name })
+        setServiceNames(svcNames)
+      }
+
       setLoading(false)
     }
     loadSaved()
@@ -468,6 +539,8 @@ export default function SavedPage() {
     setSavedServiceIds(prev => { const n = new Set(prev); isSaved ? n.delete(serviceId) : n.add(serviceId); return n })
     if (isSaved) {
       setSavedServices(prev => prev.filter(s => s.id !== serviceId))
+      setSavedServiceNotes(prev => { const n = { ...prev }; delete n[serviceId]; return n })
+      setSavedServiceQuotes(prev => { const n = { ...prev }; delete n[serviceId]; return n })
       await supabase.from('saved_services').delete().eq('clerk_user_id', user.id).eq('service_id', serviceId)
     } else {
       await supabase.from('saved_services').insert({ clerk_user_id: user.id, service_id: serviceId })
@@ -479,9 +552,17 @@ export default function SavedPage() {
     if (name) setVendorNames(prev => ({ ...prev, [vendorId]: name }))
   }
 
+  function handleServiceQuoteChange(serviceId: string, name: string, amount: number | null) {
+    setSavedServiceQuotes(prev => ({ ...prev, [serviceId]: amount }))
+    if (name) setServiceNames(prev => ({ ...prev, [serviceId]: name }))
+  }
+
   const namedQuotes: Record<string, number> = {}
   Object.entries(savedQuotes).forEach(([vid, amount]) => {
     if (amount !== null && amount > 0) namedQuotes[vendorNames[vid] || vid] = amount
+  })
+  Object.entries(savedServiceQuotes).forEach(([sid, amount]) => {
+    if (amount !== null && amount > 0) namedQuotes[serviceNames[sid] || sid] = amount
   })
 
   const grouped = CATEGORY_ORDER.reduce<Record<string, Vendor[]>>((acc, cat) => {
@@ -541,7 +622,6 @@ export default function SavedPage() {
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px 60px' }}>
-
         {!isLoading && user && totalSaved > 0 && (
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 24, background: '#fff8f5', position: 'sticky', top: 54, zIndex: 10 }}>
             <button style={tabStyle('vendors')} onClick={() => setActiveTab('vendors')}>
@@ -557,10 +637,13 @@ export default function SavedPage() {
 
         {!isLoading && !user && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>&#9825;</div>
-            <h2 style={{ fontSize: 20, color: 'var(--text)', fontWeight: 600, margin: '0 0 8px', fontFamily: newsreader }}>Sign in to see your saved vendors</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px', fontFamily: manrope }}>Head back to the directory and sign in to start saving.</p>
-            <button onClick={() => openSignIn()} style={{ padding: '10px 24px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: manrope }}>Sign in</button>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>&#9825;</div>
+            <h2 style={{ fontSize: 22, color: 'var(--text)', fontWeight: 600, margin: '0 0 10px', fontFamily: newsreader }}>Sign in to see your saved vendors</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 28px', fontFamily: manrope, lineHeight: 1.6 }}>Create a free account to save vendors, track your budget, and share your shortlist.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+              <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: manrope, width: 220 }}>Sign in</button>
+              <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: '#fff', color: ACCENT, borderRadius: 24, border: '1.5px solid ' + ACCENT, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: manrope, width: 220 }}>Create account</button>
+            </div>
           </div>
         )}
 
@@ -625,7 +708,7 @@ export default function SavedPage() {
                             <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: manrope }}>{services.length} stylist{services.length !== 1 ? 's' : ''}</span>
                           </div>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 12 }}>
-                            {services.map(s => (<ServiceCard key={s.id} service={s} savedIds={savedServiceIds} onToggleSave={handleToggleServiceSave} />))}
+                            {services.map(s => (<ServiceCard key={s.id} service={s} savedIds={savedServiceIds} onToggleSave={handleToggleServiceSave} savedNote={savedServiceNotes[s.id] ?? ''} savedQuotedPrice={savedServiceQuotes[s.id] ?? null} onQuoteChange={handleServiceQuoteChange} />))}
                           </div>
                         </div>
                       )

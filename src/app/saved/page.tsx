@@ -628,7 +628,7 @@ export default function SavedPage() {
               Events {savedVendors.length > 0 && <span style={{ marginLeft: 6, fontSize: 10, background: activeTab === 'vendors' ? ACCENT : 'var(--bg-pill)', color: activeTab === 'vendors' ? 'white' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{savedVendors.length}</span>}
             </button>
             <button style={tabStyle('services')} onClick={() => setActiveTab('services')}>
-              Services {savedServices.length > 0 && <span style={{ marginLeft: 6, fontSize: 10, background: activeTab === 'services' ? ACCENT : 'var(--bg-pill)', color: activeTab === 'services' ? 'white' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{savedServices.length}</span>}
+              Beauty Services {savedServices.length > 0 && <span style={{ marginLeft: 6, fontSize: 10, background: activeTab === 'services' ? ACCENT : 'var(--bg-pill)', color: activeTab === 'services' ? 'white' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{savedServices.length}</span>}
             </button>
           </div>
         )}

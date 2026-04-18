@@ -230,7 +230,7 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
         </div>
 
         <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', fontFamily: manrope, fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-          Made with love for Nigerian brides
+          Made with love for Nigerians
         </div>
       </div>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap');`}</style>

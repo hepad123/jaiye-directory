@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useUser, useClerk, SignInButton, Show } from '@clerk/nextjs'
 import Image from 'next/image'
-import { useTheme } from '@/hooks/useTheme'
 import { useSupabase } from '@/hooks/useSupabase'
 import { useEffect, useState, useRef } from 'react'
 
@@ -59,10 +58,15 @@ function UserSearch() {
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)} title="Search people" style={{ width: 32, height: 32, borderRadius: '50%', background: open ? 'var(--accent)' : 'var(--bg-pill)', border: '1.5px solid ' + (open ? 'var(--accent)' : 'var(--border)'), display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={open ? 'white' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><circle cx="19" cy="19" r="3"/><line x1="21" y1="21" x2="17.5" y2="17.5"/>
+      <button
+        onClick={() => setOpen(o => !o)}
+        title="Find friends"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 20, background: open ? 'var(--bg-pill)' : 'transparent', border: 'none', cursor: 'pointer', color: open ? 'var(--text)' : 'var(--text-muted)', fontFamily: 'var(--font-jost, sans-serif)', fontSize: 13, fontWeight: open ? 600 : 400, transition: 'all 0.15s' }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
+        <span className="nav-label">Find friends</span>
       </button>
       {open && (
         <div style={{ position: 'absolute', top: 40, right: 0, zIndex: 200, background: 'var(--bg-card)', borderRadius: 14, boxShadow: '0 8px 32px rgba(28,25,23,0.14)', border: '1px solid var(--border)', width: 300, overflow: 'hidden', fontFamily: 'var(--font-jost, sans-serif)' }}>
@@ -98,22 +102,6 @@ function UserSearch() {
         </div>
       )}
     </div>
-  )
-}
-
-function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme()
-  const isDark = theme === 'dark'
-  return (
-    <button onClick={toggleTheme} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'} style={{ width: 44, height: 24, borderRadius: 12, background: isDark ? 'var(--accent)' : 'var(--bg-pill)', border: '1.5px solid var(--border)', position: 'relative', cursor: 'pointer', padding: 0, transition: 'background 0.2s, border-color 0.2s', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', top: 1, left: isDark ? 21 : 1, width: 18, height: 18, borderRadius: '50%', background: isDark ? 'white' : 'var(--bg-card)', border: '1px solid ' + (isDark ? 'transparent' : 'var(--border)'), display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        {isDark ? (
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        ) : (
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        )}
-      </div>
-    </button>
   )
 }
 
@@ -303,7 +291,6 @@ export default function Navbar() {
             </SignInButton>
           </Show>
           <div style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 2px' }} />
-          <ThemeToggle />
           <UserSearch />
           <Show when="signed-in">
             <ProfileDropdown user={user} username={username} displayName={displayName} profileChecked={profileChecked} isActive={isActive} signOut={signOut} />

@@ -213,8 +213,13 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
           </div>
 
           {expandableItem('Events', eventsOpen, () => setEventsOpen(o => !o))}
-          <div style={{ maxHeight: eventsOpen ? 120 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
-            {subItem('Wedding', '/directory')}
+          <div style={{ maxHeight: eventsOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
+            {subItem('Weddings', '/directory?occasion=wedding')}
+            {subItem('Birthdays', '/directory?occasion=birthday')}
+            {subItem('Corporate', '/directory?occasion=corporate')}
+            {subItem('Celebrations', '/directory?occasion=celebration')}
+            {subItem('Baby Showers', '/directory?occasion=babyshower')}
+            {subItem('Naming Ceremonies', '/directory?occasion=naming')}
           </div>
 
           <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />

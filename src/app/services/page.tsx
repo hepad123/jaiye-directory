@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useSupabase } from '@/hooks/useSupabase'
 
@@ -168,11 +169,11 @@ export default function ServicesPage() {
 
   useEffect(() => { setSubs([]) }, [cat])
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const c = params.get('cat')
-    if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
-  }, [])
+  const searchParams = useSearchParams()
+useEffect(() => {
+  const c = searchParams.get('cat')
+  if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
+}, [searchParams])
 
   const fetchServices = useCallback(async () => {
     setLoading(true)

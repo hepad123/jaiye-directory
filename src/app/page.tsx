@@ -298,7 +298,7 @@ export default function HomePage() {
         <div style={{ maxWidth: "560px", margin: "0 auto" }}>
           <div style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "4rem", color: "rgba(141,75,0,0.18)", lineHeight: 0.8, marginBottom: "1.5rem", userSelect: "none" }}>&ldquo;</div>
           <blockquote style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(1.2rem, 4vw, 1.5rem)", fontWeight: 400, color: "#1C1917", lineHeight: 1.5, marginBottom: "2rem", letterSpacing: "-0.01em", fontStyle: "italic" }}>
-            I finally found a space that allows me to discover new beauty providers. No longer keeping saved folders on Instagram and TikTok that I can never find
+            I finally found a space that allows me to discover new hairstylists that my friends have used and recommend. No longer keeping saved folders on Instagram and TikTok that I can never find
           </blockquote>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.85rem" }}>
             <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)", flexShrink: 0 }}>A</div>

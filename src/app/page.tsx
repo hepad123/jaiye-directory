@@ -14,7 +14,7 @@ const FEATURED_VENDORS = [
     location: "Nigeria",
     tier: "Verified",
     instagram: "kmariverse",
-    image: "/kmari.jpg",
+    image: "/:kmari.jpg",
     badge: "Top Rated",
   },
 ];
@@ -151,12 +151,12 @@ export default function HomePage() {
         .category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 560px; }
         @media (min-width: 768px) { .category-grid { max-width: 760px; gap: 1.25rem; } }
         @media (min-width: 1024px) { .category-grid { max-width: 960px; gap: 1.5rem; } }
-        .featured-scroll { display: flex; justify-content: center; padding: 0.5rem 1.5rem 1.5rem; }
+        .featured-scroll { display: flex; justify-content: center; padding: 0.5rem 1.5rem 1.5rem; max-width: 1200px; margin: 0 auto; }
         .featured-card { width: 272px; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #F0EBE3; box-shadow: 0 4px 24px rgba(141,75,0,0.07); }
         .section-inner { padding: 0 1.5rem; }
         @media (min-width: 768px) { .section-inner { padding: 0 3rem; max-width: 1200px; margin: 0 auto; } }
         .featured-header { padding: 0 1.5rem; max-width: 1200px; margin: 0 auto 2rem; }
-        @media (min-width: 768px) { .featured-header { padding: 0 3rem; } }
+@media (min-width: 768px) { .featured-header { padding: 0 3rem; max-width: 1200px; margin: 0 auto 2rem; } }
         .hero-section { position: relative; min-height: 92vh; display: flex; align-items: flex-end; padding-bottom: 3rem; overflow: visible; }
         @media (min-width: 768px) { .hero-section { min-height: 88vh; align-items: center; padding-bottom: 0; } .hero-content { padding-left: 5vw; max-width: 700px; } }
         @media (min-width: 1024px) { .hero-content { padding-left: 7vw; max-width: 760px; } }

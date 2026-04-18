@@ -38,6 +38,34 @@ const CATEGORIES = [
   },
 ];
 
+const HOW_IT_WORKS = [
+  {
+    icon: "✦",
+    title: "Discover",
+    body: "Browse hundreds of verified Nigerian wedding vendors and beauty stylists — all in one place. Filter by category, location, and what the community recommends.",
+  },
+  {
+    icon: "★",
+    title: "Vouch & Verify",
+    body: "Mark vendors you've used and recommend the ones you love. Real experiences from real people in the community — no paid placements.",
+  },
+  {
+    icon: "♡",
+    title: "Save & Note",
+    body: "Build your personal shortlist and leave private notes to yourself on each vendor. Your thoughts, your budget, all in one place.",
+  },
+  {
+    icon: "◎",
+    title: "Follow Your Circle",
+    body: "Follow friends and see who they've saved, used, and would recommend. Wedding planning is better when you can trust the source.",
+  },
+  {
+    icon: "↗",
+    title: "Book Directly",
+    body: "Some vendors offer direct booking links — go straight from discovery to booking without leaving the directory.",
+  },
+];
+
 type SearchResults = { vendors: { id: string; name: string; location: string }[]; services: { id: string; name: string; category: string }[] };
 
 function useSearchDropdown(
@@ -145,6 +173,7 @@ export default function HomePage() {
   return (
     <div style={{ background: "#faf9f6", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", overflowX: "hidden", position: "relative" }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;1,400&display=swap');
         @keyframes jaiye-ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .hero-content { position: relative; width: 100%; padding: 0 1.5rem; max-width: 680px; }
         @media (min-width: 768px) { .hero-content { padding: 0 3rem; } }
@@ -160,8 +189,12 @@ export default function HomePage() {
         .hero-section { position: relative; min-height: 92vh; display: flex; align-items: flex-end; padding-bottom: 3rem; overflow: visible; }
         @media (min-width: 768px) { .hero-section { min-height: 88vh; align-items: center; padding-bottom: 0; } .hero-content { padding-left: 5vw; max-width: 700px; } }
         @media (min-width: 1024px) { .hero-content { padding-left: 7vw; max-width: 760px; } }
+        .hiw-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        @media (min-width: 640px) { .hiw-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 1024px) { .hiw-grid { grid-template-columns: repeat(5, 1fr); } }
       `}</style>
 
+      {/* HERO */}
       <section className="hero-section">
         <img src={UNSPLASH_HERO} alt="Editorial portrait" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", filter: "sepia(8%) brightness(0.88)" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(15,10,5,0.82) 0%, rgba(15,10,5,0.38) 45%, transparent 100%)" }} />
@@ -214,6 +247,7 @@ export default function HomePage() {
         <div style={{ position: "absolute", bottom: "2rem", right: "1.5rem", color: "rgba(255,255,255,0.18)", fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "4rem", fontWeight: 700, lineHeight: 1, userSelect: "none" }}>No.1</div>
       </section>
 
+      {/* TICKER */}
       <div style={{ background: "#8d4b00", overflow: "hidden", padding: "0.75rem 0", whiteSpace: "nowrap", position: "relative", zIndex: 1 }}>
         <div style={{ display: "inline-flex", gap: "3rem", animation: "jaiye-ticker 28s linear infinite", fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>
           {[...tickerItems, ...tickerItems].map((t, i) => (
@@ -222,6 +256,7 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* CATEGORIES */}
       <section style={{ padding: "5rem 1.5rem", background: "#faf9f6" }}>
         <div className="section-inner">
           <div data-reveal style={revealBase}>
@@ -245,12 +280,14 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* DIVIDER */}
       <div className="section-inner" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <div style={{ flex: 1, height: "1px", background: "#E8E3DC" }} />
         <span style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.1rem", color: "#D97706" }}>&#10022;</span>
         <div style={{ flex: 1, height: "1px", background: "#E8E3DC" }} />
       </div>
 
+      {/* FEATURED VENDORS */}
       <section style={{ padding: "5rem 1.5rem" }}>
         <div className="featured-header" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
           <div>
@@ -259,7 +296,6 @@ export default function HomePage() {
           </div>
           <Link href="/directory" style={{ fontSize: "0.8rem", fontWeight: 700, color: "#8d4b00", textDecoration: "none", letterSpacing: "0.04em", borderBottom: "1.5px solid rgba(141,75,0,0.25)", paddingBottom: "2px", whiteSpace: "nowrap" }}>View all</Link>
         </div>
-
         <div className="featured-scroll">
           {FEATURED_VENDORS.map((vendor, i) => {
             const igHref = vendor.instagram ? "https://instagram.com/" + vendor.instagram : null;
@@ -294,11 +330,29 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+      <section data-reveal style={{ ...revealBase, background: "#1C1917", padding: "5rem 1.5rem" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <p style={{ fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#D97706", fontWeight: 700, marginBottom: "0.5rem" }}>The Directory</p>
+          <h2 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(1.8rem, 5vw, 2.4rem)", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: "3rem" }}>How it works</h2>
+          <div className="hiw-grid">
+            {HOW_IT_WORKS.map((item, i) => (
+              <div key={item.title} data-reveal style={{ ...revealDelay(i * 80), borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: "1.5rem" }}>
+                <div style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.4rem", color: "#D97706", marginBottom: "1rem", lineHeight: 1 }}>{item.icon}</div>
+                <h3 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.05rem", fontWeight: 700, color: "#ffffff", marginBottom: "0.6rem", letterSpacing: "-0.01em" }}>{item.title}</h3>
+                <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.7, fontFamily: "var(--font-jost, 'Jost', sans-serif)", fontWeight: 400 }}>{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIAL */}
       <section data-reveal style={{ ...revealBase, background: "#F5F0E8", padding: "5rem 1.5rem", textAlign: "center" }}>
         <div style={{ maxWidth: "560px", margin: "0 auto" }}>
           <div style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "4rem", color: "rgba(141,75,0,0.18)", lineHeight: 0.8, marginBottom: "1.5rem", userSelect: "none" }}>&ldquo;</div>
-          <blockquote style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(1.2rem, 4vw, 1.5rem)", fontWeight: 400, color: "#1C1917", lineHeight: 1.5, marginBottom: "2rem", letterSpacing: "-0.01em", fontStyle: "italic" }}>
-            I finally found a space that allows me to discover new hairstylists that my friends have used and recommend. No longer keeping saved folders on Instagram and TikTok that I can never find
+          <blockquote style={{ fontFamily: "'Open Sans', sans-serif", fontSize: "clamp(1.1rem, 3.5vw, 1.35rem)", fontWeight: 400, color: "#1C1917", lineHeight: 1.65, marginBottom: "2rem", letterSpacing: "0em", fontStyle: "italic" }}>
+            I finally found a space that allows me to discover new beauty providers. No longer keeping saved folders on Instagram and TikTok that I can never find
           </blockquote>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.85rem" }}>
             <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-playfair, 'Fraunces', serif)", flexShrink: 0 }}>A</div>
@@ -310,6 +364,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* FOOTER */}
       <footer style={{ background: "#1C1917", padding: "3.5rem 1.5rem", textAlign: "center" }}>
         <h4 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.4rem", fontWeight: 700, color: "#ffffff", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>JAIYE DIRECTORY</h4>
         <p style={{ fontSize: "9px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#D97706", marginBottom: "2rem" }}>Crafting Tradition</p>

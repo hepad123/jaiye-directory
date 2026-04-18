@@ -38,7 +38,15 @@ const CATEGORIES = [
   },
 ];
 
-function useSearchDropdown(searchVal, setSearchResults, setSearchOpen, setSearchLoading, supabase) {
+type SearchResults = { vendors: { id: string; name: string; location: string }[]; services: { id: string; name: string; category: string }[] };
+
+function useSearchDropdown(
+  searchVal: string,
+  setSearchResults: (r: SearchResults) => void,
+  setSearchOpen: (o: boolean) => void,
+  setSearchLoading: (l: boolean) => void,
+  supabase: ReturnType<typeof useSupabase>
+) {
   useEffect(() => {
     if (!searchVal.trim() || searchVal.length < 2) {
       setSearchResults({ vendors: [], services: [] });
@@ -66,8 +74,8 @@ function useScrollReveal() {
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
-          e.target.style.opacity = "1";
-          e.target.style.transform = "translateY(0)";
+          (e.target as HTMLElement).style.opacity = "1";
+          (e.target as HTMLElement).style.transform = "translateY(0)";
           io.unobserve(e.target);
         }
       });
@@ -89,7 +97,7 @@ const BridalIcon = () => (
   </svg>
 );
 
-const ICONS = {
+const ICONS: Record<string, React.ReactNode> = {
   "Services": <ServicesIcon />,
   "Events": <BridalIcon />,
 };
@@ -113,24 +121,24 @@ export default function HomePage() {
   useScrollReveal();
   const supabase = useSupabase();
   const router = useRouter();
-  const searchRef = useRef(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [searchVal, setSearchVal] = useState("");
-  const [searchResults, setSearchResults] = useState({ vendors: [], services: [] });
+  const [searchResults, setSearchResults] = useState<SearchResults>({ vendors: [], services: [] });
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
   useSearchDropdown(searchVal, setSearchResults, setSearchOpen, setSearchLoading, supabase);
 
   useEffect(() => {
-    function handleClick(e) {
-      if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false);
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
     }
     document.addEventListener("mouseup", handleClick);
     return () => document.removeEventListener("mouseup", handleClick);
   }, []);
 
-  const revealBase = { opacity: 0, transform: "translateY(28px)", transition: "opacity 0.7s ease, transform 0.7s ease" };
-  const revealDelay = (ms) => ({ ...revealBase, transitionDelay: ms + "ms" });
+  const revealBase: React.CSSProperties = { opacity: 0, transform: "translateY(28px)", transition: "opacity 0.7s ease, transform 0.7s ease" };
+  const revealDelay = (ms: number): React.CSSProperties => ({ ...revealBase, transitionDelay: ms + "ms" });
 
   const tickerItems = ["Nigerian Wedding Vendors", "Verified Artisans", "Bridal Beauty", "Hair Braiding Specialists", "Event Planners", "Makeup Artists", "Community Shortlists"];
 
@@ -181,7 +189,7 @@ export default function HomePage() {
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B45309", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>Weddings &amp; Events</div>
                     {searchResults.vendors.map((v) => (
-                      <button key={v.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/directory?search=" + encodeURIComponent(v.name)); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#FDF8F3"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}>
+                      <button key={v.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/directory?search=" + encodeURIComponent(v.name)); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#FDF8F3"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#1C1917" }}>{v.name}</span>
                         {v.location && <span style={{ fontSize: "11px", color: "#A8A29E" }}>{v.location}</span>}
                       </button>
@@ -192,7 +200,7 @@ export default function HomePage() {
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#0D9488", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>Services</div>
                     {searchResults.services.map((s) => (
-                      <button key={s.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/services?search=" + encodeURIComponent(s.name) + "&cat=" + encodeURIComponent(s.category)); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#F0FAFA"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}>
+                      <button key={s.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/services?search=" + encodeURIComponent(s.name) + "&cat=" + encodeURIComponent(s.category)); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#F0FAFA"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#1C1917" }}>{s.name}</span>
                         <span style={{ fontSize: "11px", color: "#A8A29E" }}>{s.category}</span>
                       </button>
@@ -256,8 +264,9 @@ export default function HomePage() {
           {FEATURED_VENDORS.map((vendor, i) => {
             const igHref = vendor.instagram ? "https://instagram.com/" + vendor.instagram : null;
             const igLabel = vendor.instagram ? "@" + vendor.instagram : null;
+            const cardDelay = i * 100;
             return (
-              <div key={vendor.name} data-reveal className="featured-card" style={{ opacity: 0, transform: "translateY(28px)", transition: "opacity 0.7s ease, transform 0.7s ease", transitionDelay: (i * 100) + "ms" }}>
+              <div key={vendor.name} data-reveal className="featured-card" style={{ opacity: 0, transform: "translateY(28px)", transition: "opacity 0.7s ease, transform 0.7s ease", transitionDelay: cardDelay + "ms" }}>
                 <div style={{ position: "relative", height: "220px", background: "#F5F0E8", overflow: "hidden" }}>
                   {vendor.image
                     ? <img src={vendor.image} alt={vendor.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
@@ -277,7 +286,7 @@ export default function HomePage() {
                       <span key={tag} style={{ padding: "3px 10px", background: "#F5F0E8", borderRadius: "999px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#78716C" }}>{tag}</span>
                     ))}
                   </div>
-                  {igHref && <a href={igHref} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "999px", border: "1.5px solid #E8E3DC", fontSize: "11px", fontWeight: 600, color: "#1C1917", textDecoration: "none", letterSpacing: "0.04em" }}><IgIcon />{igLabel}</a>}
+                  {igHref && igLabel && <a href={igHref} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "999px", border: "1.5px solid #E8E3DC", fontSize: "11px", fontWeight: 600, color: "#1C1917", textDecoration: "none", letterSpacing: "0.04em" }}><IgIcon />{igLabel}</a>}
                 </div>
               </div>
             );

@@ -292,6 +292,7 @@ export default function Navbar() {
           </Show>
           <div style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 2px' }} />
           <UserSearch />
+          <div style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 2px' }} />
           <Show when="signed-in">
             <ProfileDropdown user={user} username={username} displayName={displayName} profileChecked={profileChecked} isActive={isActive} signOut={signOut} />
           </Show>

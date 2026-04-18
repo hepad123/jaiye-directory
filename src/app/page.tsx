@@ -21,7 +21,7 @@ const FEATURED_VENDORS = [
 
 const CATEGORIES = [
   {
-    label: "Services",
+    label: "Beauty Services",
     sub: "Hair, Makeup, Lashes & more",
     href: "/beautyservices",
     featured: false,
@@ -43,7 +43,7 @@ const HOW_IT_WORKS = [
     icon: "✦",
     title: "Discover",
     pills: [
-      { label: "Browse Services", href: "/beautyservices" },
+      { label: "Browse Beauty Services", href: "/beautyservices" },
       { label: "Browse Events", href: "/directory" },
     ],
     body: "Browse hundreds of verified Nigerian event vendors and beauty stylists — all in one place. Filter by category, location, and what the community recommends.",
@@ -52,7 +52,7 @@ const HOW_IT_WORKS = [
     icon: "★",
     title: "Vouch & Verify",
     pills: [
-      { label: "Browse Services", href: "/beautyservices" },
+      { label: "Browse Beauty Services", href: "/beautyservices" },
       { label: "Browse Events", href: "/directory" },
     ],
     body: "Mark vendors and stylists you've used and recommend the ones you love. Real experiences from real people in the community",
@@ -78,7 +78,7 @@ const HOW_IT_WORKS = [
     icon: "↗",
     title: "Book Directly",
     pills: [
-      { label: "Browse Services", href: "/beautyservices" },
+      { label: "Browse Beauty Services", href: "/beautyservices" },
     ],
     body: "Some vendors and stylists offer direct booking links — go straight from discovery to booking",
   },
@@ -395,7 +395,7 @@ export default function HomePage() {
         <h4 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.4rem", fontWeight: 700, color: "#ffffff", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>JAIYE DIRECTORY</h4>
         <p style={{ fontSize: "9px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#D97706", marginBottom: "2rem" }}>Crafting Tradition</p>
         <div style={{ display: "flex", justifyContent: "center", gap: "2rem", flexWrap: "wrap", marginBottom: "2rem" }}>
-          {["Services", "Events", "Community", "Contact"].map((link) => (
+          {["Beauty Services", "Events", "Community", "Contact"].map((link) => (
             <a key={link} href="#" style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>{link}</a>
           ))}
         </div>

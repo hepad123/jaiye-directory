@@ -127,9 +127,7 @@ export default function SuggestVendorModal({ open, onClose }: Props) {
                 </div>
               </div>
 
-              <button className="s-submit" onClick={handleSubmit} disabled={saving || !name.trim() || !category || !instagram.trim()}
-                {saving ? 'Submitting...' : 'Submit suggestion'}
-              </button>
+              <button className="s-submit" onClick={handleSubmit} disabled={saving || !name.trim() || !category || !instagram.trim()}>{'Submit suggestion'}</button>
               <button className="s-cancel" onClick={handleClose}>Cancel</button>
             </>
           )}

@@ -156,7 +156,7 @@ export default function HomePage() {
         .section-inner { padding: 0 1.5rem; }
         @media (min-width: 768px) { .section-inner { padding: 0 3rem; max-width: 1200px; margin: 0 auto; } }
         .featured-header { padding: 0 1.5rem; max-width: 1200px; margin: 0 auto 2rem; }
-@media (min-width: 768px) { .featured-header { padding: 0 3rem; max-width: 1200px; margin: 0 auto 2rem; } }
+        @media (min-width: 768px) { .featured-header { padding: 0 3rem; max-width: 1200px; margin: 0 auto 2rem; } }
         .hero-section { position: relative; min-height: 92vh; display: flex; align-items: flex-end; padding-bottom: 3rem; overflow: visible; }
         @media (min-width: 768px) { .hero-section { min-height: 88vh; align-items: center; padding-bottom: 0; } .hero-content { padding-left: 5vw; max-width: 700px; } }
         @media (min-width: 1024px) { .hero-content { padding-left: 7vw; max-width: 760px; } }
@@ -251,7 +251,7 @@ export default function HomePage() {
         <div style={{ flex: 1, height: "1px", background: "#E8E3DC" }} />
       </div>
 
-      <section style={{ padding: "5rem 0" }}>
+      <section style={{ padding: "5rem 1.5rem" }}>
         <div className="featured-header" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
           <div>
             <p style={{ fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#D97706", fontWeight: 700, marginBottom: "0.4rem" }}>Featured</p>

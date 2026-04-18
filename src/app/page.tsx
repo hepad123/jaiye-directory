@@ -252,7 +252,7 @@ export default function HomePage() {
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#0D9488", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>Services</div>
                     {searchResults.services.map((s) => (
-                      <button key={s.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/services?search=" + encodeURIComponent(s.name) + "&cat=" + encodeURIComponent(s.category)); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#F0FAFA"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
+                      <button key={s.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/beautyservices?cat=" + encodeURIComponent(s.category)); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#F0FAFA"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#1C1917" }}>{s.name}</span>
                         <span style={{ fontSize: "11px", color: "#A8A29E" }}>{s.category}</span>
                       </button>

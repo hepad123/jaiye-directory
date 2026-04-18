@@ -53,6 +53,15 @@ function UserSearch() {
     return () => clearTimeout(timer)
   }, [query, supabase])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('find') === 'true') {
+      setOpen(true)
+      window.history.replaceState({}, '', '/')
+    }
+  }, [])
+
   const avatarColours = ['#D97706', '#6366F1', '#0D9488', '#2563EB', '#EA580C', '#DB2777']
   const avatarColour = (name: string) => avatarColours[name.charCodeAt(0) % avatarColours.length]
 

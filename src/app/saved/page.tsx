@@ -714,7 +714,7 @@ export default function SavedPage() {
                       )
                     })}
                     <div style={{ textAlign: 'center', marginTop: 8 }}>
-                      <a href:"/beautyservices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: '#fff', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: manrope }}>Browse more services</a>
+                      <a href="/beautyservices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: '#fff', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: manrope }}>Browse more services</a>
                     </div>
                   </div>
                 )}

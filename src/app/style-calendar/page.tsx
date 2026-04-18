@@ -179,7 +179,18 @@ export default function StyleCalendarPage() {
     setEntries(prev => prev.filter(e => e.id !== id));
   }
 
-  if (!isLoaded) return null;
+  if (!isLoaded) return (
+  <div style={{ background: '#fff8f5', minHeight: '100vh', padding: '32px 20px' }}>
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ height: 12, width: 120, background: '#f0e6dc', borderRadius: 6, marginBottom: 16 }} />
+      <div style={{ height: 36, width: 260, background: '#f0e6dc', borderRadius: 8, marginBottom: 8 }} />
+      <div style={{ height: 16, width: 200, background: '#f0e6dc', borderRadius: 6, marginBottom: 32 }} />
+      {[1,2,3,4].map(i => (
+        <div key={i} style={{ height: 64, background: '#f0e6dc', borderRadius: 12, marginBottom: 12, opacity: 1 - i * 0.15 }} />
+      ))}
+    </div>
+  </div>
+);
 
   if (!user) {
     return (

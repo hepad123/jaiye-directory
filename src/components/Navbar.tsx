@@ -224,6 +224,7 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
           {sectionLabel('You')}
           {navItem('Saved', '/saved', { count: savedCount })}
           {navItem('My Profile', '/profile/edit')}
+          {navItem('Style Calendar', '/style-calendar')}
         </div>
 
         <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', fontFamily: manrope, fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>

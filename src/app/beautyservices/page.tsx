@@ -75,6 +75,45 @@ function HeartIcon({ filled }: { filled: boolean }) {
   )
 }
 
+function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; setSortMode: (s: SortMode) => void; manrope: string }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mouseup', handleClick)
+    return () => document.removeEventListener('mouseup', handleClick)
+  }, [])
+
+  const options: { key: SortMode; label: string }[] = [
+    { key: 'most_rec',  label: 'Most Recommended' },
+    { key: 'most_used', label: 'Most Used' },
+  ]
+
+  const currentLabel = options.find(o => o.key === sortMode)?.label || 'Sort'
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+        {currentLabel}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 200, overflow: 'hidden' }}>
+          {options.map(o => (
+            <button key={o.key} onClick={() => { setSortMode(o.key); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: sortMode === o.key ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: sortMode === o.key ? 700 : 400, color: sortMode === o.key ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (sortMode !== o.key) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (sortMode !== o.key) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+              {o.label}
+              {sortMode === o.key && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SubcategoryDropdown({ cat, subs, setSubs, manrope }: { cat: string; subs: string[]; setSubs: (s: string[]) => void; manrope: string }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -282,10 +321,6 @@ function ServicesPage() {
 
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
-  const sortPills: { key: SortMode; label: string }[] = [
-    { key: 'most_rec',  label: 'Most Recommended' },
-    { key: 'most_used', label: 'Most Used' },
-  ]
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff8f5', color: 'var(--text)', fontFamily: manrope, overflowX: 'hidden' }}>
@@ -310,12 +345,7 @@ function ServicesPage() {
           <SubcategoryDropdown cat={cat} subs={subs} setSubs={setSubs} manrope={manrope} />
           <CityDropdown city={city} setCity={setCity} subCity={subCity} setSubCity={setSubCity} manrope={manrope} />
           <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
-          {sortPills.map(pill => (
-            <button key={pill.key} onClick={() => setSortMode(pill.key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 999, border: '1.5px solid ' + (sortMode === pill.key ? CATEGORY_ACCENT : 'var(--border)'), background: sortMode === pill.key ? CATEGORY_ACCENT : 'transparent', color: sortMode === pill.key ? '#fff' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
-              {sortMode === pill.key && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-              {pill.label}
-            </button>
-          ))}
+          <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
         </div>
       </div>
 

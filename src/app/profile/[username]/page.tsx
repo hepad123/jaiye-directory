@@ -159,7 +159,7 @@ function GroupedServiceList({ services }: { services: ServiceRow[] }) {
   if (Object.keys(grouped).length === 0) return null
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', fontFamily: manrope, padding: '16px 16px 6px', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Services</div>
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', fontFamily: manrope, padding: '16px 16px 6px', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Beauty Services</div>
       {Object.entries(grouped).map(([cat, catServices]) => {
         const meta = SERVICE_CATEGORY_META[cat] || { emoji: '✦', colour: '#D97706' }
         return (

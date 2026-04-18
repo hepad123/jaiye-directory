@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useSupabase } from '@/hooks/useSupabase'
+import { useSearchParams } from 'next/navigation'
 
 interface Service {
   id: string
@@ -45,9 +45,7 @@ const SUB_COLOR: Record<string, string> = {
 }
 
 const CATEGORY_ACCENT = '#B4690E'
-
 const emptyStats: ServiceStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
-
 type SortMode = 'most_used' | 'most_rec'
 
 function InstagramIcon() {
@@ -154,10 +152,11 @@ function CityDropdown({ city, setCity, manrope }: { city: string; setCity: (c: s
   )
 }
 
-export default function ServicesPage() {
+function ServicesPage() {
   const { user } = useUser()
   const { openSignIn } = useClerk()
   const supabase = useSupabase()
+  const searchParams = useSearchParams()
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [cat, setCat] = useState('Hair')
@@ -169,11 +168,10 @@ export default function ServicesPage() {
 
   useEffect(() => { setSubs([]) }, [cat])
 
-  const searchParams = useSearchParams()
-useEffect(() => {
-  const c = searchParams.get('cat')
-  if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
-}, [searchParams])
+  useEffect(() => {
+    const c = searchParams.get('cat')
+    if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
+  }, [searchParams])
 
   const fetchServices = useCallback(async () => {
     setLoading(true)
@@ -259,7 +257,6 @@ useEffect(() => {
 
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
-
   const sortPills: { key: SortMode; label: string }[] = [
     { key: 'most_rec',  label: 'Most Recommended' },
     { key: 'most_used', label: 'Most Used' },
@@ -335,7 +332,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           <HeartIcon filled={isSaved} />
         </button>
         {bookUrl && (
-          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999, background: '#1C1917', border: '1px solid #1C1917', fontSize: 10, fontWeight: 700, color: '#ffffff', textDecoration: 'none', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: manrope, whiteSpace: 'nowrap', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999, background: '#1C1917', border: '1px solid #1C1917', fontSize: 10, fontWeight: 700, color: '#ffffff', textDecoration: 'none', letterSpacing: '0.06em', textTransform: 'uppercase' as const, fontFamily: manrope, whiteSpace: 'nowrap', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Book
           </a>
@@ -391,5 +388,13 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         </button>
       </div>
     </div>
+  )
+}
+
+export default function ServicesPageWrapper() {
+  return (
+    <Suspense>
+      <ServicesPage />
+    </Suspense>
   )
 }

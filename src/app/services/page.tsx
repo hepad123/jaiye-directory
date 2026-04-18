@@ -47,6 +47,8 @@ const CATEGORY_ACCENT = '#B4690E'
 
 const emptyStats: ServiceStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 
+type SortMode = 'most_used' | 'most_rec'
+
 function InstagramIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -160,6 +162,7 @@ export default function ServicesPage() {
   const [cat, setCat] = useState('Hair')
   const [subs, setSubs] = useState<string[]>([])
   const [city, setCity] = useState('All')
+  const [sortMode, setSortMode] = useState<SortMode>('most_rec')
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState<Record<string, ServiceStats>>({})
 
@@ -247,8 +250,19 @@ export default function ServicesPage() {
     }
   }, [supabase, user, stats, openSignIn])
 
+  const sortedServices = [...services].sort((a, b) => {
+    if (sortMode === 'most_rec')  return (stats[b.id]?.recCount  || 0) - (stats[a.id]?.recCount  || 0)
+    if (sortMode === 'most_used') return (stats[b.id]?.usedCount || 0) - (stats[a.id]?.usedCount || 0)
+    return 0
+  })
+
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
+
+  const sortPills: { key: SortMode; label: string }[] = [
+    { key: 'most_rec',  label: 'Most Recommended' },
+    { key: 'most_used', label: 'Most Used' },
+  ]
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff8f5', color: 'var(--text)', fontFamily: manrope, overflowX: 'hidden' }}>
@@ -269,9 +283,16 @@ export default function ServicesPage() {
       </div>
 
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '12px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <SubcategoryDropdown cat={cat} subs={subs} setSubs={setSubs} manrope={manrope} />
           <CityDropdown city={city} setCity={setCity} manrope={manrope} />
+          <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
+          {sortPills.map(pill => (
+            <button key={pill.key} onClick={() => setSortMode(pill.key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 999, border: '1.5px solid ' + (sortMode === pill.key ? CATEGORY_ACCENT : 'var(--border)'), background: sortMode === pill.key ? CATEGORY_ACCENT : 'transparent', color: sortMode === pill.key ? '#fff' : 'var(--text-muted)', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+              {sortMode === pill.key && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              {pill.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -281,7 +302,7 @@ export default function ServicesPage() {
         {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different subcategory or city</p></div>)}
         {!loading && services.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>
-            {services.map(sv => (<Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} onToggleSave={() => toggleSave(sv.id)} stats={stats[sv.id] || emptyStats} onToggleUsed={() => toggleUsed(sv.id)} onToggleRec={() => toggleRec(sv.id)} isLoggedIn={!!user} onOpenAuth={openSignIn} />))}
+            {sortedServices.map(sv => (<Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} onToggleSave={() => toggleSave(sv.id)} stats={stats[sv.id] || emptyStats} onToggleUsed={() => toggleUsed(sv.id)} onToggleRec={() => toggleRec(sv.id)} isLoggedIn={!!user} onOpenAuth={openSignIn} />))}
           </div>
         )}
       </div>
@@ -312,21 +333,17 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
       </button>
 
       <div style={{ padding: '14px 14px 12px' }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 5, fontFamily: manrope }}>
-          {service.category}
-        </div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 36, fontFamily: newsreader }}>
-          {service.name}
-        </div>
+        <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 5, fontFamily: manrope }}>{service.category}</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 36, fontFamily: newsreader }}>{service.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: manrope, letterSpacing: '0.04em' }}>{s}</span>))}
         </div>
         {(usedCount > 0 || recCount > 0) && (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-    {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used &#128075;</span>}
-    {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
-  </div>
-)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used &#128075;</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
+          </div>
+        )}
         {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
         {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
 

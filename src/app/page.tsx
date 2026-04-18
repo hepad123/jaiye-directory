@@ -42,27 +42,27 @@ const HOW_IT_WORKS = [
   {
     icon: "✦",
     title: "Discover",
-    body: "Browse hundreds of verified Nigerian wedding vendors and beauty stylists — all in one place. Filter by category, location, and what the community recommends.",
+    body: "Browse hundreds of verified Nigerian event vendors and beauty stylists — all in one place. Filter by category, location, and what the community recommends.",
   },
   {
     icon: "★",
     title: "Vouch & Verify",
-    body: "Mark vendors you've used and recommend the ones you love. Real experiences from real people in the community — no paid placements.",
+    body: "Mark vendors and stylists you've used and recommend the ones you love. Real experiences from real people in the community",
   },
   {
     icon: "♡",
     title: "Save & Note",
-    body: "Build your personal shortlist and leave private notes to yourself on each vendor. Your thoughts, your budget, all in one place.",
+    body: "Build your personal shortlist and leave private notes to yourself on each vendor and/or stylist. Your thoughts, your budget, all in one place",
   },
   {
     icon: "◎",
     title: "Follow Your Circle",
-    body: "Follow friends and see who they've saved, used, and would recommend. Wedding planning is better when you can trust the source.",
+    body: "Follow people you trust to see who they've used, and would recommend",
   },
   {
     icon: "↗",
     title: "Book Directly",
-    body: "Some vendors offer direct booking links — go straight from discovery to booking without leaving the directory.",
+    body: "Some vendors and stylists offer direct booking links — go straight from discovery to booking",
   },
 ];
 

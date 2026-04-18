@@ -60,6 +60,23 @@ type VendorStats = {
 
 type SortMode = 'most_used' | 'most_rec'
 
+const OCCASION_CATEGORIES: Record<string, string[]> = {
+  wedding: [],
+  birthday: ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Videography & Content'],
+  corporate: ['Event Planning', 'Decor & Venue', 'Catering', 'Photography', 'Videography & Content'],
+  celebration: ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Videography & Content', 'Makeup'],
+  babyshower: ['Event Planning', 'Decor & Venue', 'Catering', 'Photography'],
+  naming: ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Outfits'],
+}
+
+const OCCASION_LABELS: Record<string, string> = {
+  birthday: 'Birthdays',
+  corporate: 'Corporate Events',
+  celebration: 'Celebrations',
+  babyshower: 'Baby Showers',
+  naming: 'Naming Ceremonies',
+}
+
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Event Planning':        { emoji: '📋', colour: '#6366F1' },
   'Styling':               { emoji: '✨', colour: '#0D9488' },
@@ -421,6 +438,8 @@ export default function DirectoryPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
   const [vendorStats, setVendorStats] = useState<Record<string, VendorStats>>({})
+  const [occasionCategories, setOccasionCategories] = useState<string[]>([])
+  const [occasionLabel, setOccasionLabel] = useState('')
 
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
@@ -430,7 +449,13 @@ export default function DirectoryPage() {
     const q = params.get('search')
     if (q) setSearch(q)
     const occasion = params.get('occasion')
-    if (occasion) setSearch(occasion)
+    if (occasion && occasion !== 'wedding') {
+      const cats = OCCASION_CATEGORIES[occasion]
+      if (cats && cats.length > 0) {
+        setOccasionCategories(cats)
+        setOccasionLabel(OCCASION_LABELS[occasion] || '')
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -539,6 +564,7 @@ export default function DirectoryPage() {
     const q = search.toLowerCase()
     const matchSearch = !q || v.name?.toLowerCase().includes(q) || v.services?.toLowerCase().includes(q) || v.instagram?.toLowerCase().includes(q) || v.notes?.toLowerCase().includes(q)
     const matchCat = category === '__discounts__' ? !!v.discount_code : category === 'All' || v.category === category
+    const matchOccasion = occasionCategories.length === 0 || occasionCategories.includes(v.category)
     const matchLoc = (() => {
       if (location === 'All') return true
       if (location === 'Abuja') return v.location?.toLowerCase().includes('abuja')
@@ -553,7 +579,7 @@ export default function DirectoryPage() {
     })()
     const matchNew = !showNewOnly || isNewVendor(v)
     const matchType = category !== 'Outfits' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
-    return matchSearch && matchCat && matchLoc && matchNew && matchType
+    return matchSearch && matchCat && matchOccasion && matchLoc && matchNew && matchType
   })
 
   const sorted = [...filtered].sort((a, b) => {
@@ -576,6 +602,12 @@ export default function DirectoryPage() {
 
       <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
         <img src="/pexels-directory-hero.jpg" alt="Directory" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+        {occasionLabel && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(15,10,5,0.75) 0%, transparent 100%)', padding: '24px 24px 16px' }}>
+            <div style={{ fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontFamily: manrope, fontWeight: 600, marginBottom: 4 }}>Browsing</div>
+            <div style={{ fontFamily: newsreader, fontSize: 28, fontWeight: 700, color: '#fff' }}>{occasionLabel}</div>
+          </div>
+        )}
       </div>
 
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#fff8f5', borderBottom: '1px solid var(--border)' }}>
@@ -602,6 +634,11 @@ export default function DirectoryPage() {
         </div>
 
         <div style={{ maxWidth: 1200, margin: '8px auto 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          {occasionLabel && (
+            <button onClick={() => { setOccasionCategories([]); setOccasionLabel('') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT + '15', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, letterSpacing: '0.04em' }}>
+              {occasionLabel} &#10005;
+            </button>
+          )}
           <button onClick={() => setCategory(category === '__discounts__' ? 'All' : '__discounts__')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + (category === '__discounts__' ? 'var(--text)' : 'var(--border)'), cursor: 'pointer', fontSize: 11, fontWeight: category === '__discounts__' ? 700 : 500, background: category === '__discounts__' ? 'var(--text)' : 'transparent', color: category === '__discounts__' ? 'var(--accent-light)' : 'var(--text-muted)', fontFamily: manrope, transition: 'all 0.15s', letterSpacing: '0.04em' }}>
             Discounts <span style={{ fontSize: 10, opacity: 0.6 }}>{vendors.filter(v => v.discount_code).length}</span>
           </button>
@@ -639,7 +676,7 @@ export default function DirectoryPage() {
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
                 <p style={{ fontFamily: newsreader, fontSize: 22, marginBottom: 8 }}>No vendors found</p>
                 <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: manrope }}>Try adjusting your filters</p>
-                <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setSubLocation(''); setShowNewOnly(false); setWeddingType('All') }} style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>
+                <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setSubLocation(''); setShowNewOnly(false); setWeddingType('All'); setOccasionCategories([]); setOccasionLabel('') }} style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>
                   Show all
                 </button>
               </div>

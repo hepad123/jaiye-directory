@@ -42,26 +42,36 @@ const HOW_IT_WORKS = [
   {
     icon: "✦",
     title: "Discover",
+    href: "/directory",
+    pill: "Browse Directory",
     body: "Browse hundreds of verified Nigerian event vendors and beauty stylists — all in one place. Filter by category, location, and what the community recommends.",
   },
   {
     icon: "★",
     title: "Vouch & Verify",
+    href: "/directory",
+    pill: "Browse Directory",
     body: "Mark vendors and stylists you've used and recommend the ones you love. Real experiences from real people in the community",
   },
   {
     icon: "♡",
     title: "Save & Note",
+    href: "/saved",
+    pill: "View Saved",
     body: "Build your personal shortlist and leave private notes to yourself on each vendor and/or stylist. Your thoughts all in one place",
   },
   {
     icon: "◎",
     title: "Follow Your Circle",
+    href: "/directory",
+    pill: "Browse Directory",
     body: "Follow people you trust to see who they've used, and would recommend",
   },
   {
     icon: "↗",
     title: "Book Directly",
+    href: "/services",
+    pill: "Browse Services",
     body: "Some vendors and stylists offer direct booking links — go straight from discovery to booking",
   },
 ];
@@ -192,6 +202,8 @@ export default function HomePage() {
         .hiw-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
         @media (min-width: 640px) { .hiw-grid { grid-template-columns: 1fr 1fr; } }
         @media (min-width: 1024px) { .hiw-grid { grid-template-columns: repeat(5, 1fr); } }
+        .hiw-card { border-top: 1px solid rgba(255,255,255,0.12); padding-top: 1.5rem; text-decoration: none; display: flex; flex-direction: column; transition: opacity 0.15s; }
+        .hiw-card:hover { opacity: 0.72; }
       `}</style>
 
       {/* HERO */}
@@ -337,11 +349,12 @@ export default function HomePage() {
           <h2 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "clamp(1.8rem, 5vw, 2.4rem)", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: "3rem" }}>How it works</h2>
           <div className="hiw-grid">
             {HOW_IT_WORKS.map((item, i) => (
-              <div key={item.title} data-reveal style={{ ...revealDelay(i * 80), borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: "1.5rem" }}>
+              <Link key={item.title} href={item.href} data-reveal className="hiw-card" style={{ ...revealDelay(i * 80) }}>
                 <div style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.4rem", color: "#D97706", marginBottom: "1rem", lineHeight: 1 }}>{item.icon}</div>
                 <h3 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.05rem", fontWeight: 700, color: "#ffffff", marginBottom: "0.6rem", letterSpacing: "-0.01em" }}>{item.title}</h3>
-                <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.7, fontFamily: "var(--font-jost, 'Jost', sans-serif)", fontWeight: 400 }}>{item.body}</p>
-              </div>
+                <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.7, fontFamily: "var(--font-jost, 'Jost', sans-serif)", fontWeight: 400, marginBottom: "1.25rem", flex: 1 }}>{item.body}</p>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "5px 12px", borderRadius: "999px", border: "1px solid rgba(217,119,6,0.4)", background: "rgba(217,119,6,0.1)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#D97706", alignSelf: "flex-start" }}>{item.pill} &#8594;</span>
+              </Link>
             ))}
           </div>
         </div>

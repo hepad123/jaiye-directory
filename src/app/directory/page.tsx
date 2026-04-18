@@ -58,7 +58,7 @@ type VendorStats = {
   hasRec: boolean
 }
 
-const FEATURED_VENDORS = ['Zapphaire Events', 'Glam by Omoye']
+type SortMode = 'most_used' | 'most_rec'
 
 const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
   'Event Planning':        { emoji: '📋', colour: '#6366F1' },
@@ -82,7 +82,6 @@ const CATEGORY_ORDER = [
 const CATEGORY_ACCENT = '#B4690E'
 
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
-const getEmoji  = (cat: string) => CATEGORY_META[cat]?.emoji  ?? '✦'
 
 const isNewVendor = (v: Vendor) => {
   if (!v.created_at) return false
@@ -249,7 +248,6 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
 
   const colour = getColour(v.category)
   const igHandle = v.instagram?.replace('@', '').trim()
-  const isFeatured = FEATURED_VENDORS.includes(v.name)
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
   const isSaved = savedIds.has(v.id)
   const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
@@ -314,28 +312,23 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
       )}
 
       <div style={{ position: 'absolute', top: saverLabel ? 38 : 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
-        {isFeatured && <div style={{ background: 'var(--accent-light)', border: '1px solid var(--gold)', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: 'var(--gold)', fontFamily: manrope }}>Top pick</div>}
-        {v.verified  && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: manrope }}>Verified</div>}
-        {isNew       && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: manrope }}>New</div>}
+        {v.verified && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: manrope }}>Verified</div>}
+        {isNew      && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: manrope }}>New</div>}
       </div>
 
       <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }} style={{ position: 'absolute', top: saverLabel ? 38 : 12, right: 12, background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
         <HeartIcon filled={isSaved} />
       </button>
 
-      <div style={{ padding: '14px 14px 12px', paddingTop: (isFeatured || v.verified || isNew) ? (saverLabel ? 52 : 36) : (saverLabel ? 18 : 14) }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: colour, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>
-          {v.category}
-        </div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: newsreader }}>
-          {v.name}
-        </div>
+      <div style={{ padding: '14px 14px 12px', paddingTop: (v.verified || isNew) ? (saverLabel ? 52 : 36) : (saverLabel ? 18 : 14) }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: colour, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>{v.category}</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: newsreader }}>{v.name}</div>
 
         {(avgRating !== null || usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
             {avgRating !== null && <span style={{ fontSize: 11, color: 'var(--gold)', fontFamily: manrope }}>&#9733; {avgRating}</span>}
             {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used &#128075;</span>}
-{recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
           </div>
         )}
 
@@ -343,26 +336,22 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 3, fontFamily: manrope }}>From &#8358;{v.price_from}</div>}
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-  {igHandle && (
-    <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
-      <InstagramIcon />Instagram
-    </a>
-  )}
-  {whatsappUrl && (
-    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
-      <WhatsAppIcon />WhatsApp
-    </a>
-  )}
-</div>
+          {igHandle && (
+            <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+              <InstagramIcon />Instagram
+            </a>
+          )}
+          {whatsappUrl && (
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+              <WhatsAppIcon />WhatsApp
+            </a>
+          )}
+        </div>
 
         {v.discount_code && (
           <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: 'var(--text)', color: 'var(--accent-light)', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: manrope }}>
-              &#127991; {v.discount_code}
-            </span>
-            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)', background: copied ? 'var(--accent-light)' : '#fff', fontSize: 10, color: copied ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: manrope }}>
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: 'var(--text)', color: 'var(--accent-light)', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: manrope }}>&#127991; {v.discount_code}</span>
+            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)', background: copied ? 'var(--accent-light)' : '#fff', fontSize: 10, color: copied ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: manrope }}>{copied ? 'Copied!' : 'Copy'}</button>
           </div>
         )}
 
@@ -389,13 +378,13 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
 
             <div style={{ marginTop: 4 }}>
               <button onClick={toggleUsed} disabled={usedSubmitting} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)', opacity: usedSubmitting ? 0.6 : 1 }}>
-  &#128075; {hasUsed ? 'Used this' : 'I used this vendor'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {usedCount}</span>}
-</button>
+                &#128075; {hasUsed ? 'Used this' : 'I used this vendor'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {usedCount}</span>}
+              </button>
             </div>
             <div style={{ marginTop: 4 }}>
               <button onClick={toggleRecommend} disabled={recSubmitting} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)', opacity: recSubmitting ? 0.6 : 1 }}>
-  &#11088; {hasRec ? 'Recommended' : 'I recommend this'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {recCount}</span>}
-</button>
+                &#11088; {hasRec ? 'Recommended' : 'I recommend this'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {recCount}</span>}
+              </button>
             </div>
             <ReviewSection vendor={v} currentUser={currentUser} onOpenAuth={onOpenAuth} />
           </div>
@@ -425,6 +414,7 @@ export default function DirectoryPage() {
   const [subLocation, setSubLocation] = useState('')
   const [showNewOnly, setShowNewOnly] = useState(false)
   const [weddingType, setWeddingType] = useState('All')
+  const [sortMode, setSortMode] = useState<SortMode>('most_rec')
   const [loading, setLoading] = useState(true)
   const [cardResetKey, setCardResetKey] = useState(0)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
@@ -457,195 +447,4 @@ export default function DirectoryPage() {
   useEffect(() => {
     if (!authUser?.id) { setSavedIds(new Set()); return }
     supabase.from('saved_vendors').select('vendor_id').eq('clerk_user_id', authUser.id)
-      .then(({ data }) => { if (data) setSavedIds(new Set(data.map((r: {vendor_id: string}) => r.vendor_id))) })
-  }, [authUser])
-
-  useEffect(() => {
-    if (!authUser?.id) { setFollowSaverMap({}); return }
-    async function loadFollowContext() {
-      const { data: followRows } = await supabase.from('follows').select('clerk_following_id').eq('clerk_follower_id', authUser!.id)
-      if (!followRows || followRows.length === 0) { setFollowSaverMap({}); return }
-      const followingIds = followRows.map((r: {clerk_following_id: string}) => r.clerk_following_id)
-      const { data: profiles } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').in('clerk_user_id', followingIds)
-      if (!profiles || profiles.length === 0) { setFollowSaverMap({}); return }
-      const profileMap: Record<string, FollowProfile> = {}
-      profiles.forEach((p: {clerk_user_id: string; display_name: string; username: string; avatar_url?: string}) => { profileMap[p.clerk_user_id] = { ...p, id: p.clerk_user_id } })
-      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, clerk_user_id').in('clerk_user_id', followingIds)
-      if (!savedRows || savedRows.length === 0) { setFollowSaverMap({}); return }
-      const map: Record<string, FollowProfile[]> = {}
-      savedRows.forEach((row: {vendor_id: string; clerk_user_id: string}) => {
-        const profile = profileMap[row.clerk_user_id]
-        if (!profile) return
-        if (!map[row.vendor_id]) map[row.vendor_id] = []
-        if (!map[row.vendor_id].find(p => p.id === profile.id)) map[row.vendor_id].push(profile)
-      })
-      setFollowSaverMap(map)
-    }
-    loadFollowContext()
-  }, [authUser])
-
-  useEffect(() => {
-    async function loadAll() {
-      setLoading(true)
-      const [vendorsRes, reviewsRes, recsRes, usedRes] = await Promise.all([
-        supabase.from('vendors').select('*'),
-        supabase.from('reviews').select('vendor_id, rating, comment, clerk_user_id'),
-        supabase.from('vendor_recommendations').select('vendor_id, clerk_user_id'),
-        supabase.from('vendor_used').select('vendor_id, clerk_user_id'),
-      ])
-      const allVendors = vendorsRes.data || []
-      const allReviews = reviewsRes.data || []
-      const allRecs    = recsRes.data    || []
-      const allUsed    = usedRes.data    || []
-      setVendors(allVendors)
-      const stats: Record<string, VendorStats> = {}
-      allVendors.forEach((v: Vendor) => {
-        const vendorReviews = allReviews.filter((r: {vendor_id: string; comment: string}) => r.vendor_id === v.id)
-        const realReviews   = vendorReviews.filter((r: {comment: string}) => r.comment !== '__used__')
-        const vendorRecs    = allRecs.filter((r: {vendor_id: string}) => r.vendor_id === v.id)
-        const vendorUsed    = allUsed.filter((r: {vendor_id: string}) => r.vendor_id === v.id)
-        const avgRating = realReviews.length > 0
-          ? Math.round(realReviews.reduce((s: number, r: {rating: number}) => s + r.rating, 0) / realReviews.length * 10) / 10
-          : null
-        stats[v.id] = {
-          avgRating,
-          usedCount: vendorUsed.length,
-          recCount:  vendorRecs.length,
-          hasUsed:   authUser?.id ? vendorUsed.some((r: {clerk_user_id: string}) => r.clerk_user_id === authUser.id) : false,
-          hasRec:    authUser?.id ? vendorRecs.some((r: {clerk_user_id: string}) => r.clerk_user_id === authUser.id) : false,
-        }
-      })
-      setVendorStats(stats)
-      setLoading(false)
-    }
-    loadAll()
-  }, [authUser])
-
-  useEffect(() => { setCardResetKey(k => k + 1) }, [category])
-
-  const handleToggleSave = useCallback(async (vendorId: string) => {
-    if (!authUser?.id) return
-    const isSaved = savedIds.has(vendorId)
-    setSavedIds(prev => { const n = new Set(prev); if (isSaved) n.delete(vendorId); else n.add(vendorId); return n })
-    if (isSaved) {
-      await fetch('/api/saved', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId }) })
-    } else {
-      await fetch('/api/saved', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId }) })
-    }
-    window.dispatchEvent(new Event('saved-change'))
-  }, [authUser, savedIds])
-
-  const handleStatChange = useCallback((vendorId: string, patch: Partial<VendorStats>) => {
-    setVendorStats(prev => ({ ...prev, [vendorId]: { ...prev[vendorId], ...patch } }))
-  }, [])
-
-  const vendorsWithSubcats = vendors.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
-  const allCats = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
-  const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
-  const categories = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
-  const newVendors = vendorsWithSubcats.filter(isNewVendor)
-
-  const filtered = vendorsWithSubcats.filter(v => {
-    const q = search.toLowerCase()
-    const matchSearch = !q || v.name?.toLowerCase().includes(q) || v.services?.toLowerCase().includes(q) || v.instagram?.toLowerCase().includes(q) || v.notes?.toLowerCase().includes(q)
-    const matchCat = category === '__discounts__' ? !!v.discount_code : category === 'All' || v.category === category
-    const matchLoc = (() => {
-      if (location === 'All') return true
-      if (location === 'Abuja') return v.location?.toLowerCase().includes('abuja')
-      if (location === 'Lagos') {
-        if (!v.location?.toLowerCase().includes('lagos') && !v.location?.toLowerCase().includes('lekki') && !v.location?.toLowerCase().includes('victoria island') && !v.location?.toLowerCase().includes('ikoyi')) return false
-        if (subLocation === 'All Lagos' || subLocation === '') return true
-        if (subLocation === 'Lekki') return v.location?.toLowerCase().includes('lekki')
-        if (subLocation === 'Victoria Island') return v.location?.toLowerCase().includes('victoria island') || v.location?.toLowerCase().includes('v.i') || v.location?.toLowerCase().includes('vi,')
-        if (subLocation === 'Ikoyi') return v.location?.toLowerCase().includes('ikoyi')
-      }
-      return true
-    })()
-    const matchNew = !showNewOnly || isNewVendor(v)
-    const matchType = category !== 'Outfits' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
-    return matchSearch && matchCat && matchLoc && matchNew && matchType
-  })
-
-  const sorted = [...filtered].sort((a, b) => (FEATURED_VENDORS.includes(a.name) ? 0 : 1) - (FEATURED_VENDORS.includes(b.name) ? 0 : 1))
-  const emptyStats: VendorStats = { avgRating: null, usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
-
-  return (
-    <main style={{ fontFamily: manrope, background: '#fff8f5', minHeight: '100vh' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.15} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
-
-      <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
-        <img src="/pexels-directory-hero.jpg" alt="Directory" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
-      </div>
-
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#fff8f5', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
-          {categories.map(cat => {
-            const isActive = category === cat
-            const colour = cat === 'All' ? CATEGORY_ACCENT : getColour(cat)
-            return (
-              <button key={cat} onClick={() => { setCategory(cat); setWeddingType('All') }} style={{ padding: '18px 20px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-                {cat}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '12px 16px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px' }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
-            {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>}
-          </div>
-          <LocationDropdown location={location} subLocation={subLocation} setLocation={setLocation} setSubLocation={setSubLocation} manrope={manrope} />
-        </div>
-
-        <div style={{ maxWidth: 1200, margin: '8px auto 0', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <button onClick={() => setCategory(category === '__discounts__' ? 'All' : '__discounts__')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + (category === '__discounts__' ? 'var(--text)' : 'var(--border)'), cursor: 'pointer', fontSize: 11, fontWeight: category === '__discounts__' ? 700 : 500, background: category === '__discounts__' ? 'var(--text)' : 'transparent', color: category === '__discounts__' ? 'var(--accent-light)' : 'var(--text-muted)', fontFamily: manrope, transition: 'all 0.15s', letterSpacing: '0.04em' }}>
-            Discounts <span style={{ fontSize: 10, opacity: 0.6 }}>{vendors.filter(v => v.discount_code).length}</span>
-          </button>
-          {newVendors.length > 0 && (
-            <button onClick={() => setShowNewOnly(!showNewOnly)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + (showNewOnly ? 'var(--text)' : 'var(--border)'), cursor: 'pointer', fontSize: 11, fontWeight: showNewOnly ? 700 : 500, background: showNewOnly ? 'var(--text)' : 'transparent', color: showNewOnly ? 'var(--bg)' : 'var(--text-muted)', fontFamily: manrope, transition: 'all 0.15s', letterSpacing: '0.04em' }}>
-              New this week <span style={{ fontSize: 10, opacity: 0.55 }}>{newVendors.length}</span>
-            </button>
-          )}
-          {category === 'Outfits' && ['All', 'White Wedding', 'Traditional'].map(type => (
-            <button key={type} onClick={() => setWeddingType(type)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + (weddingType === type ? CATEGORY_ACCENT : 'var(--border)'), cursor: 'pointer', fontSize: 11, fontWeight: weddingType === type ? 700 : 500, background: weddingType === type ? CATEGORY_ACCENT : 'transparent', color: weddingType === type ? '#fff' : 'var(--text-muted)', fontFamily: manrope, transition: 'all 0.15s', letterSpacing: '0.04em' }}>
-              {type}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 16px 2px' }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>{sorted.length} vendors</p>
-      </div>
-
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 14 }}>
-        {loading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ background: '#fff', borderRadius: 14, height: 100, opacity: 0.3, border: '1px solid var(--border)' }} />
-            ))
-          : sorted.length === 0
-            ? (
-              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
-                <p style={{ fontFamily: newsreader, fontSize: 22, marginBottom: 8 }}>No vendors found</p>
-                <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: manrope }}>Try adjusting your filters</p>
-                <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setSubLocation(''); setShowNewOnly(false); setWeddingType('All') }} style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>
-                  Show all
-                </button>
-              </div>
-            )
-            : sorted.map(v => (
-              <VendorCard key={v.id} v={v} isNew={isNewVendor(v)} resetKey={cardResetKey} currentUser={currentUser} savedIds={savedIds} onToggleSave={handleToggleSave} onOpenAuth={openAuthModal} followSavers={followSaverMap[v.id] || []} stats={vendorStats[v.id] || emptyStats} onStatChange={handleStatChange} />
-            ))
-        }
-      </div>
-
-      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 11, fontFamily: manrope, letterSpacing: '0.04em' }}>
-        Made with love for Nigerian brides and families
-      </footer>
-    </main>
-  )
-}
+      .then(({ data }) => { if (data) setSavedIds(new Set(data.map

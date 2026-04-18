@@ -120,7 +120,7 @@ function SubcategoryDropdown({ cat, subs, setSubs, manrope }: { cat: string; sub
 function CityDropdown({ city, setCity, manrope }: { city: string; setCity: (c: string) => void; manrope: string }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const cities = ['All', 'Lagos', 'Abuja']
+  const cities = ['All', 'Lagos', 'Abuja', 'London']
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {

@@ -695,7 +695,7 @@ export default function SavedPage() {
                   <div style={{ textAlign: 'center', padding: '40px 16px' }}>
                     <div style={{ fontSize: 36, marginBottom: 10 }}>&#128135;</div>
                     <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: manrope }}>No services saved yet.</p>
-                    <Link href="/services" style={{ display: 'inline-block', marginTop: 12, padding: '9px 22px', borderRadius: 24, background: ACCENT, color: 'white', fontSize: 12, textDecoration: 'none', fontWeight: 700, fontFamily: manrope }}>Browse services</Link>
+                    <Link href: "/beautyservices" style={{ display: 'inline-block', marginTop: 12, padding: '9px 22px', borderRadius: 24, background: ACCENT, color: 'white', fontSize: 12, textDecoration: 'none', fontWeight: 700, fontFamily: manrope }}>Browse services</Link>
                   </div>
                 ) : (
                   <div>
@@ -714,7 +714,7 @@ export default function SavedPage() {
                       )
                     })}
                     <div style={{ textAlign: 'center', marginTop: 8 }}>
-                      <Link href="/services" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: '#fff', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: manrope }}>Browse more services</Link>
+                      <Link href: "/beautyservices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: '#fff', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: manrope }}>Browse more services</Link>
                     </div>
                   </div>
                 )}

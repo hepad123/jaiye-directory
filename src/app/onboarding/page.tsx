@@ -160,9 +160,9 @@ export default function OnboardingPage() {
                 background: profileType === 'customer' ? 'var(--accent-light)' : 'var(--bg-card)',
                 transition: 'all 0.15s', textAlign: 'left',
               }}>
-                <div style={{ width: 48, height: 48, borderRadius: 14, flexShrink: 0, background: profileType === 'customer' ? 'var(--accent)' : 'var(--bg-pill)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>👰🏾</div>
+                <div style={{ width: 48, height: 48, borderRadius: 14, flexShrink: 0, background: profileType === 'customer' ? 'var(--accent)' : 'var(--bg-pill)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>✨</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: profileType === 'customer' ? 'var(--accent)' : 'var(--text)', marginBottom: 3 }}>I'm planning a wedding / event</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: profileType === 'customer' ? 'var(--accent)' : 'var(--text)', marginBottom: 3 }}>I'm a user / customer</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>Save vendors, leave reviews, share recommendations</div>
                 </div>
                 {profileType === 'customer' && <div style={{ marginLeft: 'auto', color: 'var(--accent)', fontSize: 18, flexShrink: 0 }}>✓</div>}
@@ -175,9 +175,9 @@ export default function OnboardingPage() {
                 background: profileType === 'vendor' ? 'var(--bg-pill)' : 'var(--bg-card)',
                 transition: 'all 0.15s', textAlign: 'left',
               }}>
-                <div style={{ width: 48, height: 48, borderRadius: 14, flexShrink: 0, background: profileType === 'vendor' ? 'var(--text)' : 'var(--bg-pill)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🎀</div>
+                <div style={{ width: 48, height: 48, borderRadius: 14, flexShrink: 0, background: profileType === 'vendor' ? 'var(--text)' : 'var(--bg-pill)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>💅🏾</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>I'm a wedding / event vendor</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>I'm a vendor / stylist</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>Manage your listing, respond to reviews, grow your bookings</div>
                 </div>
                 {profileType === 'vendor' && <div style={{ marginLeft: 'auto', color: 'var(--text)', fontSize: 18, flexShrink: 0 }}>✓</div>}

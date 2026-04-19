@@ -1,3 +1,6 @@
+Here it is — the complete file to paste into `src/app/directory/page.tsx`:
+
+```tsx
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
@@ -404,6 +407,7 @@ function CategoryDropdown({ occasion, selectedCats, setSelectedCats, weddingType
 
 function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; setSortMode: (s: SortMode) => void; manrope: string }) {
   const [open, setOpen] = useState(false)
+  const [interacted, setInteracted] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -418,20 +422,22 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
     { key: 'most_rec',  label: 'Most Recommended' },
     { key: 'most_used', label: 'Most Used' },
   ]
-  const currentLabel = options.find(o => o.key === sortMode)?.label || 'Sort'
+
+  const currentLabel = interacted ? (options.find(o => o.key === sortMode)?.label || 'Sort') : 'Sort'
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: interacted ? CATEGORY_ACCENT : 'transparent', color: interacted ? '#fff' : CATEGORY_ACCENT, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
         {currentLabel}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 38, right: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 200, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 200, overflow: 'hidden' }}>
           {options.map(o => (
-            <button key={o.key} onClick={() => { setSortMode(o.key); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: sortMode === o.key ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: sortMode === o.key ? 700 : 400, color: sortMode === o.key ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (sortMode !== o.key) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (sortMode !== o.key) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+            <button key={o.key} onClick={() => { setSortMode(o.key); setInteracted(true); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: interacted && sortMode === o.key ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: interacted && sortMode === o.key ? 700 : 400, color: interacted && sortMode === o.key ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (!(interacted && sortMode === o.key)) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (!(interacted && sortMode === o.key)) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
               {o.label}
-              {sortMode === o.key && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              {interacted && sortMode === o.key && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
             </button>
           ))}
         </div>
@@ -697,6 +703,7 @@ export default function DirectoryPage() {
   useEffect(() => {
     setSelectedCats([])
     setWeddingType('All')
+    setSearch('')
     setCardResetKey(k => k + 1)
   }, [occasion])
 
@@ -838,6 +845,7 @@ export default function DirectoryPage() {
         </div>
       </div>
 
+      {/* Occasion tabs */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#fff8f5', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {OCCASION_TABS.map(tab => {
@@ -851,22 +859,35 @@ export default function DirectoryPage() {
         </div>
       </div>
 
-      <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '12px 16px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 180, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px' }}>
+      {/* Filter bar — 3 rows */}
+      <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '10px 16px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+
+          {/* Row 1: search */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
             <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
             {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>}
           </div>
-          <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
-          <LocationDropdown location={location} subLocation={subLocation} setLocation={setLocation} setSubLocation={setSubLocation} manrope={manrope} />
-          <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
-          <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
+
+          {/* Row 2: all vendors + all locations */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+            <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
+            <LocationDropdown location={location} subLocation={subLocation} setLocation={setLocation} setSubLocation={setSubLocation} manrope={manrope} />
+          </div>
+
+          {/* Row 3: sort */}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
+          </div>
+
         </div>
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 16px 2px' }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>{sorted.length} vendors</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
+          {sorted.length} vendors{search ? ' for "' + search + '"' : ''}
+        </p>
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 14 }}>
@@ -896,3 +917,4 @@ export default function DirectoryPage() {
     </main>
   )
 }
+```

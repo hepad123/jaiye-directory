@@ -196,17 +196,15 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
 
   return (
     <div style={{ marginTop: 6 }}>
-      <button
+      <button 
         onClick={() => setOpen(o => !o)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 12px', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1, flexShrink: 0 }}>{open ? '-' : '+'}</span>
-          <span>Reviews{totalCount !== null ? ' (' + totalCount + ')' : ''}</span>
-        </div>
+        <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1, flexShrink: 0 }}>{open ? '-' : '+'}</span>
+        <span>Reviews{totalCount !== null ? ' (' + totalCount + ')' : ''}</span>
         {avgExp && !open && (
           <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>
-            Exp {avgExp}&#9733; · Q {avgQual}&#9733;
+            · Exp {avgExp}&#9733; Q {avgQual}&#9733;
           </span>
         )}
       </button>

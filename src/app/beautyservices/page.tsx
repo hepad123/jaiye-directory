@@ -27,6 +27,16 @@ type ServiceStats = {
   hasRec: boolean
 }
 
+type ServiceReview = {
+  id: string
+  clerk_user_id: string
+  reviewer_name: string
+  rating_experience: number
+  rating_quality: number
+  comment: string | null
+  created_at: string
+}
+
 const CATEGORIES: Record<string, string[]> = {
   Hair:   ['All', 'Braids', 'Cornrows', 'Natural Hair', 'Ponytail', 'Relaxed Hair', 'Sew In', 'Silk Press', 'Textured Hair', 'Treatment', 'Wigs', 'Weaves', 'Locs', 'Knotless', 'Faux Locs'],
   Makeup: ['All', 'Bridal MUA', 'Glam', 'Editorial', 'Airbrush'],
@@ -72,6 +82,207 @@ function HeartIcon({ filled }: { filled: boolean }) {
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'var(--accent)' : 'none'} stroke={filled ? 'var(--accent)' : 'var(--border)'} strokeWidth="2" style={{ flexShrink: 0, transition: 'all 0.15s ease' }}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
     </svg>
+  )
+}
+
+function StarPicker({ value, onChange, manrope }: { value: number; onChange: (v: number) => void; manrope: string }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div style={{ display: 'flex', gap: 2 }}>
+      {[1,2,3,4,5].map(s => (
+        <span
+          key={s}
+          onClick={() => onChange(s)}
+          onMouseEnter={() => setHover(s)}
+          onMouseLeave={() => setHover(0)}
+          style={{ cursor: 'pointer', fontSize: 18, color: s <= (hover || value) ? '#D97706' : 'var(--border)', transition: 'color 0.1s', fontFamily: manrope }}
+        >★</span>
+      ))}
+    </div>
+  )
+}
+
+function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsreader }: {
+  serviceId: string
+  currentUserId: string | null
+  displayName: string
+  manrope: string
+  newsreader: string
+}) {
+  const supabase = useSupabase()
+  const { openSignIn } = useClerk()
+  const [reviews, setReviews] = useState<ServiceReview[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [ratingExp, setRatingExp] = useState(0)
+  const [ratingQual, setRatingQual] = useState(0)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const myReview = reviews.find(r => r.clerk_user_id === currentUserId) || null
+  const otherReviews = reviews.filter(r => r.clerk_user_id !== currentUserId)
+
+  useEffect(() => {
+    if (!loaded) return
+    setLoading(true)
+    supabase.from('service_reviews')
+      .select('*')
+      .eq('service_id', serviceId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setReviews(data || [])
+        setLoading(false)
+      })
+  }, [serviceId, loaded])
+
+  function startEdit() {
+    if (myReview) {
+      setRatingExp(myReview.rating_experience)
+      setRatingQual(myReview.rating_quality)
+      setComment(myReview.comment || '')
+    } else {
+      setRatingExp(0)
+      setRatingQual(0)
+      setComment('')
+    }
+    setEditing(true)
+  }
+
+  async function handleSubmit() {
+    if (!currentUserId) { openSignIn(); return }
+    if (ratingExp === 0 || ratingQual === 0) return
+    setSubmitting(true)
+    const payload = {
+      service_id: serviceId,
+      clerk_user_id: currentUserId,
+      reviewer_name: displayName,
+      rating_experience: ratingExp,
+      rating_quality: ratingQual,
+      comment: comment.trim() || null,
+    }
+    const { data, error } = await supabase
+      .from('service_reviews')
+      .upsert(payload, { onConflict: 'service_id,clerk_user_id' })
+      .select()
+    if (!error && data) {
+      setReviews(prev => {
+        const without = prev.filter(r => r.clerk_user_id !== currentUserId)
+        return [data[0], ...without]
+      })
+      setEditing(false)
+    }
+    setSubmitting(false)
+  }
+
+  async function handleDelete() {
+    if (!currentUserId || !myReview) return
+    setDeleting(true)
+    await supabase.from('service_reviews').delete().eq('id', myReview.id)
+    setReviews(prev => prev.filter(r => r.id !== myReview.id))
+    setEditing(false)
+    setDeleting(false)
+  }
+
+  const avgExp = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating_experience, 0) / reviews.length).toFixed(1) : null
+  const avgQual = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating_quality, 0) / reviews.length).toFixed(1) : null
+
+  return (
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: manrope }}>
+            {!loaded ? 'Reviews' : reviews.length === 0 ? 'No reviews yet' : reviews.length + ' review' + (reviews.length !== 1 ? 's' : '')}
+          </span>
+          {avgExp && (
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>
+              · Exp {avgExp}&#9733; · Quality {avgQual}&#9733;
+            </span>
+          )}
+        </div>
+        {!loaded ? (
+          <button onClick={() => { if (!currentUserId) { openSignIn(); return } setLoaded(true) }} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>
+            {currentUserId ? 'See reviews' : 'Sign in to review'}
+          </button>
+        ) : !myReview && !editing ? (
+          <button onClick={() => { if (!currentUserId) { openSignIn(); return } startEdit() }} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>
+            + Add review
+          </button>
+        ) : myReview && !editing ? (
+          <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>
+            Edit
+          </button>
+        ) : null}
+      </div>
+
+      {loading && <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>Loading...</p>}
+
+      {editing && (
+        <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '12px 12px', marginBottom: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4, fontFamily: manrope }}>Customer Experience</div>
+              <StarPicker value={ratingExp} onChange={setRatingExp} manrope={manrope} />
+            </div>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4, fontFamily: manrope }}>Quality of Output</div>
+              <StarPicker value={ratingQual} onChange={setRatingQual} manrope={manrope} />
+            </div>
+            <textarea
+              placeholder="Share your experience (optional)..."
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              rows={3}
+              maxLength={500}
+              style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none', outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || ratingExp === 0 || ratingQual === 0}
+                style={{ padding: '7px 18px', background: ratingExp > 0 && ratingQual > 0 ? CATEGORY_ACCENT : 'var(--bg-pill)', color: ratingExp > 0 && ratingQual > 0 ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: ratingExp > 0 && ratingQual > 0 ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}
+              >
+                {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
+              </button>
+              <button onClick={() => setEditing(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>
+                Cancel
+              </button>
+              {myReview && (
+                <button onClick={handleDelete} disabled={deleting} style={{ padding: '7px 14px', background: 'none', border: '1px solid #DC2626', borderRadius: 20, fontSize: 11, color: '#DC2626', cursor: 'pointer', fontFamily: manrope, marginLeft: 'auto' }}>
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loaded && !editing && myReview && (
+        <div style={{ background: 'var(--accent-light)', border: '1px solid var(--gold)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: CATEGORY_ACCENT, marginBottom: 6, fontFamily: manrope }}>Your review</div>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 4 }}>
+            <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>Exp: {'★'.repeat(myReview.rating_experience)}<span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - myReview.rating_experience)}</span></span>
+            <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>Quality: {'★'.repeat(myReview.rating_quality)}<span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - myReview.rating_quality)}</span></span>
+          </div>
+          {myReview.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, lineHeight: 1.5, fontFamily: manrope }}>{myReview.comment}</p>}
+        </div>
+      )}
+
+      {loaded && !editing && otherReviews.slice(0, 3).map(r => (
+        <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '10px 12px', marginBottom: 6 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', fontFamily: newsreader }}>{r.reviewer_name}</span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginBottom: r.comment ? 4 : 0 }}>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>Exp: <span style={{ color: '#D97706' }}>{'★'.repeat(r.rating_experience)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - r.rating_experience)}</span></span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>Quality: <span style={{ color: '#D97706' }}>{'★'.repeat(r.rating_quality)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - r.rating_quality)}</span></span>
+          </div>
+          {r.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, lineHeight: 1.5, fontFamily: manrope }}>{r.comment}</p>}
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -221,6 +432,7 @@ function ServicesPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState<Record<string, ServiceStats>>({})
   const [suggestOpen, setSuggestOpen] = useState(false)
+  const [displayName, setDisplayName] = useState('')
 
   useEffect(() => { setSubs([]) }, [cat])
   useEffect(() => { if (city !== 'London') setSubCity('') }, [city])
@@ -229,6 +441,12 @@ function ServicesPage() {
     const c = searchParams.get('cat')
     if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
   }, [searchParams])
+
+  useEffect(() => {
+    if (!user?.id) { setDisplayName(''); return }
+    supabase.from('profiles').select('display_name').eq('clerk_user_id', user.id).maybeSingle()
+      .then(({ data }) => { setDisplayName(data?.display_name || user.fullName || '') })
+  }, [user, supabase])
 
   const fetchServices = useCallback(async () => {
     setLoading(true)
@@ -355,7 +573,21 @@ function ServicesPage() {
         {!loading && services.length === 0 && (<div style={{ textAlign: 'center', padding: '80px 24px' }}><p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>No results found</p><p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different subcategory or location</p></div>)}
         {!loading && services.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>
-            {sortedServices.map(sv => (<Card key={sv.id} service={sv} isSaved={savedIds.has(sv.id)} onToggleSave={() => toggleSave(sv.id)} stats={stats[sv.id] || emptyStats} onToggleUsed={() => toggleUsed(sv.id)} onToggleRec={() => toggleRec(sv.id)} isLoggedIn={!!user} onOpenAuth={openSignIn} />))}
+            {sortedServices.map(sv => (
+              <Card
+                key={sv.id}
+                service={sv}
+                isSaved={savedIds.has(sv.id)}
+                onToggleSave={() => toggleSave(sv.id)}
+                stats={stats[sv.id] || emptyStats}
+                onToggleUsed={() => toggleUsed(sv.id)}
+                onToggleRec={() => toggleRec(sv.id)}
+                isLoggedIn={!!user}
+                onOpenAuth={openSignIn}
+                currentUserId={user?.id || null}
+                displayName={displayName}
+              />
+            ))}
           </div>
         )}
 
@@ -370,10 +602,11 @@ function ServicesPage() {
   )
 }
 
-function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec, isLoggedIn, onOpenAuth }: {
+function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec, isLoggedIn, onOpenAuth, currentUserId, displayName }: {
   service: Service; isSaved: boolean; onToggleSave: () => void
   stats: ServiceStats; onToggleUsed: () => void; onToggleRec: () => void
   isLoggedIn: boolean; onOpenAuth: () => void
+  currentUserId: string | null; displayName: string
 }) {
   const [expanded, setExpanded] = useState(false)
   const subs = service.subcategories || []
@@ -431,7 +664,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
         {expanded && (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ marginTop: 2 }}>
+            <div>
               <button onClick={onToggleUsed} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)', marginBottom: 6 }}>
                 {hasUsed ? 'Used this stylist' : 'I used this stylist'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {usedCount}</span>}
               </button>
@@ -441,6 +674,13 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
                 {hasRec ? 'Recommended' : 'I recommend this stylist'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {recCount}</span>}
               </button>
             </div>
+            <ReviewSection
+              serviceId={service.id}
+              currentUserId={currentUserId}
+              displayName={displayName}
+              manrope={manrope}
+              newsreader={newsreader}
+            />
           </div>
         )}
 

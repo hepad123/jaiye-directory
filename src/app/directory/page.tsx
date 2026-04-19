@@ -914,4 +914,3 @@ export default function DirectoryPage() {
     </main>
   )
 }
-```

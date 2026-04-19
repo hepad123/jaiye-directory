@@ -1,6 +1,3 @@
-Here it is — the complete file to paste into `src/app/directory/page.tsx`:
-
-```tsx
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'

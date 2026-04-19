@@ -24,6 +24,7 @@ type Vendor = {
   created_at?: string
   verified?: boolean
   wedding_type?: string
+  occasions?: string[]
 }
 
 type VendorReview = {
@@ -60,43 +61,41 @@ type VendorStats = {
 
 type SortMode = 'most_used' | 'most_rec'
 
-const OCCASION_CATEGORIES: Record<string, string[]> = {
-  wedding: [],
-  birthday: ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Videography & Content'],
-  corporate: ['Event Planning', 'Decor & Venue', 'Catering', 'Photography', 'Videography & Content'],
-  celebration: ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Videography & Content', 'Makeup'],
-  babyshower: ['Event Planning', 'Decor & Venue', 'Catering', 'Photography'],
-  naming: ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Outfits'],
-}
+const CATEGORY_ACCENT = '#B4690E'
 
-const OCCASION_LABELS: Record<string, string> = {
-  birthday: 'Birthdays',
-  corporate: 'Corporate Events',
-  celebration: 'Celebrations',
-  babyshower: 'Baby Showers',
-  naming: 'Naming Ceremonies',
-}
-
-const CATEGORY_META: Record<string, { emoji: string; colour: string }> = {
-  'Event Planning':        { emoji: '📋', colour: '#6366F1' },
-  'Styling':               { emoji: '✨', colour: '#0D9488' },
-  'Outfits':               { emoji: '👗', colour: '#D97706' },
-  'Makeup':                { emoji: '💄', colour: '#DB2777' },
-  'Hair & Gele':           { emoji: '💅', colour: '#EA580C' },
-  'Photography':           { emoji: '📷', colour: '#2563EB' },
-  'Videography & Content': { emoji: '🎬', colour: '#78716C' },
-  'Decor & Venue':         { emoji: '🏛️', colour: '#92400E' },
-  'Catering':              { emoji: '🍽️', colour: '#C2410C' },
-  'Entertainment':         { emoji: '🎤', colour: '#7C3AED' },
-  'Other':                 { emoji: '✦',  colour: '#57534E' },
-}
-
-const CATEGORY_ORDER = [
-  'All', 'Event Planning', 'Outfits',
-  'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content',
+const OCCASION_TABS = [
+  { key: 'weddings',      label: 'Weddings' },
+  { key: 'birthdays',     label: 'Birthdays' },
+  { key: 'corporate',     label: 'Corporate' },
+  { key: 'celebrations',  label: 'Celebrations' },
+  { key: 'babyshower',    label: 'Baby Showers' },
+  { key: 'naming',        label: 'Naming Ceremonies' },
 ]
 
-const CATEGORY_ACCENT = '#B4690E'
+const OCCASION_CATEGORIES: Record<string, string[]> = {
+  weddings:     ['Event Planning', 'Outfits', 'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content', 'Decor & Venue', 'Catering', 'Entertainment', 'Accessories'],
+  birthdays:    ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Videography & Content'],
+  corporate:    ['Event Planning', 'Decor & Venue', 'Catering', 'Photography', 'Videography & Content'],
+  celebrations: ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Videography & Content', 'Makeup'],
+  babyshower:   ['Event Planning', 'Decor & Venue', 'Catering', 'Photography'],
+  naming:       ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Outfits', 'Hair & Gele', 'Makeup'],
+}
+
+const WEDDING_TYPE_CATS = ['Outfits', 'Styling', 'Accessories']
+
+const CATEGORY_META: Record<string, { colour: string }> = {
+  'Event Planning':        { colour: '#6366F1' },
+  'Styling':               { colour: '#0D9488' },
+  'Outfits':               { colour: '#D97706' },
+  'Makeup':                { colour: '#DB2777' },
+  'Hair & Gele':           { colour: '#EA580C' },
+  'Photography':           { colour: '#2563EB' },
+  'Videography & Content': { colour: '#78716C' },
+  'Decor & Venue':         { colour: '#92400E' },
+  'Catering':              { colour: '#C2410C' },
+  'Entertainment':         { colour: '#7C3AED' },
+  'Accessories':           { colour: '#B45309' },
+}
 
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
 
@@ -139,7 +138,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   return (
     <div style={{ display: 'flex', gap: 2 }}>
       {[1,2,3,4,5].map(s => (
-        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : 'var(--border)', transition: 'color 0.1s' }}>★</span>
+        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : 'var(--border)', transition: 'color 0.1s' }}>&#9733;</span>
       ))}
     </div>
   )
@@ -190,9 +189,7 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
       setRatingQual(myReview.rating_quality)
       setComment(myReview.comment || '')
     } else {
-      setRatingExp(0)
-      setRatingQual(0)
-      setComment('')
+      setRatingExp(0); setRatingQual(0); setComment('')
     }
     setEditing(true)
   }
@@ -209,15 +206,9 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
       rating_quality: ratingQual,
       comment: comment.trim() || null,
     }
-    const { data, error } = await supabase
-      .from('vendor_reviews')
-      .upsert(payload, { onConflict: 'vendor_id,clerk_user_id' })
-      .select()
+    const { data, error } = await supabase.from('vendor_reviews').upsert(payload, { onConflict: 'vendor_id,clerk_user_id' }).select()
     if (!error && data) {
-      setReviews(prev => {
-        const without = prev.filter(r => r.clerk_user_id !== currentUser.id)
-        return [data[0], ...without]
-      })
+      setReviews(prev => { const without = prev.filter(r => r.clerk_user_id !== currentUser.id); return [data[0], ...without] })
       setEditing(false)
     }
     setSubmitting(false)
@@ -228,8 +219,7 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
     setDeleting(true)
     await supabase.from('vendor_reviews').delete().eq('id', myReview.id)
     setReviews(prev => prev.filter(r => r.id !== myReview.id))
-    setEditing(false)
-    setDeleting(false)
+    setEditing(false); setDeleting(false)
   }
 
   const totalCount = loaded ? reviews.length : null
@@ -238,15 +228,12 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
 
   return (
     <div style={{ marginTop: 6 }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}
-      >
+      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
         <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1, flexShrink: 0 }}>{open ? '-' : '+'}</span>
         <span>Reviews{totalCount !== null ? ' (' + totalCount + ')' : ''}</span>
         {avgExp && !open && (
           <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>
-            · Exp {avgExp}&#9733; Q {avgQual}&#9733;
+            {'\u00b7'} Exp {avgExp}&#9733; Q {avgQual}&#9733;
           </span>
         )}
       </button>
@@ -267,7 +254,6 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
               + Write a review
             </button>
           )}
-
           {loaded && !editing && !currentUser && (
             <button onClick={() => openSignIn()} style={{ width: '100%', padding: '8px', background: 'var(--bg-pill)', border: '1px dashed var(--border)', borderRadius: 10, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontFamily: manrope }}>
               Sign in to leave a review
@@ -285,25 +271,12 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
                   <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontFamily: manrope }}>Quality of Output</div>
                   <StarPicker value={ratingQual} onChange={setRatingQual} />
                 </div>
-                <textarea
-                  placeholder="Share your experience (optional)..."
-                  value={comment}
-                  onChange={e => setComment(e.target.value)}
-                  rows={3}
-                  maxLength={500}
-                  style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }}
-                />
+                <textarea placeholder="Share your experience (optional)..." value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting || ratingExp === 0 || ratingQual === 0}
-                    style={{ padding: '7px 18px', background: ratingExp > 0 && ratingQual > 0 ? CATEGORY_ACCENT : 'var(--bg-pill)', color: ratingExp > 0 && ratingQual > 0 ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: ratingExp > 0 && ratingQual > 0 ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}
-                  >
+                  <button onClick={handleSubmit} disabled={submitting || ratingExp === 0 || ratingQual === 0} style={{ padding: '7px 18px', background: ratingExp > 0 && ratingQual > 0 ? CATEGORY_ACCENT : 'var(--bg-pill)', color: ratingExp > 0 && ratingQual > 0 ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: ratingExp > 0 && ratingQual > 0 ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
                     {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
                   </button>
-                  <button onClick={() => setEditing(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>
-                    Cancel
-                  </button>
+                  <button onClick={() => setEditing(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>Cancel</button>
                   {myReview && (
                     <button onClick={handleDelete} disabled={deleting} style={{ padding: '7px 14px', background: 'none', border: '1px solid #DC2626', borderRadius: 20, fontSize: 11, color: '#DC2626', cursor: 'pointer', fontFamily: manrope, marginLeft: 'auto' }}>
                       {deleting ? 'Deleting...' : 'Delete'}
@@ -329,7 +302,7 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
           )}
 
           {loaded && otherReviews.length === 0 && !myReview && !editing && (
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>No reviews yet — be the first!</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>No reviews yet {'\u2014'} be the first!</p>
           )}
 
           {loaded && allOtherReviews.map(r => (
@@ -357,6 +330,78 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
   )
 }
 
+function CategoryDropdown({ occasion, selectedCats, setSelectedCats, weddingType, setWeddingType, manrope }: {
+  occasion: string
+  selectedCats: string[]
+  setSelectedCats: (c: string[]) => void
+  weddingType: string
+  setWeddingType: (t: string) => void
+  manrope: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const availableCats = OCCASION_CATEGORIES[occasion] || []
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mouseup', handleClick)
+    return () => document.removeEventListener('mouseup', handleClick)
+  }, [])
+
+  const toggle = (cat: string) => {
+    if (selectedCats.includes(cat)) {
+      setSelectedCats(selectedCats.filter(c => c !== cat))
+    } else {
+      setSelectedCats([...selectedCats, cat])
+    }
+  }
+
+  const label = selectedCats.length === 0
+    ? 'All Vendors'
+    : selectedCats.length === 1
+      ? selectedCats[0]
+      : selectedCats.length + ' Categories'
+
+  const isFiltered = selectedCats.length > 0
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: isFiltered ? CATEGORY_ACCENT : 'transparent', color: isFiltered ? '#fff' : CATEGORY_ACCENT, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+        {label}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 220, maxHeight: 380, overflowY: 'auto' }}>
+          <button onClick={() => { setSelectedCats([]); setWeddingType('All') }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: selectedCats.length === 0 ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', borderBottom: '1px solid var(--border)', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: selectedCats.length === 0 ? 700 : 400, color: selectedCats.length === 0 ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer' }}>
+            All Vendors
+            {selectedCats.length === 0 && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+          </button>
+          {availableCats.map(cat => (
+            <div key={cat}>
+              <button onClick={() => toggle(cat)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: selectedCats.includes(cat) ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: selectedCats.includes(cat) ? 700 : 400, color: selectedCats.includes(cat) ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (!selectedCats.includes(cat)) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (!selectedCats.includes(cat)) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                {cat}
+                {selectedCats.includes(cat) && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              </button>
+              {selectedCats.includes(cat) && WEDDING_TYPE_CATS.includes(cat) && occasion === 'weddings' && (
+                <div style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                  {['All', 'White Wedding', 'Traditional'].map(type => (
+                    <button key={type} onClick={() => setWeddingType(type)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '7px 16px 7px 28px', background: weddingType === type ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 11, fontFamily: manrope, fontWeight: weddingType === type ? 700 : 400, color: weddingType === type ? CATEGORY_ACCENT : 'var(--text-muted)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (weddingType !== type) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (weddingType !== type) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                      {type === 'All' ? 'All styles' : type}
+                      {weddingType === type && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; setSortMode: (s: SortMode) => void; manrope: string }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -373,7 +418,6 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
     { key: 'most_rec',  label: 'Most Recommended' },
     { key: 'most_used', label: 'Most Used' },
   ]
-
   const currentLabel = options.find(o => o.key === sortMode)?.label || 'Sort'
 
   return (
@@ -383,7 +427,7 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 200, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 38, right: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 200, overflow: 'hidden' }}>
           {options.map(o => (
             <button key={o.key} onClick={() => { setSortMode(o.key); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: sortMode === o.key ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: sortMode === o.key ? 700 : 400, color: sortMode === o.key ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (sortMode !== o.key) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (sortMode !== o.key) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
               {o.label}
@@ -600,23 +644,18 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
 
               <div style={{ marginTop: 4 }}>
                 <button onClick={toggleUsed} disabled={usedSubmitting} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)', opacity: usedSubmitting ? 0.6 : 1 }}>
-                  &#128075; {hasUsed ? 'Used this' : 'I used this vendor'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {usedCount}</span>}
+                  &#128075; {hasUsed ? 'Used this' : 'I used this vendor'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> {'\u00b7'} {usedCount}</span>}
                 </button>
               </div>
               <div>
                 <button onClick={toggleRecommend} disabled={recSubmitting} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)', opacity: recSubmitting ? 0.6 : 1 }}>
-                  &#11088; {hasRec ? 'Recommended' : 'I recommend this'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> · {recCount}</span>}
+                  &#11088; {hasRec ? 'Recommended' : 'I recommend this'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> {'\u00b7'} {recCount}</span>}
                 </button>
               </div>
             </div>
           )}
 
-          <ReviewSection
-            vendorId={v.id}
-            currentUser={currentUser}
-            manrope={manrope}
-            newsreader={newsreader}
-          />
+          <ReviewSection vendorId={v.id} currentUser={currentUser} manrope={manrope} newsreader={newsreader} />
         </div>
       </div>
     </div>
@@ -631,11 +670,11 @@ export default function DirectoryPage() {
 
   const [vendors, setVendors] = useState<Vendor[]>([])
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('All')
+  const [occasion, setOccasion] = useState('weddings')
+  const [selectedCats, setSelectedCats] = useState<string[]>([])
+  const [weddingType, setWeddingType] = useState('All')
   const [location, setLocation] = useState('All')
   const [subLocation, setSubLocation] = useState('')
-  const [showNewOnly, setShowNewOnly] = useState(false)
-  const [weddingType, setWeddingType] = useState('All')
   const [sortMode, setSortMode] = useState<SortMode>('most_rec')
   const [loading, setLoading] = useState(true)
   const [cardResetKey, setCardResetKey] = useState(0)
@@ -643,8 +682,6 @@ export default function DirectoryPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
   const [vendorStats, setVendorStats] = useState<Record<string, VendorStats>>({})
-  const [occasionCategories, setOccasionCategories] = useState<string[]>([])
-  const [occasionLabel, setOccasionLabel] = useState('')
 
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
@@ -653,15 +690,15 @@ export default function DirectoryPage() {
     const params = new URLSearchParams(window.location.search)
     const q = params.get('search')
     if (q) setSearch(q)
-    const occasion = params.get('occasion')
-    if (occasion && occasion !== 'wedding') {
-      const cats = OCCASION_CATEGORIES[occasion]
-      if (cats && cats.length > 0) {
-        setOccasionCategories(cats)
-        setOccasionLabel(OCCASION_LABELS[occasion] || '')
-      }
-    }
+    const occ = params.get('occasion')
+    if (occ && OCCASION_TABS.find(t => t.key === occ)) setOccasion(occ)
   }, [])
+
+  useEffect(() => {
+    setSelectedCats([])
+    setWeddingType('All')
+    setCardResetKey(k => k + 1)
+  }, [occasion])
 
   useEffect(() => {
     if (!authUser?.id) { setCurrentUser(null); return }
@@ -677,7 +714,7 @@ export default function DirectoryPage() {
   useEffect(() => {
     if (!authUser?.id) { setSavedIds(new Set()); return }
     supabase.from('saved_vendors').select('vendor_id').eq('clerk_user_id', authUser.id)
-      .then(({ data }) => { if (data) setSavedIds(new Set(data.map((r: {vendor_id: string}) => r.vendor_id))) })
+      .then(({ data }) => { if (data) setSavedIds(new Set(data.map((r: { vendor_id: string }) => r.vendor_id))) })
   }, [authUser])
 
   useEffect(() => {
@@ -685,15 +722,15 @@ export default function DirectoryPage() {
     async function loadFollowContext() {
       const { data: followRows } = await supabase.from('follows').select('clerk_following_id').eq('clerk_follower_id', authUser!.id)
       if (!followRows || followRows.length === 0) { setFollowSaverMap({}); return }
-      const followingIds = followRows.map((r: {clerk_following_id: string}) => r.clerk_following_id)
+      const followingIds = followRows.map((r: { clerk_following_id: string }) => r.clerk_following_id)
       const { data: profiles } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').in('clerk_user_id', followingIds)
       if (!profiles || profiles.length === 0) { setFollowSaverMap({}); return }
       const profileMap: Record<string, FollowProfile> = {}
-      profiles.forEach((p: {clerk_user_id: string; display_name: string; username: string; avatar_url?: string}) => { profileMap[p.clerk_user_id] = { ...p, id: p.clerk_user_id } })
+      profiles.forEach((p: { clerk_user_id: string; display_name: string; username: string; avatar_url?: string }) => { profileMap[p.clerk_user_id] = { ...p, id: p.clerk_user_id } })
       const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, clerk_user_id').in('clerk_user_id', followingIds)
       if (!savedRows || savedRows.length === 0) { setFollowSaverMap({}); return }
       const map: Record<string, FollowProfile[]> = {}
-      savedRows.forEach((row: {vendor_id: string; clerk_user_id: string}) => {
+      savedRows.forEach((row: { vendor_id: string; clerk_user_id: string }) => {
         const profile = profileMap[row.clerk_user_id]
         if (!profile) return
         if (!map[row.vendor_id]) map[row.vendor_id] = []
@@ -715,17 +752,18 @@ export default function DirectoryPage() {
       const allVendors = vendorsRes.data || []
       const allRecs    = recsRes.data    || []
       const allUsed    = usedRes.data    || []
-      setVendors(allVendors)
+      const mapped = allVendors.map((v: Vendor) => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
+      setVendors(mapped)
       const stats: Record<string, VendorStats> = {}
-      allVendors.forEach((v: Vendor) => {
-        const vendorRecs  = allRecs.filter((r: {vendor_id: string}) => r.vendor_id === v.id)
-        const vendorUsed  = allUsed.filter((r: {vendor_id: string}) => r.vendor_id === v.id)
+      mapped.forEach((v: Vendor) => {
+        const vendorRecs = allRecs.filter((r: { vendor_id: string }) => r.vendor_id === v.id)
+        const vendorUsed = allUsed.filter((r: { vendor_id: string }) => r.vendor_id === v.id)
         stats[v.id] = {
           avgRating: null,
           usedCount: vendorUsed.length,
           recCount:  vendorRecs.length,
-          hasUsed:   authUser?.id ? vendorUsed.some((r: {clerk_user_id: string}) => r.clerk_user_id === authUser.id) : false,
-          hasRec:    authUser?.id ? vendorRecs.some((r: {clerk_user_id: string}) => r.clerk_user_id === authUser.id) : false,
+          hasUsed:   authUser?.id ? vendorUsed.some((r: { clerk_user_id: string }) => r.clerk_user_id === authUser.id) : false,
+          hasRec:    authUser?.id ? vendorRecs.some((r: { clerk_user_id: string }) => r.clerk_user_id === authUser.id) : false,
         }
       })
       setVendorStats(stats)
@@ -733,8 +771,6 @@ export default function DirectoryPage() {
     }
     loadAll()
   }, [authUser])
-
-  useEffect(() => { setCardResetKey(k => k + 1) }, [category])
 
   const handleToggleSave = useCallback(async (vendorId: string) => {
     if (!authUser?.id) return
@@ -752,17 +788,13 @@ export default function DirectoryPage() {
     setVendorStats(prev => ({ ...prev, [vendorId]: { ...prev[vendorId], ...patch } }))
   }, [])
 
-  const vendorsWithSubcats = vendors.map(v => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
-  const allCats = Array.from(new Set(vendorsWithSubcats.map(v => v.category)))
-  const remainingCats = allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
-  const categories = [...CATEGORY_ORDER.filter(c => c === 'All' || allCats.includes(c)), ...remainingCats]
-  const newVendors = vendorsWithSubcats.filter(isNewVendor)
+  const occasionCats = OCCASION_CATEGORIES[occasion] || []
 
-  const filtered = vendorsWithSubcats.filter(v => {
+  const filtered = vendors.filter(v => {
     const q = search.toLowerCase()
     const matchSearch = !q || v.name?.toLowerCase().includes(q) || v.services?.toLowerCase().includes(q) || v.instagram?.toLowerCase().includes(q) || v.notes?.toLowerCase().includes(q)
-    const matchCat = category === '__discounts__' ? !!v.discount_code : category === 'All' || v.category === category
-    const matchOccasion = occasionCategories.length === 0 || occasionCategories.includes(v.category)
+    const matchOccasion = occasionCats.includes(v.category)
+    const matchCat = selectedCats.length === 0 || selectedCats.includes(v.category)
     const matchLoc = (() => {
       if (location === 'All') return true
       if (location === 'Abuja') return v.location?.toLowerCase().includes('abuja')
@@ -775,9 +807,12 @@ export default function DirectoryPage() {
       }
       return true
     })()
-    const matchNew = !showNewOnly || isNewVendor(v)
-    const matchType = category !== 'Outfits' || weddingType === 'All' || v.wedding_type === weddingType || v.wedding_type === 'Both'
-    return matchSearch && matchCat && matchOccasion && matchLoc && matchNew && matchType
+    const matchWeddingType = (() => {
+      if (weddingType === 'All') return true
+      if (!WEDDING_TYPE_CATS.includes(v.category)) return true
+      return v.wedding_type === weddingType || v.wedding_type === 'Both'
+    })()
+    return matchSearch && matchOccasion && matchCat && matchLoc && matchWeddingType
   })
 
   const sorted = [...filtered].sort((a, b) => {
@@ -788,6 +823,7 @@ export default function DirectoryPage() {
     return 0
   })
 
+  const currentTab = OCCASION_TABS.find(t => t.key === occasion)
   const emptyStats: VendorStats = { avgRating: null, usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 
   return (
@@ -796,21 +832,19 @@ export default function DirectoryPage() {
 
       <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
         <img src="/pexels-directory-hero.jpg" alt="Directory" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
-        {occasionLabel && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(15,10,5,0.75) 0%, transparent 100%)', padding: '24px 24px 16px' }}>
-            <div style={{ fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontFamily: manrope, fontWeight: 600, marginBottom: 4 }}>Browsing</div>
-            <div style={{ fontFamily: newsreader, fontSize: 28, fontWeight: 700, color: '#fff' }}>{occasionLabel}</div>
-          </div>
-        )}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(15,10,5,0.7) 0%, transparent 100%)', padding: '24px 24px 16px' }}>
+          <div style={{ fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontFamily: manrope, fontWeight: 600, marginBottom: 4 }}>Events Directory</div>
+          <div style={{ fontFamily: newsreader, fontSize: 28, fontWeight: 700, color: '#fff' }}>{currentTab?.label || 'Weddings'}</div>
+        </div>
       </div>
 
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#fff8f5', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
-          {categories.map(cat => {
-            const isActive = category === cat
+          {OCCASION_TABS.map(tab => {
+            const isActive = occasion === tab.key
             return (
-              <button key={cat} onClick={() => { setCategory(cat); setWeddingType('All') }} style={{ padding: '18px 20px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-                {cat}
+              <button key={tab.key} onClick={() => setOccasion(tab.key)} style={{ padding: '18px 20px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {tab.label}
               </button>
             )
           })}
@@ -819,34 +853,15 @@ export default function DirectoryPage() {
 
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '12px 16px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px' }}>
+          <div style={{ flex: 1, minWidth: 180, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px' }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
             <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
             {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>}
           </div>
+          <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
           <LocationDropdown location={location} subLocation={subLocation} setLocation={setLocation} setSubLocation={setSubLocation} manrope={manrope} />
+          <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
           <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
-        </div>
-
-        <div style={{ maxWidth: 1200, margin: '8px auto 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          {occasionLabel && (
-            <button onClick={() => { setOccasionCategories([]); setOccasionLabel('') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT + '15', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, letterSpacing: '0.04em' }}>
-              {occasionLabel} &#10005;
-            </button>
-          )}
-          <button onClick={() => setCategory(category === '__discounts__' ? 'All' : '__discounts__')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + (category === '__discounts__' ? 'var(--text)' : 'var(--border)'), cursor: 'pointer', fontSize: 11, fontWeight: category === '__discounts__' ? 700 : 500, background: category === '__discounts__' ? 'var(--text)' : 'transparent', color: category === '__discounts__' ? 'var(--accent-light)' : 'var(--text-muted)', fontFamily: manrope, transition: 'all 0.15s', letterSpacing: '0.04em' }}>
-            Discounts <span style={{ fontSize: 10, opacity: 0.6 }}>{vendors.filter(v => v.discount_code).length}</span>
-          </button>
-          {newVendors.length > 0 && (
-            <button onClick={() => setShowNewOnly(!showNewOnly)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + (showNewOnly ? 'var(--text)' : 'var(--border)'), cursor: 'pointer', fontSize: 11, fontWeight: showNewOnly ? 700 : 500, background: showNewOnly ? 'var(--text)' : 'transparent', color: showNewOnly ? 'var(--bg)' : 'var(--text-muted)', fontFamily: manrope, transition: 'all 0.15s', letterSpacing: '0.04em' }}>
-              New this week <span style={{ fontSize: 10, opacity: 0.55 }}>{newVendors.length}</span>
-            </button>
-          )}
-          {category === 'Outfits' && ['All', 'White Wedding', 'Traditional'].map(type => (
-            <button key={type} onClick={() => setWeddingType(type)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, border: '1px solid ' + (weddingType === type ? CATEGORY_ACCENT : 'var(--border)'), cursor: 'pointer', fontSize: 11, fontWeight: weddingType === type ? 700 : 500, background: weddingType === type ? CATEGORY_ACCENT : 'transparent', color: weddingType === type ? '#fff' : 'var(--text-muted)', fontFamily: manrope, transition: 'all 0.15s', letterSpacing: '0.04em' }}>
-              {type}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -864,7 +879,7 @@ export default function DirectoryPage() {
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
                 <p style={{ fontFamily: newsreader, fontSize: 22, marginBottom: 8 }}>No vendors found</p>
                 <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: manrope }}>Try adjusting your filters</p>
-                <button onClick={() => { setSearch(''); setCategory('All'); setLocation('All'); setSubLocation(''); setShowNewOnly(false); setWeddingType('All'); setOccasionCategories([]); setOccasionLabel('') }} style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>
+                <button onClick={() => { setSearch(''); setSelectedCats([]); setLocation('All'); setSubLocation(''); setWeddingType('All') }} style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>
                   Show all
                 </button>
               </div>

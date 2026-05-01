@@ -232,7 +232,7 @@ export default function HomePage() {
           </p>
           <div data-reveal ref={searchRef} style={{ ...revealDelay(320), position: "relative", maxWidth: "520px", zIndex: 9999 }}>
             <input type="text" placeholder="Search vendors, services, locations..." value={searchVal} onChange={(e) => setSearchVal(e.target.value)} onFocus={() => { if (searchVal.trim().length >= 2) setSearchOpen(true); }} style={{ width: "100%", background: "rgba(255,255,255,0.96)", border: "none", borderRadius: "14px", padding: "1.1rem 5rem 1.1rem 1.4rem", fontSize: "0.95rem", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", boxShadow: "0 8px 40px rgba(0,0,0,0.3)", outline: "none", boxSizing: "border-box" }} />
-            <button onClick={() => { if (searchVal.trim()) router.push("/directory?search=" + encodeURIComponent(searchVal)); }} style={{ position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)", background: "#8d4b00", border: "none", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <button onClick={() => { if (searchVal.trim()) router.push(`/directory?search=${encodeURIComponent(searchVal)}`); }} style={{ position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)", background: "#8d4b00", border: "none", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <SearchIcon />
             </button>
             {searchOpen && (searchResults.vendors.length > 0 || searchResults.services.length > 0) && (
@@ -241,7 +241,7 @@ export default function HomePage() {
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B45309", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>Weddings &amp; Events</div>
                     {searchResults.vendors.map((v) => (
-                      <button key={v.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/directory?search=" + encodeURIComponent(v.name) + "&id=" + v.id); }}
+                      <button key={v.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push(`/directory?search=${encodeURIComponent(v.name)}&id=${v.id}`); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#FDF8F3"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#1C1917" }}>{v.name}</span>
                         {v.location && <span style={{ fontSize: "11px", color: "#A8A29E" }}>{v.location}</span>}
                       </button>
@@ -252,7 +252,7 @@ export default function HomePage() {
                   <div>
                     <div style={{ padding: "10px 16px 6px", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#0D9488", fontWeight: 700, borderBottom: "1px solid #F0EBE3" }}>Services</div>
                     {searchResults.services.map((s) => (
-                      <button key={s.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push("/beautyservices?cat=" + encodeURIComponent(s.category) + "&id=" + s.id); }}
+                      <button key={s.id} onClick={() => { setSearchOpen(false); setSearchVal(""); router.push(`/beautyservices?cat=${encodeURIComponent(s.category)}&id=${s.id}`); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid #F5F0E8", cursor: "pointer", textAlign: "left" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#F0FAFA"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#1C1917" }}>{s.name}</span>
                         <span style={{ fontSize: "11px", color: "#A8A29E" }}>{s.category}</span>
                       </button>

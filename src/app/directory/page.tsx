@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useSupabase } from '@/hooks/useSupabase'
 import { sanitizeSearch, safeVendorUrl, LIMITS } from '@/lib/sanitize'
+import SuggestVendorModal from '@/components/SuggestVendorModal'
 
 type Vendor = {
   id: string
@@ -685,6 +686,7 @@ export default function DirectoryPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
   const [vendorStats, setVendorStats] = useState<Record<string, VendorStats>>({})
+  const [suggestOpen, setSuggestOpen] = useState(false)
 
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
@@ -885,9 +887,14 @@ export default function DirectoryPage() {
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 16px 2px' }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
-          {sorted.length} vendors{search ? ' for "' + search + '"' : ''}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
+            {sorted.length} vendors{search ? ' for "' + search + '"' : ''}
+          </p>
+          <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            + Suggest
+          </button>
+        </div>
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 14 }}>
@@ -914,6 +921,8 @@ export default function DirectoryPage() {
       <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 11, fontFamily: manrope, letterSpacing: '0.04em' }}>
         Made with love for Nigerian brides and families
       </footer>
+
+      <SuggestVendorModal open={suggestOpen} onClose={() => setSuggestOpen(false)} />
     </main>
   )
 }

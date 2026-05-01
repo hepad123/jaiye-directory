@@ -558,7 +558,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
 
   return (
-    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
+    <div id={'vendor-' + v.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
       {saverLabel && (
         <div style={{ background: colour + '0D', borderBottom: '1px solid ' + colour + '20', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ display: 'flex' }}>
@@ -695,6 +695,18 @@ export default function DirectoryPage() {
     if (q) setSearch(q)
     const occ = params.get('occasion')
     if (occ && OCCASION_TABS.find(t => t.key === occ)) setOccasion(occ)
+    const id = params.get('id')
+    if (id) {
+      setTimeout(() => {
+        const el = document.getElementById('vendor-' + id)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          el.style.outline = '2px solid #B4690E'
+          el.style.outlineOffset = '3px'
+          setTimeout(() => { el.style.outline = 'none' }, 2500)
+        }
+      }, 1000)
+    }
   }, [])
 
   useEffect(() => {
@@ -842,7 +854,6 @@ export default function DirectoryPage() {
         </div>
       </div>
 
-      {/* Occasion tabs */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#fff8f5', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {OCCASION_TABS.map(tab => {
@@ -856,28 +867,20 @@ export default function DirectoryPage() {
         </div>
       </div>
 
-      {/* Filter bar — 3 rows */}
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '10px 16px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-
-          {/* Row 1: search */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
             <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
             {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>}
           </div>
-
-          {/* Row 2: all vendors + all locations */}
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
             <LocationDropdown location={location} subLocation={subLocation} setLocation={setLocation} setSubLocation={setSubLocation} manrope={manrope} />
           </div>
-
-          {/* Row 3: sort */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
           </div>
-
         </div>
       </div>
 

@@ -288,7 +288,6 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
   const [interacted, setInteracted] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
@@ -439,6 +438,18 @@ function ServicesPage() {
   useEffect(() => {
     const c = searchParams.get('cat')
     if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
+    const id = searchParams.get('id')
+    if (id) {
+      setTimeout(() => {
+        const el = document.getElementById('service-' + id)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          el.style.outline = '2px solid #B4690E'
+          el.style.outlineOffset = '3px'
+          setTimeout(() => { el.style.outline = 'none' }, 2500)
+        }
+      }, 800)
+    }
   }, [searchParams])
 
   useEffect(() => {
@@ -569,11 +580,9 @@ function ServicesPage() {
         </div>
       </div>
 
-      {/* Filter bar — 3 rows */}
+      {/* Filter bar */}
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '10px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-
-          {/* Row 1: search */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
             <input
@@ -588,18 +597,13 @@ function ServicesPage() {
               <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>
             )}
           </div>
-
-          {/* Row 2: styles + locations */}
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <SubcategoryDropdown cat={cat} subs={subs} setSubs={setSubs} manrope={manrope} />
             <CityDropdown city={city} setCity={setCity} subCity={subCity} setSubCity={setSubCity} manrope={manrope} />
           </div>
-
-          {/* Row 3: sort */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
           </div>
-
         </div>
       </div>
 
@@ -674,7 +678,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
 
   return (
-    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
+    <div id={'service-' + service.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)', transition: 'outline 0.3s ease' }}>
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
         <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
           <HeartIcon filled={isSaved} />

@@ -609,12 +609,16 @@ function ServicesPage() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px 0' }}>
         {!loading && (
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20, fontFamily: manrope, letterSpacing: '0.04em' }}>
-            {sortedServices.length} {sortedServices.length === 1 ? 'result' : 'results'}
-            {search ? ' for "' + search + '"' : ''}
-            {subs.length > 0 ? ' \u00b7 ' + subs.join(', ') : ''}
-            {city !== 'All' ? ' \u00b7 ' + (subCity && subCity !== 'All London' ? subCity : city) : ''}
-          </p>
+  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
+    {sortedServices.length} {sortedServices.length === 1 ? 'result' : 'results'}
+    {search ? ' for "' + search + '"' : ''}
+    {subs.length > 0 ? ' \u00b7 ' + subs.join(', ') : ''}
+    {city !== 'All' ? ' \u00b7 ' + (subCity && subCity !== 'All London' ? subCity : city) : ''}
+  </p>
+  <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+    ✦ Suggest
+  </button>
+</div>
         )}
         {loading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>

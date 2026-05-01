@@ -230,7 +230,7 @@ export default function HomePage() {
           <p data-reveal style={{ ...revealDelay(200), color: "rgba(255,255,255,0.78)", fontSize: "1.05rem", lineHeight: 1.6, fontWeight: 300, marginBottom: "2rem", maxWidth: "400px" }}>
             Discover the finest beauty services and events vendors in the Nigerian community
           </p>
-          <div data-reveal ref={searchRef} style={{ ...revealDelay(320), position: "relative", maxWidth: "520px", zIndex: 9999 }}>
+          <div data-reveal ref={searchRef} style={{ ...revealDelay(320), position: "relative", maxWidth: "520px", zIndex: 10 }}>
             <input type="text" placeholder="Search vendors, services, locations..." value={searchVal} onChange={(e) => setSearchVal(e.target.value)} onFocus={() => { if (searchVal.trim().length >= 2) setSearchOpen(true); }} style={{ width: "100%", background: "rgba(255,255,255,0.96)", border: "none", borderRadius: "14px", padding: "1.1rem 5rem 1.1rem 1.4rem", fontSize: "0.95rem", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", boxShadow: "0 8px 40px rgba(0,0,0,0.3)", outline: "none", boxSizing: "border-box" }} />
             <button onClick={() => { if (searchVal.trim()) router.push(`/directory?search=${encodeURIComponent(searchVal)}`); }} style={{ position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)", background: "#8d4b00", border: "none", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <SearchIcon />

@@ -25,7 +25,7 @@ export default function SuggestVendorModal({ open, onClose }: Props) {
   const supabase = useSupabase()
 
   const [name, setName] = useState('')
-  const [category, setCategory] = useState('')
+  const [categories, setCategories] = useState<string[]>([])
   const [location, setLocation] = useState('')
   const [instagram, setInstagram] = useState('')
   const [phone, setPhone] = useState('')
@@ -36,19 +36,21 @@ export default function SuggestVendorModal({ open, onClose }: Props) {
   if (!open) return null
 
   function reset() {
-    setName(''); setCategory(''); setLocation(''); setInstagram(''); setPhone(''); setWebsite(''); setDone(false)
+    setName(''); setCategories([]); setLocation(''); setInstagram(''); setPhone(''); setWebsite(''); setDone(false)
   }
 
-  function handleClose() {
-    reset(); onClose()
+  function handleClose() { reset(); onClose() }
+
+  function toggleCategory(c: string) {
+    setCategories(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])
   }
 
   async function handleSubmit() {
-    if (!name.trim() || !category) return
+    if (!name.trim() || categories.length === 0 || !instagram.trim()) return
     setSaving(true)
     await supabase.from('vendor_suggestions').insert({
       name: name.trim(),
-      category,
+      category: categories.join(', '),
       location: location.trim() || null,
       instagram: instagram.trim() || null,
       phone: phone.trim() || null,
@@ -99,11 +101,17 @@ export default function SuggestVendorModal({ open, onClose }: Props) {
                 </div>
 
                 <div>
-                  <label className="s-label">Category *</label>
-                  <select className="s-input" value={category} onChange={e => setCategory(e.target.value)}>
-                    <option value="">Select a category...</option>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <label className="s-label">Category * <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, fontSize: 10, color: '#A8A29E' }}>select all that apply</span></label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {CATEGORIES.map(c => {
+                      const selected = categories.includes(c)
+                      return (
+                        <button key={c} onClick={() => toggleCategory(c)} style={{ padding: '6px 14px', borderRadius: 999, border: '1.5px solid ' + (selected ? ACCENT : BORDER), background: selected ? ACCENT : '#fff', color: selected ? '#fff' : '#1C1917', fontFamily: manrope, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
+                          {c}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
 
                 <div>
@@ -127,7 +135,9 @@ export default function SuggestVendorModal({ open, onClose }: Props) {
                 </div>
               </div>
 
-              <button className="s-submit" onClick={handleSubmit} disabled={saving || !name.trim() || !category || !instagram.trim()}>{'Submit suggestion'}</button>
+              <button className="s-submit" onClick={handleSubmit} disabled={saving || !name.trim() || categories.length === 0 || !instagram.trim()}>
+                {saving ? 'Submitting...' : 'Submit suggestion'}
+              </button>
               <button className="s-cancel" onClick={handleClose}>Cancel</button>
             </>
           )}

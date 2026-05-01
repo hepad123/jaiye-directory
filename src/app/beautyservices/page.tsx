@@ -429,7 +429,7 @@ function ServicesPage() {
   const [sortMode, setSortMode] = useState<SortMode>('most_rec')
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState<Record<string, ServiceStats>>({})
-  const [suggestOpen, setSuggestOpen] = useState(false)
+  const [Open, setOpen] = useState(false)
   const [displayName, setDisplayName] = useState('')
 
   useEffect(() => { setSubs([]); setSearch('') }, [cat])
@@ -615,8 +615,8 @@ function ServicesPage() {
     {subs.length > 0 ? ' \u00b7 ' + subs.join(', ') : ''}
     {city !== 'All' ? ' \u00b7 ' + (subCity && subCity !== 'All London' ? subCity : city) : ''}
   </p>
-  <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-    ✦ Suggest
+  <button onClick={() => setOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+    &#10022; Suggest
   </button>
 </div>
         )}

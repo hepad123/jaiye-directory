@@ -429,7 +429,7 @@ function ServicesPage() {
   const [sortMode, setSortMode] = useState<SortMode>('most_rec')
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState<Record<string, ServiceStats>>({})
-  const [Open, setOpen] = useState(false)
+  const [suggestOpen, setSuggestOpen] = useState(false)
   const [displayName, setDisplayName] = useState('')
 
   useEffect(() => { setSubs([]); setSearch('') }, [cat])
@@ -585,17 +585,8 @@ function ServicesPage() {
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <input
-              type="text"
-              placeholder="Search stylists..."
-              value={search}
-              maxLength={80}
-              onChange={e => setSearch(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', color: 'var(--text)', fontFamily: manrope }}
-            />
-            {search && (
-              <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>
-            )}
+            <input type="text" placeholder="Search stylists..." value={search} maxLength={80} onChange={e => setSearch(e.target.value)} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
+            {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <SubcategoryDropdown cat={cat} subs={subs} setSubs={setSubs} manrope={manrope} />
@@ -609,16 +600,17 @@ function ServicesPage() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px 0' }}>
         {!loading && (
-  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
-    {sortedServices.length} {sortedServices.length === 1 ? 'result' : 'results'}
-    {search ? ' for "' + search + '"' : ''}
-    {subs.length > 0 ? ' \u00b7 ' + subs.join(', ') : ''}
-    {city !== 'All' ? ' \u00b7 ' + (subCity && subCity !== 'All London' ? subCity : city) : ''}
-  </p>
-  <button onClick={() => setOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-    &#10022; Suggest
-  </button>
-</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
+              {sortedServices.length} {sortedServices.length === 1 ? 'result' : 'results'}
+              {search ? ' for "' + search + '"' : ''}
+              {subs.length > 0 ? ' \u00b7 ' + subs.join(', ') : ''}
+              {city !== 'All' ? ' \u00b7 ' + (subCity && subCity !== 'All London' ? subCity : city) : ''}
+            </p>
+            <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              + Suggest
+            </button>
+          </div>
         )}
         {loading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>
@@ -651,11 +643,6 @@ function ServicesPage() {
             ))}
           </div>
         )}
-
-        <div style={{ textAlign: 'center', padding: '40px 0 20px', borderTop: '1px solid var(--border)', marginTop: 40 }}>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, fontFamily: manrope }}>Know a stylist who should be here?</p>
-          <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 22px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 13, fontWeight: 700, fontFamily: manrope, cursor: 'pointer' }}>{'\u2736 Suggest a stylist'}</button>
-        </div>
       </div>
 
       <SuggestVendorModal open={suggestOpen} onClose={() => setSuggestOpen(false)} />

@@ -63,7 +63,7 @@ function calcOverallScore(r: ServiceReview): number | null {
 
 function calcCatAvg(reviews: ServiceReview[], key: string): number | null {
   const vals = reviews
-    .map(r => (r as Record<string, number | null>)[key])
+    .map(r => (r as unknown as Record<string, number | null>)[key])
     .filter((v): v is number => v !== null && v !== undefined)
   if (vals.length === 0) return null
   return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
@@ -193,7 +193,7 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
     if (myReview) {
       const r: Record<string, number> = {}
       REVIEW_CATS.forEach(c => {
-        const v = (myReview as Record<string, number | null>)[c.key]
+        const v = (myReview as unknown as Record<string, number | null>)[c.key]
         if (v !== null && v !== undefined) r[c.key] = v
       })
       setRatings(r)
@@ -342,7 +342,7 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
                 <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>
               </div>
               {REVIEW_CATS.map(c => {
-                const v = (myReview as Record<string, number | null>)[c.key]
+                const v = (myReview as unknown as Record<string, number | null>)[c.key]
                 if (!v) return null
                 return (
                   <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -366,7 +366,7 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
                 <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
               </div>
               {REVIEW_CATS.map(c => {
-                const v = (r as Record<string, number | null>)[c.key]
+                const v = (r as unknown as Record<string, number | null>)[c.key]
                 if (!v) return null
                 return (
                   <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>

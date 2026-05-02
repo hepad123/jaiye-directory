@@ -333,7 +333,7 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <button
             onClick={() => { if (!currentUserId) { openSignIn(); return }; showForm ? setShowForm(false) : startEdit() }}
-            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff',
+            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
             {myReview ? 'Edit your review' : '+ Leave a review'}
           </button>
           {allReviews.length > 0 && (

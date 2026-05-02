@@ -122,38 +122,40 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   return (
     <div style={{ display: 'flex', gap: 2 }}>
       {[1,2,3,4,5].map(s => (
-        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} style={{ cursor: 'pointer', fontSize: 18, color: s <= (hover || value) ? '#D97706' : 'var(--border)', transition: 'color 0.1s' }}>&#9733;</span>
+        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)}
+          style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : '#E8E3DC', transition: 'color 0.1s', userSelect: 'none' }}>
+          &#9733;
+        </span>
       ))}
     </div>
   )
 }
 
-function StarDisplay({ value, max = 5 }: { value: number; max?: number }) {
+function StarDisplay({ value }: { value: number }) {
   return (
-    <span>
-      {Array.from({ length: max }).map((_, i) => (
-        <span key={i} style={{ color: i < Math.round(value) ? '#D97706' : 'var(--border)', fontSize: 11 }}>&#9733;</span>
+    <span style={{ fontSize: 13, letterSpacing: 1 }}>
+      {[1,2,3,4,5].map(s => (
+        <span key={s} style={{ color: s <= Math.round(value) ? '#D97706' : '#E8E3DC' }}>&#9733;</span>
       ))}
     </span>
   )
 }
 
-function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsreader, onScoreUpdate }: {
+function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsreader, onScoreUpdate }: {
   serviceId: string
   currentUserId: string | null
   displayName: string
   manrope: string
   newsreader: string
-  onScoreUpdate?: (score: number | null) => void
+  onScoreUpdate?: (score: number | null, count: number) => void
 }) {
   const supabase = useSupabase()
   const { openSignIn } = useClerk()
-  const [open, setOpen] = useState(false)
   const [reviews, setReviews] = useState<ServiceReview[]>([])
   const [loaded, setLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [showAll, setShowAll] = useState(false)
-  const [editing, setEditing] = useState(false)
   const [ratings, setRatings] = useState<Record<string, number>>({})
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -161,22 +163,16 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
 
   const myReview = reviews.find(r => r.clerk_user_id === currentUserId) || null
   const otherReviews = reviews.filter(r => r.clerk_user_id !== currentUserId)
-  const allOtherReviews = showAll ? otherReviews : otherReviews.slice(0, 3)
-  const hasMore = otherReviews.length > 3
-  const totalCount = loaded ? reviews.length : null
+  const allReviews = myReview ? [myReview, ...otherReviews] : otherReviews
+  const visibleReviews = showAll ? allReviews : allReviews.slice(0, 3)
+  const hasMore = allReviews.length > 3
 
-  // Overall score = avg of all individual review scores (only those with 3+ cats rated)
   const validScores = reviews.map(calcOverallScore).filter((v): v is number => v !== null)
   const avgOverall = validScores.length > 0
     ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length * 10) / 10
     : null
 
   useEffect(() => {
-    if (loaded && onScoreUpdate) onScoreUpdate(avgOverall)
-  }, [avgOverall, loaded])
-
-  useEffect(() => {
-    if (!open || loaded) return
     setLoading(true)
     supabase.from('service_reviews')
       .select('*')
@@ -187,7 +183,11 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
         setLoaded(true)
         setLoading(false)
       })
-  }, [open, serviceId, loaded])
+  }, [serviceId])
+
+  useEffect(() => {
+    if (loaded && onScoreUpdate) onScoreUpdate(avgOverall, reviews.length)
+  }, [avgOverall, loaded, reviews.length])
 
   function startEdit() {
     if (myReview) {
@@ -202,7 +202,7 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
       setRatings({})
       setComment('')
     }
-    setEditing(true)
+    setShowForm(true)
   }
 
   const mandatoryMet = REVIEW_CATS.filter(c => c.required).every(c => (ratings[c.key] || 0) > 0)
@@ -225,7 +225,7 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
     const { data, error } = await supabase.from('service_reviews').upsert(payload, { onConflict: 'service_id,clerk_user_id' }).select()
     if (!error && data) {
       setReviews(prev => { const without = prev.filter(r => r.clerk_user_id !== currentUserId); return [data[0], ...without] })
-      setEditing(false)
+      setShowForm(false)
     }
     setSubmitting(false)
   }
@@ -235,41 +235,30 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
     setDeleting(true)
     await supabase.from('service_reviews').delete().eq('id', myReview.id)
     setReviews(prev => prev.filter(r => r.id !== myReview.id))
-    setEditing(false); setDeleting(false)
+    setShowForm(false); setDeleting(false)
   }
 
+  if (loading) return <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>Loading reviews...</p>
+
   return (
-    <div style={{ marginTop: 6 }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-        <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1, flexShrink: 0 }}>{open ? '-' : '+'}</span>
-        <span>Reviews{totalCount !== null ? ' (' + totalCount + ')' : ''}</span>
-        {avgOverall !== null && !open && (
-          <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>
-            {'\u00b7'} {avgOverall}/10
-          </span>
-        )}
-      </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {open && (
-        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {loading && <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '8px 0' }}>Loading...</p>}
-
-          {/* Category averages breakdown */}
-          {loaded && reviews.length > 0 && (
-            <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '10px 12px' }}>
-              {avgOverall !== null && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', fontFamily: manrope }}>Overall score</span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope }}>{avgOverall}<span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400 }}>/10</span></span>
-                </div>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* Score circle + category breakdown */}
+      {loaded && reviews.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {avgOverall !== null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: manrope, lineHeight: 1 }}>{avgOverall}</span>
+                <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)', fontFamily: manrope, lineHeight: 1 }}>/10</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
                 {REVIEW_CATS.map(c => {
                   const avg = calcCatAvg(reviews, c.key)
                   if (avg === null) return null
                   return (
                     <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>{c.label} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({avg})</span></span>
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{c.label} <span style={{ color: CATEGORY_ACCENT }}>({avg})</span></span>
                       <StarDisplay value={avg} />
                     </div>
                   )
@@ -277,114 +266,119 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
               </div>
             </div>
           )}
+        </div>
+      )}
 
-          {loaded && !editing && !myReview && currentUserId && (
-            <button onClick={startEdit} style={{ width: '100%', padding: '8px', background: CATEGORY_ACCENT + '10', border: '1px dashed ' + CATEGORY_ACCENT, borderRadius: 10, fontSize: 11, color: CATEGORY_ACCENT, fontWeight: 600, cursor: 'pointer', fontFamily: manrope }}>
-              + Write a review
-            </button>
-          )}
-          {loaded && !editing && !currentUserId && (
-            <button onClick={() => openSignIn()} style={{ width: '100%', padding: '8px', background: 'var(--bg-pill)', border: '1px dashed var(--border)', borderRadius: 10, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontFamily: manrope }}>
-              Sign in to leave a review
-            </button>
-          )}
-
-          {editing && (
-            <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '12px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {REVIEW_CATS.map(c => (
-                  <div key={c.key}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', fontFamily: manrope }}>
-                        {c.label}{c.hint ? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> ({c.hint})</span> : ''}
-                        {c.required && <span style={{ color: CATEGORY_ACCENT, marginLeft: 2 }}>*</span>}
-                      </span>
-                      {!c.required && (ratings[c.key] || 0) === 0 && (
-                        <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope, letterSpacing: '0.06em' }}>OPTIONAL</span>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <StarPicker value={ratings[c.key] || 0} onChange={v => setRatings(prev => ({ ...prev, [c.key]: v }))} />
-                      {(ratings[c.key] || 0) > 0 && !c.required && (
-                        <button onClick={() => setRatings(prev => { const n = { ...prev }; delete n[c.key]; return n })} style={{ fontSize: 9, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope }}>clear</button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <textarea
-                  placeholder="Any additional comments? (optional)"
-                  value={comment}
-                  onChange={e => setComment(e.target.value)}
-                  rows={3}
-                  maxLength={500}
-                  style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }}
-                />
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
-                    {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
-                  </button>
-                  <button onClick={() => setEditing(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>Cancel</button>
-                  {myReview && (
-                    <button onClick={handleDelete} disabled={deleting} style={{ padding: '7px 14px', background: 'none', border: '1px solid #DC2626', borderRadius: 20, fontSize: 11, color: '#DC2626', cursor: 'pointer', fontFamily: manrope, marginLeft: 'auto' }}>
-                      {deleting ? 'Deleting...' : 'Delete'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* My review display */}
-          {loaded && !editing && myReview && (
-            <div style={{ background: 'var(--accent-light)', border: '1px solid var(--gold)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope }}>Your review</span>
-                <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>
-              </div>
-              {REVIEW_CATS.map(c => {
-                const v = (myReview as unknown as Record<string, number | null>)[c.key]
-                if (!v) return null
-                return (
-                  <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>{c.label}</span>
-                    <StarDisplay value={v} />
-                  </div>
-                )
-              })}
-              {myReview.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: '6px 0 0', lineHeight: 1.5, fontFamily: manrope }}>{myReview.comment}</p>}
-            </div>
-          )}
-
-          {loaded && otherReviews.length === 0 && !myReview && !editing && (
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>No reviews yet {'\u2014'} be the first!</p>
-          )}
-
-          {loaded && allOtherReviews.map(r => (
-            <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', fontFamily: newsreader }}>{r.reviewer_name}</span>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
-              </div>
-              {REVIEW_CATS.map(c => {
-                const v = (r as unknown as Record<string, number | null>)[c.key]
-                if (!v) return null
-                return (
-                  <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{c.label}</span>
-                    <StarDisplay value={v} />
-                  </div>
-                )
-              })}
-              {r.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: '6px 0 0', lineHeight: 1.5, fontFamily: manrope }}>{r.comment}</p>}
+      {/* Comment snippets */}
+      {loaded && allReviews.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {visibleReviews.filter(r => r.comment).slice(0, 2).map(r => (
+            <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 8, padding: '8px 10px' }}>
+              <p style={{ fontSize: 11, color: 'var(--text)', margin: '0 0 3px', lineHeight: 1.5, fontFamily: manrope, fontStyle: 'italic' }}>{'\u201c'}{r.comment}{'\u201d'}</p>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>— {r.reviewer_name}</span>
             </div>
           ))}
+        </div>
+      )}
 
-          {loaded && hasMore && (
-            <button onClick={() => setShowAll(o => !o)} style={{ width: '100%', padding: '7px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-              {showAll ? 'Show less' : 'Show all ' + otherReviews.length + ' reviews'}
+      {/* CTA buttons */}
+      {loaded && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => { if (!currentUserId) { openSignIn(); return }; startEdit() }}
+            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+            {myReview ? 'Edit your review' : '+ Leave a review'}
+          </button>
+          {allReviews.length > 0 && (
+            <button
+              onClick={() => setShowAll(o => !o)}
+              style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1px solid var(--border)', background: 'none', color: 'var(--text-muted)', fontSize: 10, fontWeight: 600, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+              {showAll ? 'Show less' : 'See all ' + allReviews.length + ' reviews'}
             </button>
           )}
         </div>
+      )}
+
+      {/* Review form */}
+      {showForm && (
+        <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {REVIEW_CATS.map(c => (
+            <div key={c.key}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>
+                  {c.label}{c.hint ? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> ({c.hint})</span> : ''}
+                  {c.required && <span style={{ color: CATEGORY_ACCENT }}> *</span>}
+                </span>
+                {!c.required && (ratings[c.key] || 0) === 0 && (
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope, letterSpacing: '0.06em' }}>OPTIONAL</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <StarPicker value={ratings[c.key] || 0} onChange={v => setRatings(prev => ({ ...prev, [c.key]: v }))} />
+                {(ratings[c.key] || 0) > 0 && !c.required && (
+                  <button onClick={() => setRatings(prev => { const n = { ...prev }; delete n[c.key]; return n })} style={{ fontSize: 9, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope }}>clear</button>
+                )}
+              </div>
+            </div>
+          ))}
+          <textarea
+            placeholder="Any additional comments? (optional)"
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            rows={3}
+            maxLength={500}
+            style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }}
+          />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
+              {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
+            </button>
+            <button onClick={() => setShowForm(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>Cancel</button>
+            {myReview && (
+              <button onClick={handleDelete} disabled={deleting} style={{ padding: '7px 14px', background: 'none', border: '1px solid #DC2626', borderRadius: 20, fontSize: 11, color: '#DC2626', cursor: 'pointer', fontFamily: manrope, marginLeft: 'auto' }}>
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Full reviews list */}
+      {showAll && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {allReviews.map(r => {
+            const isMe = r.clerk_user_id === currentUserId
+            return (
+              <div key={r.id} style={{ background: isMe ? 'var(--accent-light)' : 'var(--bg-pill)', border: isMe ? '1px solid var(--gold)' : 'none', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                  <div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', fontFamily: newsreader }}>{r.reviewer_name}</span>
+                    {isMe && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, marginLeft: 6, letterSpacing: '0.06em' }}>YOUR REVIEW</span>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {isMe && <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>}
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                  </div>
+                </div>
+                {REVIEW_CATS.map(c => {
+                  const v = (r as unknown as Record<string, number | null>)[c.key]
+                  if (!v) return null
+                  return (
+                    <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>{c.label}</span>
+                      <StarDisplay value={v} />
+                    </div>
+                  )
+                })}
+                {r.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: '6px 0 0', lineHeight: 1.5, fontFamily: manrope }}>{r.comment}</p>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {loaded && allReviews.length === 0 && !showForm && (
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>No reviews yet {'\u2014'} be the first!</p>
       )}
     </div>
   )
@@ -752,8 +746,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   isLoggedIn: boolean; onOpenAuth: () => void
   currentUserId: string | null; displayName: string
 }) {
-  const [expanded, setExpanded] = useState(false)
-  const [overallScore, setOverallScore] = useState<number | null>(null)
+  const [moreOpen, setMoreOpen] = useState(false)
   const subs = service.subcategories || []
   const ac = SUB_COLOR[subs[0]] || CATEGORY_ACCENT
   const igUrl = service.instagram ? 'https://instagram.com/' + service.instagram : null
@@ -763,10 +756,11 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   const { usedCount, recCount, hasUsed, hasRec } = stats
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
-  const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
+  const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)', letterSpacing: '0.04em' }
 
   return (
-    <div id={'service-' + service.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)', transition: 'outline 0.3s ease' }}>
+    <div id={'service-' + service.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
+      {/* Top right actions */}
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
         <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
           <HeartIcon filled={isSaved} />
@@ -779,33 +773,20 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         )}
       </div>
 
-      <div style={{ padding: '14px 14px 12px' }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 5, fontFamily: manrope }}>{service.category}</div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 4, paddingRight: 52, fontFamily: newsreader }}>{service.name}</div>
-
-        {/* Overall score badge */}
-        {overallScore !== null && (
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 10px', borderRadius: 999, background: CATEGORY_ACCENT + '12', border: '1px solid ' + CATEGORY_ACCENT + '30' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope }}>{overallScore}</span>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>/10</span>
-            </span>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap', paddingRight: 80 }}>
+      <div style={{ padding: '14px 14px 14px' }}>
+        {/* Category + name + pills */}
+        <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>{service.category}</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 52, fontFamily: newsreader }}>{service.name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap', paddingRight: 40 }}>
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: manrope, letterSpacing: '0.04em' }}>{s}</span>))}
         </div>
-        {(usedCount > 0 || recCount > 0) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used &#128075;</span>}
-            {recCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
-          </div>
-        )}
-        {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
-        {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
 
-        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        {/* Location + bio */}
+        {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
+        {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
+
+        {/* Instagram + WhatsApp */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
           {igUrl && (
             <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <InstagramIcon />Instagram
@@ -818,35 +799,50 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-            <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{expanded ? '-' : '+'}</span>
-            {expanded ? 'Less info' : 'More info'}
-          </button>
-
-          {expanded && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
-              <div>
-                <button onClick={onToggleUsed} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)' }}>
-                  {hasUsed ? 'Used this stylist' : 'I used this stylist'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> {'\u00b7'} {usedCount}</span>}
-                </button>
-              </div>
-              <div>
-                <button onClick={onToggleRec} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)' }}>
-                  {hasRec ? 'Recommended' : 'I recommend this stylist'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> {'\u00b7'} {recCount}</span>}
-                </button>
-              </div>
+        {/* Used + Recommend */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          {(usedCount > 0 || recCount > 0) && (
+            <div style={{ width: '100%', display: 'flex', gap: 8, marginBottom: 4 }}>
+              {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#128075; {usedCount} used</span>}
+              {recCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#11088; {recCount} rec</span>}
             </div>
           )}
+          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)' }}>
+            &#128075; {hasUsed ? 'Used this' : 'I used this'}
+          </button>
+          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleRec() }} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)' }}>
+            &#11088; {hasRec ? 'Recommended' : 'I recommend'}
+          </button>
+        </div>
 
-          <ReviewSection
-            serviceId={service.id}
-            currentUserId={currentUserId}
-            displayName={displayName}
-            manrope={manrope}
-            newsreader={newsreader}
-            onScoreUpdate={setOverallScore}
-          />
+        {/* Reviews divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope }}>Reviews</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+
+        {/* Reviews section */}
+        <ReviewsSection
+          serviceId={service.id}
+          currentUserId={currentUserId}
+          displayName={displayName}
+          manrope={manrope}
+          newsreader={newsreader}
+        />
+
+        {/* More info toggle */}
+        <div style={{ marginTop: 12 }}>
+          <button onClick={() => setMoreOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+            <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{moreOpen ? '-' : '+'}</span>
+            {moreOpen ? 'Less info' : 'More info'}
+          </button>
+          {moreOpen && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 10 }}>
+              {service.phone && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope }}>&#128222; {service.phone}</p>}
+              {service.website && <a href={service.website} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: manrope }}>&#127760; {service.website}</a>}
+            </div>
+          )}
         </div>
       </div>
     </div>

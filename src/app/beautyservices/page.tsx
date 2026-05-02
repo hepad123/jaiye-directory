@@ -141,6 +141,58 @@ function StarDisplay({ value }: { value: number }) {
   )
 }
 
+function ReviewsDivider({ manrope }: { manrope: string }) {
+  const [showInfo, setShowInfo] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setShowInfo(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', margin: '4px 0 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope }}>Reviews</span>
+          <button
+            onClick={() => setShowInfo(o => !o)}
+            style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid ' + CATEGORY_ACCENT, background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}>
+            <span style={{ fontSize: 8, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope, lineHeight: 1 }}>i</span>
+          </button>
+        </div>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      </div>
+      {showInfo && (
+        <div style={{ position: 'absolute', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 24px rgba(28,25,23,0.12)', minWidth: 220, maxWidth: 260 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 8 }}>How reviews work</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {[
+              { label: 'Quality of results', hint: 'overall satisfaction' },
+              { label: 'Value for money', hint: '' },
+              { label: 'Professionalism', hint: 'listening, communication, care' },
+              { label: 'Cleanliness & comfort', hint: '' },
+              { label: 'Reliability', hint: 'punctuality, keeping to hours' },
+              { label: 'Flexibility', hint: 'out-of-hours / last-minute' },
+            ].map(c => (
+              <div key={c.label} style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                <span style={{ color: '#D97706', fontSize: 10, flexShrink: 0 }}>&#9733;</span>
+                <span style={{ fontSize: 10, color: 'var(--text)', fontFamily: manrope }}>
+                  {c.label}{c.hint && <span style={{ color: 'var(--text-muted)' }}> — {c.hint}</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsreader, onScoreUpdate }: {
   serviceId: string
   currentUserId: string | null
@@ -165,7 +217,6 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
   const otherReviews = reviews.filter(r => r.clerk_user_id !== currentUserId)
   const allReviews = myReview ? [myReview, ...otherReviews] : otherReviews
   const visibleReviews = showAll ? allReviews : allReviews.slice(0, 3)
-  const hasMore = allReviews.length > 3
 
   const validScores = reviews.map(calcOverallScore).filter((v): v is number => v !== null)
   const avgOverall = validScores.length > 0
@@ -244,28 +295,24 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
       {/* Score circle + category breakdown */}
-      {loaded && reviews.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {avgOverall !== null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: manrope, lineHeight: 1 }}>{avgOverall}</span>
-                <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)', fontFamily: manrope, lineHeight: 1 }}>/10</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
-                {REVIEW_CATS.map(c => {
-                  const avg = calcCatAvg(reviews, c.key)
-                  if (avg === null) return null
-                  return (
-                    <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{c.label} <span style={{ color: CATEGORY_ACCENT }}>({avg})</span></span>
-                      <StarDisplay value={avg} />
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+      {loaded && reviews.length > 0 && avgOverall !== null && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: manrope, lineHeight: 1 }}>{avgOverall}</span>
+            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)', fontFamily: manrope, lineHeight: 1 }}>/10</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
+            {REVIEW_CATS.map(c => {
+              const avg = calcCatAvg(reviews, c.key)
+              if (avg === null) return null
+              return (
+                <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>{c.label} <span style={{ color: CATEGORY_ACCENT }}>({avg})</span></span>
+                  <StarDisplay value={avg} />
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -275,7 +322,7 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
           {visibleReviews.filter(r => r.comment).slice(0, 2).map(r => (
             <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 8, padding: '8px 10px' }}>
               <p style={{ fontSize: 11, color: 'var(--text)', margin: '0 0 3px', lineHeight: 1.5, fontFamily: manrope, fontStyle: 'italic' }}>{'\u201c'}{r.comment}{'\u201d'}</p>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>— {r.reviewer_name}</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
             </div>
           ))}
         </div>
@@ -286,7 +333,7 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <button
             onClick={() => { if (!currentUserId) { openSignIn(); return }; startEdit() }}
-            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 10, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
             {myReview ? 'Edit your review' : '+ Leave a review'}
           </button>
           {allReviews.length > 0 && (
@@ -350,15 +397,12 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
             const isMe = r.clerk_user_id === currentUserId
             return (
               <div key={r.id} style={{ background: isMe ? 'var(--accent-light)' : 'var(--bg-pill)', border: isMe ? '1px solid var(--gold)' : 'none', borderRadius: 10, padding: '10px 12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                  <div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', fontFamily: newsreader }}>{r.reviewer_name}</span>
-                    {isMe && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, marginLeft: 6, letterSpacing: '0.06em' }}>YOUR REVIEW</span>}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {isMe && <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {isMe && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, letterSpacing: '0.06em', background: CATEGORY_ACCENT + '15', padding: '2px 7px', borderRadius: 20 }}>YOUR REVIEW</span>}
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
                   </div>
+                  {isMe && <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>}
                 </div>
                 {REVIEW_CATS.map(c => {
                   const v = (r as unknown as Record<string, number | null>)[c.key]
@@ -760,7 +804,6 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
   return (
     <div id={'service-' + service.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
-      {/* Top right actions */}
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
         <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
           <HeartIcon filled={isSaved} />
@@ -774,25 +817,23 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
       </div>
 
       <div style={{ padding: '14px 14px 14px' }}>
-        {/* Category + name + pills */}
         <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>{service.category}</div>
         <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 52, fontFamily: newsreader }}>{service.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap', paddingRight: 40 }}>
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: manrope, letterSpacing: '0.04em' }}>{s}</span>))}
         </div>
 
-        {/* Location + bio */}
         {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
         {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
 
         {(usedCount > 0 || recCount > 0) && (
-  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-    {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#128075; {usedCount} used</span>}
-    {recCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#11088; {recCount} rec</span>}
-  </div>
-)}
-        {/* Instagram + WhatsApp */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#128075; {usedCount} used</span>}
+            {recCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#11088; {recCount} rec</span>}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           {igUrl && (
             <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <InstagramIcon />Instagram
@@ -805,7 +846,6 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           )}
         </div>
 
-        {/* Used + Recommend */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
           <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)' }}>
             &#128075; {hasUsed ? 'Used this' : 'I used this'}
@@ -815,14 +855,8 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           </button>
         </div>
 
-        {/* Reviews divider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope }}>Reviews</span>
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        </div>
+        <ReviewsDivider manrope={manrope} />
 
-        {/* Reviews section */}
         <ReviewsSection
           serviceId={service.id}
           currentUserId={currentUserId}
@@ -831,7 +865,6 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           newsreader={newsreader}
         />
 
-        {/* More info toggle */}
         <div style={{ marginTop: 12 }}>
           <button onClick={() => setMoreOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
             <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{moreOpen ? '-' : '+'}</span>

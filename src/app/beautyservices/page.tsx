@@ -123,7 +123,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
     <div style={{ display: 'flex', gap: 2 }}>
       {[1,2,3,4,5].map(s => (
         <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)}
-          style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : '#E8E3DC', transition: 'color 0.1s', userSelect: 'none' }}>
+          style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : '#D1C9BE', transition: 'color 0.1s', userSelect: 'none' }}>
           &#9733;
         </span>
       ))}
@@ -135,7 +135,7 @@ function StarDisplay({ value }: { value: number }) {
   return (
     <span style={{ fontSize: 13, letterSpacing: 1 }}>
       {[1,2,3,4,5].map(s => (
-        <span key={s} style={{ color: s <= Math.round(value) ? '#D97706' : '#E8E3DC' }}>&#9733;</span>
+        <span key={s} style={{ color: s <= Math.round(value) ? '#D97706' : '#D1C9BE' }}>&#9733;</span>
       ))}
     </span>
   )
@@ -785,6 +785,12 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
         {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
 
+        {(usedCount > 0 || recCount > 0) && (
+  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+    {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#128075; {usedCount} used</span>}
+    {recCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#11088; {recCount} rec</span>}
+  </div>
+)}
         {/* Instagram + WhatsApp */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
           {igUrl && (
@@ -801,12 +807,6 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
         {/* Used + Recommend */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-          {(usedCount > 0 || recCount > 0) && (
-            <div style={{ width: '100%', display: 'flex', gap: 8, marginBottom: 4 }}>
-              {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#128075; {usedCount} used</span>}
-              {recCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#11088; {recCount} rec</span>}
-            </div>
-          )}
           <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)' }}>
             &#128075; {hasUsed ? 'Used this' : 'I used this'}
           </button>

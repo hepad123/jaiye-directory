@@ -33,8 +33,40 @@ type ServiceReview = {
   reviewer_name: string
   rating_experience: number
   rating_quality: number
+  rating_quality_results: number | null
+  rating_value: number | null
+  rating_professionalism: number | null
+  rating_cleanliness: number | null
+  rating_reliability: number | null
+  rating_flexibility: number | null
   comment: string | null
   created_at: string
+}
+
+const REVIEW_CATS = [
+  { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+  { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+  { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+  { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+  { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+  { key: 'rating_flexibility', label: 'Flexibility', hint: 'out-of-hours / last-minute accommodation', required: false },
+]
+
+function calcOverallScore(r: ServiceReview): number | null {
+  const vals = [
+    r.rating_quality_results, r.rating_value, r.rating_professionalism,
+    r.rating_cleanliness, r.rating_reliability, r.rating_flexibility,
+  ].filter((v): v is number => v !== null && v !== undefined)
+  if (vals.length < 3) return null
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 2 * 10) / 10
+}
+
+function calcCatAvg(reviews: ServiceReview[], key: string): number | null {
+  const vals = reviews
+    .map(r => (r as Record<string, number | null>)[key])
+    .filter((v): v is number => v !== null && v !== undefined)
+  if (vals.length === 0) return null
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
 }
 
 const CATEGORIES: Record<string, string[]> = {
@@ -85,23 +117,34 @@ function HeartIcon({ filled }: { filled: boolean }) {
   )
 }
 
-function StarPicker({ value, onChange, manrope }: { value: number; onChange: (v: number) => void; manrope: string }) {
+function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hover, setHover] = useState(0)
   return (
     <div style={{ display: 'flex', gap: 2 }}>
       {[1,2,3,4,5].map(s => (
-        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : 'var(--border)', transition: 'color 0.1s' }}>★</span>
+        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} style={{ cursor: 'pointer', fontSize: 18, color: s <= (hover || value) ? '#D97706' : 'var(--border)', transition: 'color 0.1s' }}>&#9733;</span>
       ))}
     </div>
   )
 }
 
-function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsreader }: {
+function StarDisplay({ value, max = 5 }: { value: number; max?: number }) {
+  return (
+    <span>
+      {Array.from({ length: max }).map((_, i) => (
+        <span key={i} style={{ color: i < Math.round(value) ? '#D97706' : 'var(--border)', fontSize: 11 }}>&#9733;</span>
+      ))}
+    </span>
+  )
+}
+
+function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsreader, onScoreUpdate }: {
   serviceId: string
   currentUserId: string | null
   displayName: string
   manrope: string
   newsreader: string
+  onScoreUpdate?: (score: number | null) => void
 }) {
   const supabase = useSupabase()
   const { openSignIn } = useClerk()
@@ -111,8 +154,7 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
   const [loading, setLoading] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [ratingExp, setRatingExp] = useState(0)
-  const [ratingQual, setRatingQual] = useState(0)
+  const [ratings, setRatings] = useState<Record<string, number>>({})
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -121,6 +163,17 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
   const otherReviews = reviews.filter(r => r.clerk_user_id !== currentUserId)
   const allOtherReviews = showAll ? otherReviews : otherReviews.slice(0, 3)
   const hasMore = otherReviews.length > 3
+  const totalCount = loaded ? reviews.length : null
+
+  // Overall score = avg of all individual review scores (only those with 3+ cats rated)
+  const validScores = reviews.map(calcOverallScore).filter((v): v is number => v !== null)
+  const avgOverall = validScores.length > 0
+    ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length * 10) / 10
+    : null
+
+  useEffect(() => {
+    if (loaded && onScoreUpdate) onScoreUpdate(avgOverall)
+  }, [avgOverall, loaded])
 
   useEffect(() => {
     if (!open || loaded) return
@@ -138,27 +191,37 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
 
   function startEdit() {
     if (myReview) {
-      setRatingExp(myReview.rating_experience)
-      setRatingQual(myReview.rating_quality)
+      const r: Record<string, number> = {}
+      REVIEW_CATS.forEach(c => {
+        const v = (myReview as Record<string, number | null>)[c.key]
+        if (v !== null && v !== undefined) r[c.key] = v
+      })
+      setRatings(r)
       setComment(myReview.comment || '')
     } else {
-      setRatingExp(0); setRatingQual(0); setComment('')
+      setRatings({})
+      setComment('')
     }
     setEditing(true)
   }
 
+  const mandatoryMet = REVIEW_CATS.filter(c => c.required).every(c => (ratings[c.key] || 0) > 0)
+
   async function handleSubmit() {
     if (!currentUserId) { openSignIn(); return }
-    if (ratingExp === 0 || ratingQual === 0) return
+    if (!mandatoryMet) return
     setSubmitting(true)
-    const payload = {
+    const payload: Record<string, string | number | null> = {
       service_id: serviceId,
       clerk_user_id: currentUserId,
       reviewer_name: displayName,
-      rating_experience: ratingExp,
-      rating_quality: ratingQual,
       comment: comment.trim() || null,
+      rating_experience: ratings['rating_professionalism'] || 0,
+      rating_quality: ratings['rating_quality_results'] || 0,
     }
+    REVIEW_CATS.forEach(c => {
+      payload[c.key] = ratings[c.key] !== undefined ? ratings[c.key] : null
+    })
     const { data, error } = await supabase.from('service_reviews').upsert(payload, { onConflict: 'service_id,clerk_user_id' }).select()
     if (!error && data) {
       setReviews(prev => { const without = prev.filter(r => r.clerk_user_id !== currentUserId); return [data[0], ...without] })
@@ -175,18 +238,14 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
     setEditing(false); setDeleting(false)
   }
 
-  const totalCount = loaded ? reviews.length : null
-  const avgExp = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating_experience, 0) / reviews.length).toFixed(1) : null
-  const avgQual = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating_quality, 0) / reviews.length).toFixed(1) : null
-
   return (
     <div style={{ marginTop: 6 }}>
       <button onClick={() => setOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
         <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1, flexShrink: 0 }}>{open ? '-' : '+'}</span>
         <span>Reviews{totalCount !== null ? ' (' + totalCount + ')' : ''}</span>
-        {avgExp && !open && (
+        {avgOverall !== null && !open && (
           <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>
-            {'\u00b7'} Exp {avgExp}&#9733; Q {avgQual}&#9733;
+            {'\u00b7'} {avgOverall}/10
           </span>
         )}
       </button>
@@ -195,10 +254,27 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
         <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading && <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '8px 0' }}>Loading...</p>}
 
-          {loaded && avgExp && (
-            <div style={{ display: 'flex', gap: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>Avg Experience: <span style={{ color: '#D97706', fontWeight: 600 }}>{avgExp}&#9733;</span></span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>Avg Quality: <span style={{ color: '#D97706', fontWeight: 600 }}>{avgQual}&#9733;</span></span>
+          {/* Category averages breakdown */}
+          {loaded && reviews.length > 0 && (
+            <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '10px 12px' }}>
+              {avgOverall !== null && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', fontFamily: manrope }}>Overall score</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope }}>{avgOverall}<span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400 }}>/10</span></span>
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {REVIEW_CATS.map(c => {
+                  const avg = calcCatAvg(reviews, c.key)
+                  if (avg === null) return null
+                  return (
+                    <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>{c.label} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({avg})</span></span>
+                      <StarDisplay value={avg} />
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 
@@ -216,17 +292,35 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
           {editing && (
             <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontFamily: manrope }}>Customer Experience</div>
-                  <StarPicker value={ratingExp} onChange={setRatingExp} manrope={manrope} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontFamily: manrope }}>Quality of Output</div>
-                  <StarPicker value={ratingQual} onChange={setRatingQual} manrope={manrope} />
-                </div>
-                <textarea placeholder="Share your experience (optional)..." value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
+                {REVIEW_CATS.map(c => (
+                  <div key={c.key}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', fontFamily: manrope }}>
+                        {c.label}{c.hint ? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> ({c.hint})</span> : ''}
+                        {c.required && <span style={{ color: CATEGORY_ACCENT, marginLeft: 2 }}>*</span>}
+                      </span>
+                      {!c.required && (ratings[c.key] || 0) === 0 && (
+                        <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope, letterSpacing: '0.06em' }}>OPTIONAL</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <StarPicker value={ratings[c.key] || 0} onChange={v => setRatings(prev => ({ ...prev, [c.key]: v }))} />
+                      {(ratings[c.key] || 0) > 0 && !c.required && (
+                        <button onClick={() => setRatings(prev => { const n = { ...prev }; delete n[c.key]; return n })} style={{ fontSize: 9, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope }}>clear</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <textarea
+                  placeholder="Any additional comments? (optional)"
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }}
+                />
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button onClick={handleSubmit} disabled={submitting || ratingExp === 0 || ratingQual === 0} style={{ padding: '7px 18px', background: ratingExp > 0 && ratingQual > 0 ? CATEGORY_ACCENT : 'var(--bg-pill)', color: ratingExp > 0 && ratingQual > 0 ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: ratingExp > 0 && ratingQual > 0 ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
+                  <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
                     {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
                   </button>
                   <button onClick={() => setEditing(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>Cancel</button>
@@ -240,17 +334,24 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
             </div>
           )}
 
+          {/* My review display */}
           {loaded && !editing && myReview && (
             <div style={{ background: 'var(--accent-light)', border: '1px solid var(--gold)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope }}>Your review</span>
                 <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>
               </div>
-              <div style={{ display: 'flex', gap: 12, marginBottom: myReview.comment ? 4 : 0 }}>
-                <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>Exp: <span style={{ color: '#D97706' }}>{'★'.repeat(myReview.rating_experience)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - myReview.rating_experience)}</span></span>
-                <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>Quality: <span style={{ color: '#D97706' }}>{'★'.repeat(myReview.rating_quality)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - myReview.rating_quality)}</span></span>
-              </div>
-              {myReview.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, lineHeight: 1.5, fontFamily: manrope }}>{myReview.comment}</p>}
+              {REVIEW_CATS.map(c => {
+                const v = (myReview as Record<string, number | null>)[c.key]
+                if (!v) return null
+                return (
+                  <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>{c.label}</span>
+                    <StarDisplay value={v} />
+                  </div>
+                )
+              })}
+              {myReview.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: '6px 0 0', lineHeight: 1.5, fontFamily: manrope }}>{myReview.comment}</p>}
             </div>
           )}
 
@@ -260,15 +361,21 @@ function ReviewSection({ serviceId, currentUserId, displayName, manrope, newsrea
 
           {loaded && allOtherReviews.map(r => (
             <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', fontFamily: newsreader }}>{r.reviewer_name}</span>
                 <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
               </div>
-              <div style={{ display: 'flex', gap: 12, marginBottom: r.comment ? 4 : 0 }}>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>Exp: <span style={{ color: '#D97706' }}>{'★'.repeat(r.rating_experience)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - r.rating_experience)}</span></span>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>Quality: <span style={{ color: '#D97706' }}>{'★'.repeat(r.rating_quality)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - r.rating_quality)}</span></span>
-              </div>
-              {r.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, lineHeight: 1.5, fontFamily: manrope }}>{r.comment}</p>}
+              {REVIEW_CATS.map(c => {
+                const v = (r as Record<string, number | null>)[c.key]
+                if (!v) return null
+                return (
+                  <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{c.label}</span>
+                    <StarDisplay value={v} />
+                  </div>
+                )
+              })}
+              {r.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: '6px 0 0', lineHeight: 1.5, fontFamily: manrope }}>{r.comment}</p>}
             </div>
           ))}
 
@@ -463,17 +570,13 @@ function ServicesPage() {
     let q = supabase.from('services').select('*').eq('category', cat).order('verified', { ascending: false }).order('name')
     if (city === 'London') {
       q = q.eq('city', 'London')
-      if (subCity && subCity !== 'All London') {
-        q = q.ilike('location', '%' + subCity + '%')
-      }
+      if (subCity && subCity !== 'All London') q = q.ilike('location', '%' + subCity + '%')
     } else if (city !== 'All') {
       q = q.eq('city', city)
     }
     const { data } = await q
     let rows = data || []
-    if (subs.length > 0) {
-      rows = rows.filter((s: Service) => subs.some(sub => s.subcategories?.includes(sub)))
-    }
+    if (subs.length > 0) rows = rows.filter((s: Service) => subs.some(sub => s.subcategories?.includes(sub)))
     setServices(rows)
     if (rows.length > 0) {
       const ids = rows.map((s: Service) => s.id)
@@ -482,14 +585,14 @@ function ServicesPage() {
         supabase.from('service_recommendations').select('service_id, clerk_user_id').in('service_id', ids),
       ])
       const usedRows = usedRes.data || []
-      const recRows  = recRes.data  || []
+      const recRows = recRes.data || []
       const newStats: Record<string, ServiceStats> = {}
       rows.forEach((s: Service) => {
         newStats[s.id] = {
           usedCount: usedRows.filter((r: {service_id: string}) => r.service_id === s.id).length,
-          recCount:  recRows.filter((r: {service_id: string})  => r.service_id === s.id).length,
-          hasUsed:   user?.id ? usedRows.some((r: {service_id: string; clerk_user_id: string}) => r.service_id === s.id && r.clerk_user_id === user.id) : false,
-          hasRec:    user?.id ? recRows.some((r: {service_id: string; clerk_user_id: string})  => r.service_id === s.id && r.clerk_user_id === user.id) : false,
+          recCount: recRows.filter((r: {service_id: string}) => r.service_id === s.id).length,
+          hasUsed: user?.id ? usedRows.some((r: {service_id: string; clerk_user_id: string}) => r.service_id === s.id && r.clerk_user_id === user.id) : false,
+          hasRec: user?.id ? recRows.some((r: {service_id: string; clerk_user_id: string}) => r.service_id === s.id && r.clerk_user_id === user.id) : false,
         }
       })
       setStats(newStats)
@@ -547,16 +650,11 @@ function ServicesPage() {
   const filteredServices = services.filter(sv => {
     if (!search.trim()) return true
     const q = search.toLowerCase()
-    return (
-      sv.name?.toLowerCase().includes(q) ||
-      sv.bio?.toLowerCase().includes(q) ||
-      sv.instagram?.toLowerCase().includes(q) ||
-      sv.subcategories?.some(s => s.toLowerCase().includes(q))
-    )
+    return sv.name?.toLowerCase().includes(q) || sv.bio?.toLowerCase().includes(q) || sv.instagram?.toLowerCase().includes(q) || sv.subcategories?.some(s => s.toLowerCase().includes(q))
   })
 
   const sortedServices = [...filteredServices].sort((a, b) => {
-    if (sortMode === 'most_rec')  return (stats[b.id]?.recCount  || 0) - (stats[a.id]?.recCount  || 0)
+    if (sortMode === 'most_rec') return (stats[b.id]?.recCount || 0) - (stats[a.id]?.recCount || 0)
     if (sortMode === 'most_used') return (stats[b.id]?.usedCount || 0) - (stats[a.id]?.usedCount || 0)
     return 0
   })
@@ -569,7 +667,6 @@ function ServicesPage() {
         <img src="/pexels-services-hero.jpg" alt="Services" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
       </div>
 
-      {/* Category tabs */}
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {Object.keys(CATEGORIES).map(c => (
@@ -580,7 +677,6 @@ function ServicesPage() {
         </div>
       </div>
 
-      {/* Filter bar */}
       <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '10px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
@@ -657,6 +753,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   currentUserId: string | null; displayName: string
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [overallScore, setOverallScore] = useState<number | null>(null)
   const subs = service.subcategories || []
   const ac = SUB_COLOR[subs[0]] || CATEGORY_ACCENT
   const igUrl = service.instagram ? 'https://instagram.com/' + service.instagram : null
@@ -684,14 +781,25 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
       <div style={{ padding: '14px 14px 12px' }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 5, fontFamily: manrope }}>{service.category}</div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 52, fontFamily: newsreader }}>{service.name}</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 4, paddingRight: 52, fontFamily: newsreader }}>{service.name}</div>
+
+        {/* Overall score badge */}
+        {overallScore !== null && (
+          <div style={{ marginBottom: 6 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 10px', borderRadius: 999, background: CATEGORY_ACCENT + '12', border: '1px solid ' + CATEGORY_ACCENT + '30' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope }}>{overallScore}</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>/10</span>
+            </span>
+          </div>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap', paddingRight: 80 }}>
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: manrope, letterSpacing: '0.04em' }}>{s}</span>))}
         </div>
         {(usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
             {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used &#128075;</span>}
-            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
+            {recCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
           </div>
         )}
         {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
@@ -737,6 +845,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
             displayName={displayName}
             manrope={manrope}
             newsreader={newsreader}
+            onScoreUpdate={setOverallScore}
           />
         </div>
       </div>

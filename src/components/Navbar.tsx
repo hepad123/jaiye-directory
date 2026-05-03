@@ -81,7 +81,7 @@ function UserSearch() {
         <div style={{ position: 'absolute', top: 40, right: 0, zIndex: 200, background: 'var(--bg-card)', borderRadius: 14, boxShadow: '0 8px 32px rgba(28,25,23,0.14)', border: '1px solid var(--border)', width: 300, overflow: 'hidden', fontFamily: 'var(--font-jost, sans-serif)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input ref={inputRef} type="text" placeholder="Search by name or @username..." value={query} onChange={e => setQuery(e.target.value)} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: 'var(--text)', background: 'transparent', fontFamily: 'var(--font-jost, sans-serif)' }} />
+            <input ref={inputRef} type="text" placeholder="Search by name or @username..." value={query} onChange={e => setQuery(e.target.value)} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, color: 'var(--text)', background: 'transparent', fontFamily: 'var(--font-jost, sans-serif)' }} />
             {query && <button onClick={() => { setQuery(''); setResults([]) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>}
           </div>
           <div style={{ maxHeight: 320, overflowY: 'auto' }}>
@@ -158,8 +158,10 @@ function ProfileDropdown({ user, username, displayName, profileChecked, isActive
 }
 
 function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onClose: () => void; pathname: string; savedCount: number }) {
-  const [beautyservicesOpen, setBeautyServicesOpen] = useState(false)
-  const [eventsOpen, setEventsOpen] = useState(false)
+  const [searchByServicesOpen, setSearchByServicesOpen] = useState(false)
+  const [beautyServicesOpen, setBeautyServicesOpen] = useState(false)
+  const [eventServicesOpen, setEventServicesOpen] = useState(false)
+  const [searchByEventsOpen, setSearchByEventsOpen] = useState(false)
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const play = 'var(--font-playfair, serif)'
 
@@ -179,13 +181,23 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
     </Link>
   )
 
+  const subSubItem = (label: string, href: string) => (
+    <Link key={label} href={href} onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 20px 7px 44px', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: isActive(href) ? '#B4690E' : 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 600, transition: 'color 0.1s' }} onMouseEnter={e => (e.currentTarget.style.color = '#B4690E')} onMouseLeave={e => { if (!isActive(href)) e.currentTarget.style.color = 'var(--text-muted)' }}>
+      <div style={{ width: 2, height: 2, borderRadius: '50%', background: isActive(href) ? '#B4690E' : 'var(--border)', flexShrink: 0 }} />
+      {label}
+    </Link>
+  )
+
   const sectionLabel = (label: string) => (
     <div style={{ fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: 'var(--text-muted)', padding: '16px 20px 4px', fontFamily: manrope, fontWeight: 600, opacity: 0.6 }}>{label}</div>
   )
 
-  const expandableItem = (label: string, isOpen: boolean, onToggle: () => void) => (
-    <button onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope, borderLeft: '2px solid transparent', transition: 'all 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-      <span>{label}</span>
+  const expandableItem = (label: string, isOpen: boolean, onToggle: () => void, indent = false) => (
+    <button onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: indent ? '9px 20px 9px 32px' : '10px 20px', fontSize: indent ? 11 : 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope, borderLeft: '2px solid transparent', transition: 'all 0.1s' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-pill)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {indent && <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--border)', flexShrink: 0 }} />}
+        {label}
+      </span>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
     </button>
   )
@@ -203,17 +215,38 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
           {sectionLabel('Explore')}
           {navItem('Home', '/')}
 
-          {expandableItem('Beauty Services', beautyservicesOpen, () => setBeautyServicesOpen(o => !o))}
-          <div style={{ maxHeight: beautyservicesOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
-            {subItem('Hair', '/beautyservices?cat=Hair')}
-            {subItem('Makeup', '/beautyservices?cat=Makeup')}
-            {subItem('Lashes', '/beautyservices?cat=Lashes')}
-            {subItem('Nails', '/beautyservices?cat=Nails')}
-            {subItem('Brows', '/beautyservices?cat=Brows')}
+          {/* Search by Services */}
+          {expandableItem('Search by Services', searchByServicesOpen, () => setSearchByServicesOpen(o => !o))}
+          <div style={{ maxHeight: searchByServicesOpen ? 600 : 0, overflow: 'hidden', transition: 'max-height 0.25s ease', background: 'var(--bg)' }}>
+
+            {expandableItem('Beauty Services', beautyServicesOpen, () => setBeautyServicesOpen(o => !o), true)}
+            <div style={{ maxHeight: beautyServicesOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease' }}>
+              {subSubItem('Hair', '/beautyservices?cat=Hair')}
+              {subSubItem('Makeup', '/beautyservices?cat=Makeup')}
+              {subSubItem('Lashes', '/beautyservices?cat=Lashes')}
+              {subSubItem('Nails', '/beautyservices?cat=Nails')}
+              {subSubItem('Brows', '/beautyservices?cat=Brows')}
+            </div>
+
+            {expandableItem('Event Services', eventServicesOpen, () => setEventServicesOpen(o => !o), true)}
+            <div style={{ maxHeight: eventServicesOpen ? 400 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease' }}>
+              {subSubItem('Event Planning', '/eventservices?cat=Event Planning')}
+              {subSubItem('Photography', '/eventservices?cat=Photography')}
+              {subSubItem('Videography & Content', '/eventservices?cat=Videography & Content')}
+              {subSubItem('Decor & Venue', '/eventservices?cat=Decor & Venue')}
+              {subSubItem('Catering', '/eventservices?cat=Catering')}
+              {subSubItem('Entertainment', '/eventservices?cat=Entertainment')}
+              {subSubItem('Outfits', '/eventservices?cat=Outfits')}
+              {subSubItem('Styling', '/eventservices?cat=Styling')}
+              {subSubItem('Accessories', '/eventservices?cat=Accessories')}
+              {subSubItem('Hair & Gele', '/eventservices?cat=Hair & Gele')}
+              {subSubItem('Makeup', '/eventservices?cat=Makeup')}
+            </div>
           </div>
 
-          {expandableItem('Events', eventsOpen, () => setEventsOpen(o => !o))}
-          <div style={{ maxHeight: eventsOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
+          {/* Search by Events */}
+          {expandableItem('Search by Events', searchByEventsOpen, () => setSearchByEventsOpen(o => !o))}
+          <div style={{ maxHeight: searchByEventsOpen ? 300 : 0, overflow: 'hidden', transition: 'max-height 0.2s ease', background: 'var(--bg)' }}>
             {subItem('Weddings', '/directory?occasion=weddings')}
             {subItem('Birthdays', '/directory?occasion=birthdays')}
             {subItem('Corporate', '/directory?occasion=corporate')}

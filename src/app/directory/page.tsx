@@ -34,9 +34,17 @@ type VendorReview = {
   reviewer_name: string
   rating_experience: number
   rating_quality: number
+  rating_quality_results: number | null
+  rating_value: number | null
+  rating_professionalism: number | null
+  rating_cleanliness: number | null
+  rating_reliability: number | null
+  rating_flexibility: number | null
   comment: string | null
   created_at: string
 }
+
+type ReviewCat = { key: string; label: string; hint: string; required: boolean }
 
 type CurrentUser = {
   id: string
@@ -63,6 +71,106 @@ type VendorStats = {
 type SortMode = 'most_used' | 'most_rec'
 
 const CATEGORY_ACCENT = '#B4690E'
+
+const REVIEW_CATS_BY_CATEGORY: Record<string, ReviewCat[]> = {
+  'Event Planning': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Photography': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Videography & Content': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Decor & Venue': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Catering': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Entertainment': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Outfits': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Styling': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Accessories': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Hair & Gele': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Makeup': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+}
+
+function calcOverallScore(r: VendorReview, cats: ReviewCat[]): number | null {
+  const vals = cats
+    .map(c => (r as unknown as Record<string, number | null>)[c.key])
+    .filter((v): v is number => v !== null && v !== undefined)
+  if (vals.length < 3) return null
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 2 * 10) / 10
+}
+
+function calcCatAvg(reviews: VendorReview[], key: string): number | null {
+  const vals = reviews
+    .map(r => (r as unknown as Record<string, number | null>)[key])
+    .filter((v): v is number => v !== null && v !== undefined)
+  if (vals.length === 0) return null
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+}
 
 const OCCASION_TABS = [
   { key: 'weddings',      label: 'Weddings' },
@@ -139,78 +247,139 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   return (
     <div style={{ display: 'flex', gap: 2 }}>
       {[1,2,3,4,5].map(s => (
-        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : 'var(--border)', transition: 'color 0.1s' }}>&#9733;</span>
+        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)}
+          style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : '#D1C9BE', transition: 'color 0.1s', userSelect: 'none' }}>
+          &#9733;
+        </span>
       ))}
     </div>
   )
 }
 
-function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
+function StarDisplay({ value }: { value: number }) {
+  return (
+    <span style={{ fontSize: 13, letterSpacing: 1 }}>
+      {[1,2,3,4,5].map(s => (
+        <span key={s} style={{ color: s <= Math.round(value) ? '#D97706' : '#D1C9BE' }}>&#9733;</span>
+      ))}
+    </span>
+  )
+}
+
+function ReviewsDivider({ manrope, cats }: { manrope: string; cats: ReviewCat[] }) {
+  const [showInfo, setShowInfo] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setShowInfo(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', margin: '4px 0 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope }}>Reviews</span>
+          <button onClick={() => setShowInfo(o => !o)} style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid ' + CATEGORY_ACCENT, background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}>
+            <span style={{ fontSize: 8, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope, lineHeight: 1 }}>i</span>
+          </button>
+        </div>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      </div>
+      {showInfo && (
+        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 24px rgba(28,25,23,0.12)', minWidth: 220, maxWidth: 260 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 8 }}>How reviews work</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {cats.map(c => (
+              <div key={c.label} style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                <span style={{ color: '#D97706', fontSize: 10, flexShrink: 0 }}>&#9733;</span>
+                <span style={{ fontSize: 10, color: 'var(--text)', fontFamily: manrope }}>
+                  {c.label}{c.hint ? <span style={{ color: 'var(--text-muted)' }}> — {c.hint}</span> : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsreader }: {
   vendorId: string
+  vendorCategory: string
   currentUser: CurrentUser | null
   manrope: string
   newsreader: string
 }) {
   const supabase = useSupabase()
   const { openSignIn } = useClerk()
-  const [open, setOpen] = useState(false)
   const [reviews, setReviews] = useState<VendorReview[]>([])
   const [loaded, setLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [showAll, setShowAll] = useState(false)
-  const [editing, setEditing] = useState(false)
-  const [ratingExp, setRatingExp] = useState(0)
-  const [ratingQual, setRatingQual] = useState(0)
+  const [ratings, setRatings] = useState<Record<string, number>>({})
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  const REVIEW_CATS = REVIEW_CATS_BY_CATEGORY[vendorCategory] || REVIEW_CATS_BY_CATEGORY['Event Planning']
+
   const myReview = reviews.find(r => r.clerk_user_id === currentUser?.id) || null
   const otherReviews = reviews.filter(r => r.clerk_user_id !== currentUser?.id)
-  const allOtherReviews = showAll ? otherReviews : otherReviews.slice(0, 3)
-  const hasMore = otherReviews.length > 3
+  const allReviews = myReview ? [myReview, ...otherReviews] : otherReviews
+  const visibleReviews = showAll ? allReviews : allReviews.slice(0, 3)
+
+  const validScores = reviews.map(r => calcOverallScore(r, REVIEW_CATS)).filter((v): v is number => v !== null)
+  const avgOverall = validScores.length > 0
+    ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length * 10) / 10
+    : null
 
   useEffect(() => {
-    if (!open || loaded) return
     setLoading(true)
-    supabase.from('vendor_reviews')
-      .select('*')
-      .eq('vendor_id', vendorId)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setReviews(data || [])
-        setLoaded(true)
-        setLoading(false)
-      })
-  }, [open, vendorId, loaded])
+    supabase.from('vendor_reviews').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false })
+      .then(({ data }) => { setReviews(data || []); setLoaded(true); setLoading(false) })
+  }, [vendorId])
 
   function startEdit() {
     if (myReview) {
-      setRatingExp(myReview.rating_experience)
-      setRatingQual(myReview.rating_quality)
+      const r: Record<string, number> = {}
+      REVIEW_CATS.forEach(c => {
+        const v = (myReview as unknown as Record<string, number | null>)[c.key]
+        if (v !== null && v !== undefined) r[c.key] = v
+      })
+      setRatings(r)
       setComment(myReview.comment || '')
     } else {
-      setRatingExp(0); setRatingQual(0); setComment('')
+      setRatings({}); setComment('')
     }
-    setEditing(true)
+    setShowForm(true)
   }
+
+  const mandatoryMet = REVIEW_CATS.filter(c => c.required).every(c => (ratings[c.key] || 0) > 0)
 
   async function handleSubmit() {
     if (!currentUser) { openSignIn(); return }
-    if (ratingExp === 0 || ratingQual === 0) return
+    if (!mandatoryMet) return
     setSubmitting(true)
-    const payload = {
+    const payload: Record<string, string | number | null> = {
       vendor_id: vendorId,
       clerk_user_id: currentUser.id,
       reviewer_name: currentUser.name,
-      rating_experience: ratingExp,
-      rating_quality: ratingQual,
       comment: comment.trim() || null,
+      rating_experience: ratings['rating_professionalism'] || 0,
+      rating_quality: ratings['rating_quality_results'] || 0,
     }
+    REVIEW_CATS.forEach(c => { payload[c.key] = ratings[c.key] !== undefined ? ratings[c.key] : null })
     const { data, error } = await supabase.from('vendor_reviews').upsert(payload, { onConflict: 'vendor_id,clerk_user_id' }).select()
     if (!error && data) {
       setReviews(prev => { const without = prev.filter(r => r.clerk_user_id !== currentUser.id); return [data[0], ...without] })
-      setEditing(false)
+      setShowForm(false)
     }
     setSubmitting(false)
   }
@@ -220,112 +389,129 @@ function ReviewSection({ vendorId, currentUser, manrope, newsreader }: {
     setDeleting(true)
     await supabase.from('vendor_reviews').delete().eq('id', myReview.id)
     setReviews(prev => prev.filter(r => r.id !== myReview.id))
-    setEditing(false); setDeleting(false)
+    setShowForm(false); setDeleting(false)
   }
 
-  const totalCount = loaded ? reviews.length : null
-  const avgExp = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating_experience, 0) / reviews.length).toFixed(1) : null
-  const avgQual = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating_quality, 0) / reviews.length).toFixed(1) : null
+  if (loading) return <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>Loading reviews...</p>
 
   return (
-    <div style={{ marginTop: 6 }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-        <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1, flexShrink: 0 }}>{open ? '-' : '+'}</span>
-        <span>Reviews{totalCount !== null ? ' (' + totalCount + ')' : ''}</span>
-        {avgExp && !open && (
-          <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>
-            {'\u00b7'} Exp {avgExp}&#9733; Q {avgQual}&#9733;
-          </span>
-        )}
-      </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {open && (
-        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {loading && <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '8px 0' }}>Loading...</p>}
-
-          {loaded && avgExp && (
-            <div style={{ display: 'flex', gap: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>Avg Experience: <span style={{ color: '#D97706', fontWeight: 600 }}>{avgExp}&#9733;</span></span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>Avg Quality: <span style={{ color: '#D97706', fontWeight: 600 }}>{avgQual}&#9733;</span></span>
-            </div>
-          )}
-
-          {loaded && !editing && !myReview && currentUser && (
-            <button onClick={startEdit} style={{ width: '100%', padding: '8px', background: CATEGORY_ACCENT + '10', border: '1px dashed ' + CATEGORY_ACCENT, borderRadius: 10, fontSize: 11, color: CATEGORY_ACCENT, fontWeight: 600, cursor: 'pointer', fontFamily: manrope }}>
-              + Write a review
-            </button>
-          )}
-          {loaded && !editing && !currentUser && (
-            <button onClick={() => openSignIn()} style={{ width: '100%', padding: '8px', background: 'var(--bg-pill)', border: '1px dashed var(--border)', borderRadius: 10, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontFamily: manrope }}>
-              Sign in to leave a review
-            </button>
-          )}
-
-          {editing && (
-            <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '12px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontFamily: manrope }}>Customer Experience</div>
-                  <StarPicker value={ratingExp} onChange={setRatingExp} />
+      {loaded && reviews.length > 0 && avgOverall !== null && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: manrope, lineHeight: 1 }}>{avgOverall}</span>
+            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)', fontFamily: manrope, lineHeight: 1 }}>/10</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
+            {REVIEW_CATS.map(c => {
+              const avg = calcCatAvg(reviews, c.key)
+              if (avg === null) return null
+              return (
+                <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>{c.label} <span style={{ color: CATEGORY_ACCENT }}>({avg})</span></span>
+                  <StarDisplay value={avg} />
                 </div>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontFamily: manrope }}>Quality of Output</div>
-                  <StarPicker value={ratingQual} onChange={setRatingQual} />
-                </div>
-                <textarea placeholder="Share your experience (optional)..." value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button onClick={handleSubmit} disabled={submitting || ratingExp === 0 || ratingQual === 0} style={{ padding: '7px 18px', background: ratingExp > 0 && ratingQual > 0 ? CATEGORY_ACCENT : 'var(--bg-pill)', color: ratingExp > 0 && ratingQual > 0 ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: ratingExp > 0 && ratingQual > 0 ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
-                    {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
-                  </button>
-                  <button onClick={() => setEditing(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>Cancel</button>
-                  {myReview && (
-                    <button onClick={handleDelete} disabled={deleting} style={{ padding: '7px 14px', background: 'none', border: '1px solid #DC2626', borderRadius: 20, fontSize: 11, color: '#DC2626', cursor: 'pointer', fontFamily: manrope, marginLeft: 'auto' }}>
-                      {deleting ? 'Deleting...' : 'Delete'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+              )
+            })}
+          </div>
+        </div>
+      )}
 
-          {loaded && !editing && myReview && (
-            <div style={{ background: 'var(--accent-light)', border: '1px solid var(--gold)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope }}>Your review</span>
-                <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>
-              </div>
-              <div style={{ display: 'flex', gap: 12, marginBottom: myReview.comment ? 4 : 0 }}>
-                <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>Exp: <span style={{ color: '#D97706' }}>{'★'.repeat(myReview.rating_experience)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - myReview.rating_experience)}</span></span>
-                <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: manrope }}>Quality: <span style={{ color: '#D97706' }}>{'★'.repeat(myReview.rating_quality)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - myReview.rating_quality)}</span></span>
-              </div>
-              {myReview.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, lineHeight: 1.5, fontFamily: manrope }}>{myReview.comment}</p>}
-            </div>
-          )}
-
-          {loaded && otherReviews.length === 0 && !myReview && !editing && (
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>No reviews yet {'\u2014'} be the first!</p>
-          )}
-
-          {loaded && allOtherReviews.map(r => (
-            <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', fontFamily: newsreader }}>{r.reviewer_name}</span>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
-              </div>
-              <div style={{ display: 'flex', gap: 12, marginBottom: r.comment ? 4 : 0 }}>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>Exp: <span style={{ color: '#D97706' }}>{'★'.repeat(r.rating_experience)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - r.rating_experience)}</span></span>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>Quality: <span style={{ color: '#D97706' }}>{'★'.repeat(r.rating_quality)}</span><span style={{ color: 'var(--border)' }}>{'★'.repeat(5 - r.rating_quality)}</span></span>
-              </div>
-              {r.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, lineHeight: 1.5, fontFamily: manrope }}>{r.comment}</p>}
+      {loaded && allReviews.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {visibleReviews.filter(r => r.comment).slice(0, 2).map(r => (
+            <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 8, padding: '8px 10px' }}>
+              <p style={{ fontSize: 11, color: 'var(--text)', margin: '0 0 3px', lineHeight: 1.5, fontFamily: manrope, fontStyle: 'italic' }}>{'\u201c'}{r.comment}{'\u201d'}</p>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
             </div>
           ))}
+        </div>
+      )}
 
-          {loaded && hasMore && (
-            <button onClick={() => setShowAll(o => !o)} style={{ width: '100%', padding: '7px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-              {showAll ? 'Show less' : 'Show all ' + otherReviews.length + ' reviews'}
+      {loaded && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => { if (!currentUser) { openSignIn(); return }; showForm ? setShowForm(false) : startEdit() }}
+            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+            {myReview ? 'Edit your review' : '+ Leave a review'}
+          </button>
+          {allReviews.length > 0 && (
+            <button onClick={() => setShowAll(o => !o)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1px solid var(--border)', background: 'none', color: 'var(--text-muted)', fontSize: 10, fontWeight: 600, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+              {showAll ? 'Show less' : 'See all ' + allReviews.length + ' reviews'}
             </button>
           )}
         </div>
+      )}
+
+      {showForm && (
+        <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {REVIEW_CATS.map(c => (
+            <div key={c.key}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>
+                  {c.label}{c.hint ? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> ({c.hint})</span> : ''}
+                  {c.required && <span style={{ color: CATEGORY_ACCENT }}> *</span>}
+                </span>
+                {!c.required && (ratings[c.key] || 0) === 0 && (
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope, letterSpacing: '0.06em' }}>OPTIONAL</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <StarPicker value={ratings[c.key] || 0} onChange={v => setRatings(prev => ({ ...prev, [c.key]: v }))} />
+                {(ratings[c.key] || 0) > 0 && !c.required && (
+                  <button onClick={() => setRatings(prev => { const n = { ...prev }; delete n[c.key]; return n })} style={{ fontSize: 9, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope }}>clear</button>
+                )}
+              </div>
+            </div>
+          ))}
+          <textarea placeholder="Any additional comments? (optional)" value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 16, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
+              {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
+            </button>
+            <button onClick={() => setShowForm(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>Cancel</button>
+            {myReview && (
+              <button onClick={handleDelete} disabled={deleting} style={{ padding: '7px 14px', background: 'none', border: '1px solid #DC2626', borderRadius: 20, fontSize: 11, color: '#DC2626', cursor: 'pointer', fontFamily: manrope, marginLeft: 'auto' }}>
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showAll && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {allReviews.map(r => {
+            const isMe = r.clerk_user_id === currentUser?.id
+            return (
+              <div key={r.id} style={{ background: isMe ? 'var(--accent-light)' : 'var(--bg-pill)', border: isMe ? '1px solid var(--gold)' : 'none', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {isMe && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, letterSpacing: '0.06em', background: CATEGORY_ACCENT + '15', padding: '2px 7px', borderRadius: 20 }}>YOUR REVIEW</span>}
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                  </div>
+                  {isMe && <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>}
+                </div>
+                {REVIEW_CATS.map(c => {
+                  const v = (r as unknown as Record<string, number | null>)[c.key]
+                  if (!v) return null
+                  return (
+                    <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>{c.label}</span>
+                      <StarDisplay value={v} />
+                    </div>
+                  )
+                })}
+                {r.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: '6px 0 0', lineHeight: 1.5, fontFamily: manrope }}>{r.comment}</p>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {loaded && allReviews.length === 0 && !showForm && (
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>No reviews yet {'\u2014'} be the first!</p>
       )}
     </div>
   )
@@ -359,12 +545,7 @@ function CategoryDropdown({ occasion, selectedCats, setSelectedCats, weddingType
     }
   }
 
-  const label = selectedCats.length === 0
-    ? 'All Vendors'
-    : selectedCats.length === 1
-      ? selectedCats[0]
-      : selectedCats.length + ' Categories'
-
+  const label = selectedCats.length === 0 ? 'All Vendors' : selectedCats.length === 1 ? selectedCats[0] : selectedCats.length + ' Categories'
   const isFiltered = selectedCats.length > 0
 
   return (
@@ -420,7 +601,6 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
     { key: 'most_rec',  label: 'Most Recommended' },
     { key: 'most_used', label: 'Most Used' },
   ]
-
   const currentLabel = interacted ? (options.find(o => o.key === sortMode)?.label || 'Sort') : 'Sort'
 
   return (
@@ -513,6 +693,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
   const isSaved = savedIds.has(v.id)
   const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
+  const reviewCats = REVIEW_CATS_BY_CATEGORY[v.category] || REVIEW_CATS_BY_CATEGORY['Event Planning']
 
   async function toggleUsed() {
     if (!currentUser) { onOpenAuth(); return }
@@ -659,7 +840,8 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
             </div>
           )}
 
-          <ReviewSection vendorId={v.id} currentUser={currentUser} manrope={manrope} newsreader={newsreader} />
+          <ReviewsDivider manrope={manrope} cats={reviewCats} />
+          <ReviewSection vendorId={v.id} vendorCategory={v.category} currentUser={currentUser} manrope={manrope} newsreader={newsreader} />
         </div>
       </div>
     </div>
@@ -873,8 +1055,8 @@ export default function DirectoryPage() {
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
-            {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button>}
+            <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
+            {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />

@@ -44,6 +44,8 @@ type VendorReview = {
   rating_flexibility: number | null
   comment: string | null
   created_at: string
+  is_repeat_user: boolean | null
+  last_used_date: string | null
 }
 
 type ReviewCat = { key: string; label: string; hint: string; required: boolean }
@@ -336,6 +338,9 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [isRepeatUser, setIsRepeatUser] = useState<boolean | null>(null)
+  const [lastUsedMonth, setLastUsedMonth] = useState('')
+  const [lastUsedYear, setLastUsedYear] = useState('')
 
   const REVIEW_CATS = REVIEW_CATS_BY_CATEGORY[vendorCategory] || REVIEW_CATS_BY_CATEGORY['Event Planning']
 
@@ -348,6 +353,10 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
   const avgOverall = validScores.length > 0
     ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length * 10) / 10
     : null
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const currentYear = new Date().getFullYear()
+  const YEARS = Array.from({ length: currentYear - 2017 }, (_, i) => String(currentYear - i))
 
   useEffect(() => {
     setLoading(true)
@@ -364,25 +373,53 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
       })
       setRatings(r)
       setComment(myReview.comment || '')
+      setIsRepeatUser(myReview.is_repeat_user ?? null)
+      if (myReview.last_used_date) {
+        const d = new Date(myReview.last_used_date)
+        setLastUsedMonth(String(d.getMonth() + 1))
+        setLastUsedYear(String(d.getFullYear()))
+      } else {
+        setLastUsedMonth('')
+        setLastUsedYear('')
+      }
     } else {
-      setRatings({}); setComment('')
+      setRatings({})
+      setComment('')
+      setIsRepeatUser(null)
+      setLastUsedMonth('')
+      setLastUsedYear('')
     }
     setShowForm(true)
   }
 
   const mandatoryMet = REVIEW_CATS.filter(c => c.required).every(c => (ratings[c.key] || 0) > 0)
 
+  function buildLastUsedDate(): string | null {
+    if (isRepeatUser && lastUsedMonth && lastUsedYear) {
+      const month = lastUsedMonth.padStart(2, '0')
+      return lastUsedYear + '-' + month + '-01'
+    }
+    return null
+  }
+
+  function formatLastUsed(dateStr: string): string {
+    const d = new Date(dateStr)
+    return MONTHS[d.getMonth()] + ' ' + d.getFullYear()
+  }
+
   async function handleSubmit() {
     if (!currentUser) { openSignIn(); return }
     if (!mandatoryMet) return
     setSubmitting(true)
-    const payload: Record<string, string | number | null> = {
+    const payload: Record<string, string | number | boolean | null> = {
       vendor_id: vendorId,
       clerk_user_id: currentUser.id,
       reviewer_name: currentUser.name,
       comment: comment.trim() || null,
       rating_experience: ratings['rating_professionalism'] || 0,
       rating_quality: ratings['rating_quality_results'] || 0,
+      is_repeat_user: isRepeatUser,
+      last_used_date: buildLastUsedDate(),
     }
     REVIEW_CATS.forEach(c => { payload[c.key] = ratings[c.key] !== undefined ? ratings[c.key] : null })
     const { data, error } = await supabase.from('vendor_reviews').upsert(payload, { onConflict: 'vendor_id,clerk_user_id' }).select()
@@ -401,10 +438,17 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
     setShowForm(false); setDeleting(false)
   }
 
+  const selectStyle: React.CSSProperties = {
+    padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+    fontSize: 12, color: 'var(--text)', background: '#fff',
+    fontFamily: manrope, outline: 'none', cursor: 'pointer',
+  }
+
   if (loading) return <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>Loading reviews...</p>
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
       {loaded && reviews.length > 0 && avgOverall !== null && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -431,7 +475,11 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
           {visibleReviews.filter(r => r.comment).slice(0, 2).map(r => (
             <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 8, padding: '8px 10px' }}>
               <p style={{ fontSize: 11, color: 'var(--text)', margin: '0 0 3px', lineHeight: 1.5, fontFamily: manrope, fontStyle: 'italic' }}>{'\u201c'}{r.comment}{'\u201d'}</p>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                {r.is_repeat_user && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontWeight: 700, fontFamily: manrope, background: CATEGORY_ACCENT + '12', padding: '1px 6px', borderRadius: 20 }}>Repeat customer</span>}
+                {r.last_used_date && <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>{'Used ' + formatLastUsed(r.last_used_date)}</span>}
+              </div>
             </div>
           ))}
         </div>
@@ -473,6 +521,35 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
               </div>
             </div>
           ))}
+
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>Have you used this vendor before?</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setIsRepeatUser(true)} style={{ padding: '6px 16px', borderRadius: 20, border: '1.5px solid ' + (isRepeatUser === true ? CATEGORY_ACCENT : 'var(--border)'), background: isRepeatUser === true ? CATEGORY_ACCENT : '#fff', color: isRepeatUser === true ? '#fff' : 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s' }}>Yes</button>
+              <button onClick={() => { setIsRepeatUser(false); setLastUsedMonth(''); setLastUsedYear('') }} style={{ padding: '6px 16px', borderRadius: 20, border: '1.5px solid ' + (isRepeatUser === false ? 'var(--text-muted)' : 'var(--border)'), background: isRepeatUser === false ? 'var(--bg-pill)' : '#fff', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s' }}>No</button>
+            </div>
+
+            {isRepeatUser === true && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>When did you last use them?</span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select value={lastUsedMonth} onChange={e => setLastUsedMonth(e.target.value)} style={selectStyle}>
+                    <option value="">Month</option>
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={String(i + 1)}>{m}</option>
+                    ))}
+                  </select>
+                  <select value={lastUsedYear} onChange={e => setLastUsedYear(e.target.value)} style={selectStyle}>
+                    <option value="">Year</option>
+                    {YEARS.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
           <textarea placeholder="Any additional comments? (optional)" value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 16, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
@@ -495,9 +572,11 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
             return (
               <div key={r.id} style={{ background: isMe ? 'var(--accent-light)' : 'var(--bg-pill)', border: isMe ? '1px solid var(--gold)' : 'none', borderRadius: 10, padding: '10px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     {isMe && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, letterSpacing: '0.06em', background: CATEGORY_ACCENT + '15', padding: '2px 7px', borderRadius: 20 }}>YOUR REVIEW</span>}
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                    {r.is_repeat_user && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontWeight: 700, fontFamily: manrope, background: CATEGORY_ACCENT + '12', padding: '1px 6px', borderRadius: 20 }}>Repeat customer</span>}
+                    {r.last_used_date && <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>{'Used ' + formatLastUsed(r.last_used_date)}</span>}
                   </div>
                   {isMe && <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>}
                 </div>

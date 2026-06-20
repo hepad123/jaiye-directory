@@ -18,6 +18,9 @@ type Vendor = {
   notes: string
   created_at?: string
   verified?: boolean
+  discount_code: string | null
+  discount_description: string | null
+  discount_expiry: string | null
 }
 
 type VendorStats = {
@@ -151,6 +154,7 @@ const EVENT_CATEGORIES = [
 ]
 
 const CATEGORY_ACCENT = '#B4690E'
+const PROMO_COLOR = '#C0A060'
 const emptyStats: VendorStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 type SortMode = 'most_used' | 'most_rec'
 
@@ -159,6 +163,12 @@ const CATEGORY_COLOR: Record<string, string> = {
   'Decor & Venue': '#92400E', 'Catering': '#C2410C', 'Entertainment': '#7C3AED',
   'Outfits': '#D97706', 'Styling': '#0D9488', 'Accessories': '#B45309',
   'Hair & Gele': '#EA580C', 'Makeup': '#DB2777',
+}
+
+function isPromoActive(vendor: Vendor): boolean {
+  if (!vendor.discount_code) return false
+  if (!vendor.discount_expiry) return false
+  return new Date(vendor.discount_expiry) >= new Date(new Date().toDateString())
 }
 
 function InstagramIcon() {
@@ -337,7 +347,6 @@ function ReviewsSection({ vendorId, vendorCategory, currentUserId, displayName, 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
       {loaded && reviews.length > 0 && avgOverall !== null && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -479,7 +488,7 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+      <button onClick={() => { setOpen(o => !o); setInteracted(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
         {currentLabel}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
       </button>
@@ -542,6 +551,7 @@ function EventServicesPage() {
   const [location, setLocation] = useState('All')
   const [search, setSearch] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('most_rec')
+  const [showPromos, setShowPromos] = useState(false)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState<Record<string, VendorStats>>({})
   const [suggestOpen, setSuggestOpen] = useState(false)
@@ -550,7 +560,7 @@ function EventServicesPage() {
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
 
-  useEffect(() => { setSearch('') }, [cat])
+  useEffect(() => { setSearch(''); setShowPromos(false) }, [cat])
 
   useEffect(() => {
     const c = searchParams.get('cat')
@@ -578,7 +588,7 @@ function EventServicesPage() {
   const fetchVendors = useCallback(async () => {
     setLoading(true)
     const dbCat = cat === 'Outfits' ? 'Fashion' : cat
-    let q = supabase.from('vendors').select('*').eq('category', dbCat).order('verified', { ascending: false }).order('name')
+    let q = supabase.from('vendors').select('id, category, name, services, location, instagram, phone, website, notes, created_at, verified, discount_code, discount_description, discount_expiry').eq('category', dbCat).order('verified', { ascending: false }).order('name')
     if (location !== 'All') q = q.ilike('location', '%' + location + '%')
     const { data } = await q
     const rows = (data || []).map((v: Vendor) => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
@@ -651,6 +661,7 @@ function EventServicesPage() {
   }, [supabase, user, stats, openSignIn])
 
   const filteredVendors = vendors.filter(v => {
+    if (showPromos && !isPromoActive(v)) return false
     if (!search.trim()) return true
     const q = search.toLowerCase()
     return v.name?.toLowerCase().includes(q) || v.services?.toLowerCase().includes(q) || v.instagram?.toLowerCase().includes(q) || v.notes?.toLowerCase().includes(q)
@@ -697,6 +708,11 @@ function EventServicesPage() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <LocationDropdown location={location} setLocation={setLocation} manrope={manrope} />
             <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
+            <button
+              onClick={() => setShowPromos(p => !p)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + PROMO_COLOR, background: showPromos ? PROMO_COLOR : 'transparent', color: showPromos ? '#fff' : PROMO_COLOR, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+              {'🏷️ Promos'}
+            </button>
           </div>
         </div>
       </div>
@@ -708,6 +724,7 @@ function EventServicesPage() {
               {sortedVendors.length} {sortedVendors.length === 1 ? 'result' : 'results'}
               {search ? ' for "' + search + '"' : ''}
               {location !== 'All' ? ' \u00b7 ' + location : ''}
+              {showPromos ? ' \u00b7 Active promos' : ''}
             </p>
             <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
               + Suggest
@@ -721,9 +738,9 @@ function EventServicesPage() {
         )}
         {!loading && sortedVendors.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-            <p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>No results found</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different search or filter</p>
-            <button onClick={() => { setSearch(''); setLocation('All') }} style={{ marginTop: 12, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>Clear filters</button>
+            <p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>{showPromos ? 'No active promos right now' : 'No results found'}</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>{showPromos ? 'Check back soon \u2014 deals get added regularly' : 'Try a different search or filter'}</p>
+            <button onClick={() => { setSearch(''); setLocation('All'); setShowPromos(false) }} style={{ marginTop: 12, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>Clear filters</button>
           </div>
         )}
         {!loading && sortedVendors.length > 0 && (
@@ -760,6 +777,7 @@ function VendorCard({ vendor, catColour, isSaved, onToggleSave, stats, onToggleU
   currentUserId: string | null; displayName: string
 }) {
   const [moreOpen, setMoreOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const igHandle = vendor.instagram?.replace('@', '').trim()
   const waUrl = vendor.phone ? 'https://wa.me/' + vendor.phone.replace(/\D/g, '') : null
   const bookUrl = vendor.website || null
@@ -768,9 +786,18 @@ function VendorCard({ vendor, catColour, isSaved, onToggleSave, stats, onToggleU
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)', letterSpacing: '0.04em' }
   const reviewCats = REVIEW_CATS_BY_CATEGORY[vendor.category] || REVIEW_CATS_BY_CATEGORY['Event Planning']
+  const promoActive = isPromoActive(vendor)
+
+  function handleCopy() {
+    if (!vendor.discount_code) return
+    navigator.clipboard.writeText(vendor.discount_code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   return (
-    <div id={'vendor-' + vendor.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
+    <div id={'vendor-' + vendor.id} style={{ background: '#fff', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid var(--border)', position: 'relative', boxShadow: promoActive ? '0 2px 12px rgba(192,160,96,0.15)' : '0 1px 4px rgba(28,25,23,0.06)' }}>
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
         <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
           <HeartIcon filled={isSaved} />
@@ -786,6 +813,28 @@ function VendorCard({ vendor, catColour, isSaved, onToggleSave, stats, onToggleU
       <div style={{ padding: '14px 14px 14px' }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: catColour, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>{vendor.category}</div>
         <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 8, paddingRight: 52, fontFamily: newsreader }}>{vendor.name}</div>
+
+        {promoActive && (
+          <div style={{ background: PROMO_COLOR + '12', border: '1px solid ' + PROMO_COLOR + '40', borderRadius: 10, padding: '8px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{'🏷️ Active promo'}</span>
+              {vendor.discount_expiry && (
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>
+                  {'Expires ' + new Date(vendor.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+              )}
+            </div>
+            {vendor.discount_description && (
+              <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{vendor.discount_description}</p>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '18', padding: '3px 10px', borderRadius: 6, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{vendor.discount_code}</code>
+              <button onClick={handleCopy} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {copied ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {vendor.location && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {vendor.location}</div>}
         {vendor.services && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{vendor.services}</p>}

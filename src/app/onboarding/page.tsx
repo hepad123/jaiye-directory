@@ -10,13 +10,14 @@ import {
 } from '@/lib/sanitize'
 
 type ProfileType = 'customer' | 'vendor'
+type Step = 'type' | 'profile' | 'about'
 
 export default function OnboardingPage() {
   const supabase = useSupabase()
   const { user, isLoaded } = useUser()
   const router = useRouter()
 
-  const [step, setStep]                         = useState<'type' | 'profile'>('type')
+  const [step, setStep]                         = useState<Step>('type')
   const [profileType, setProfileType]           = useState<ProfileType | null>(null)
   const [displayName, setDisplayName]           = useState('')
   const [username, setUsername]                  = useState('')
@@ -26,19 +27,20 @@ export default function OnboardingPage() {
   const [usernameOk, setUsernameOk]             = useState<boolean | null>(null)
   const [checkingUsername, setCheckingUsername]  = useState(false)
 
-  // Check if user already has a profile — if so, redirect to home
+  const [ageRange, setAgeRange]         = useState('')
+  const [gender, setGender]             = useState('')
+  const [locationType, setLocationType] = useState('')
+  const [aboutLoading, setAboutLoading] = useState(false)
+
   useEffect(() => {
     if (!isLoaded || !user) return
-
     async function checkProfile() {
       const { data } = await supabase
         .from('profiles')
         .select('clerk_user_id')
         .eq('clerk_user_id', user!.id)
         .maybeSingle()
-
       if (data) {
-        // Already onboarded — go home
         router.replace('/')
       } else {
         setRedirecting(false)
@@ -64,16 +66,13 @@ export default function OnboardingPage() {
 
   async function handleSaveProfile() {
     if (!user) return
-    const cleanUsername  = sanitizeUsername(username)
-
-    // display_name is always the person's real name from Clerk
-    // business_name is only for vendors
+    const cleanUsername = sanitizeUsername(username)
     const clerkName = user.fullName || user.firstName || ''
     const businessName = profileType === 'vendor' ? displayName.trim() : null
 
     if (profileType === 'vendor' && !businessName) { setError('Please enter your business name.'); return }
-    if (!isValidUsername(cleanUsername))   { setError('Username must be 3\u201330 characters (letters, numbers, underscores).'); return }
-    if (usernameOk === false)             { setError('That username is taken.'); return }
+    if (!isValidUsername(cleanUsername)) { setError('Username must be 3\u201330 characters (letters, numbers, underscores).'); return }
+    if (usernameOk === false) { setError('That username is taken.'); return }
 
     setLoading(true)
     setError('')
@@ -96,7 +95,24 @@ export default function OnboardingPage() {
       return
     }
 
-    // Redirect immediately — no modal to dismiss, no freeze
+    setLoading(false)
+    setStep('about')
+  }
+
+  async function handleSaveAbout() {
+    if (!user) return
+    setAboutLoading(true)
+
+    await supabase
+      .from('profiles')
+      .update({
+        age_range: ageRange || null,
+        gender: gender || null,
+        location_type: locationType || null,
+      })
+      .eq('clerk_user_id', user.id)
+
+    setAboutLoading(false)
     router.push('/')
   }
 
@@ -121,7 +137,19 @@ export default function OnboardingPage() {
     fontFamily: 'var(--font-jost, sans-serif)',
   })
 
-  // Show loading while checking if profile exists
+  const pillStyle = (selected: boolean): React.CSSProperties => ({
+    padding: '10px 16px',
+    borderRadius: 24,
+    border: `1.5px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+    background: selected ? 'var(--accent-light)' : 'var(--bg-card)',
+    color: selected ? 'var(--accent)' : 'var(--text)',
+    fontSize: 13,
+    fontWeight: selected ? 700 : 400,
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    fontFamily: 'var(--font-jost, sans-serif)',
+  })
+
   if (!isLoaded || redirecting) {
     return (
       <main style={{ fontFamily: 'var(--font-jost, sans-serif)', background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -165,7 +193,7 @@ export default function OnboardingPage() {
                   <div style={{ fontSize: 15, fontWeight: 700, color: profileType === 'customer' ? 'var(--accent)' : 'var(--text)', marginBottom: 3 }}>I'm a user / customer</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>Save vendors, leave reviews, share recommendations</div>
                 </div>
-                {profileType === 'customer' && <div style={{ marginLeft: 'auto', color: 'var(--accent)', fontSize: 18, flexShrink: 0 }}>✓</div>}
+                {profileType === 'customer' ? <div style={{ marginLeft: 'auto', color: 'var(--accent)', fontSize: 18, flexShrink: 0 }}>✓</div> : null}
               </button>
 
               <button onClick={() => setProfileType('vendor')} style={{
@@ -180,7 +208,7 @@ export default function OnboardingPage() {
                   <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>I'm a vendor / stylist</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>Manage your listing, respond to reviews, grow your bookings</div>
                 </div>
-                {profileType === 'vendor' && <div style={{ marginLeft: 'auto', color: 'var(--text)', fontSize: 18, flexShrink: 0 }}>✓</div>}
+                {profileType === 'vendor' ? <div style={{ marginLeft: 'auto', color: 'var(--text)', fontSize: 18, flexShrink: 0 }}>✓</div> : null}
               </button>
             </div>
 
@@ -188,7 +216,7 @@ export default function OnboardingPage() {
               Continue →
             </button>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: '12px 0 0' }}>
-              Step 1 of 2
+              Step 1 of 3
             </p>
           </>
         )}
@@ -207,7 +235,6 @@ export default function OnboardingPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* Business name — vendors only */}
               {profileType === 'vendor' && (
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
@@ -240,35 +267,112 @@ export default function OnboardingPage() {
                       borderColor: usernameOk === true ? '#16A34A' : usernameOk === false ? '#DC2626' : 'var(--border)',
                     }}
                   />
-                  {username.length >= 3 && (
+                  {username.length >= 3 ? (
                     <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: usernameOk === true ? '#16A34A' : '#DC2626' }}>
                       {checkingUsername ? '…' : usernameOk === true ? '✓' : usernameOk === false ? '✗' : ''}
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0 4px' }}>
                   Letters, numbers and underscores only. Min 3 characters.
                 </p>
               </div>
 
-              {error && <p style={{ fontSize: 11, color: '#DC2626', margin: '0 0 2px 4px' }}>{error}</p>}
+              {error ? <p style={{ fontSize: 11, color: '#DC2626', margin: '0 0 2px 4px' }}>{error}</p> : null}
 
               <button
                 onClick={handleSaveProfile}
                 disabled={loading || (profileType === 'vendor' && !displayName.trim()) || username.length < 3 || usernameOk !== true}
                 style={btnStyle(loading || (profileType === 'vendor' && !displayName.trim()) || username.length < 3 || usernameOk !== true)}>
-                {loading ? 'Saving…' : 'Create my profile →'}
+                {loading ? 'Saving…' : 'Continue →'}
               </button>
 
               <button onClick={() => setStep('type')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '4px 0' }}>
                 ← Change account type
               </button>
               <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: '4px 0 0' }}>
-                Step 2 of 2
+                Step 2 of 3
               </p>
             </div>
           </>
         )}
+
+        {/* ── Step 3: About you ── */}
+        {step === 'about' && (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>🌸</div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px', fontFamily: 'var(--font-playfair, serif)' }}>
+                Tell us about yourself
+              </h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
+                Helps us tailor Jaiye for you. All optional.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 0.5, display: 'block', marginBottom: 10 }}>
+                  AGE RANGE
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {['18–24', '25–34', '35–44', '45+'].map(a => (
+                    <button key={a} onClick={() => setAgeRange(ageRange === a ? '' : a)} style={pillStyle(ageRange === a)}>
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 0.5, display: 'block', marginBottom: 10 }}>
+                  GENDER
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {['Woman', 'Man', 'Non-binary', 'Prefer not to say'].map(g => (
+                    <button key={g} onClick={() => setGender(gender === g ? '' : g)} style={pillStyle(gender === g)}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 0.5, display: 'block', marginBottom: 10 }}>
+                  WHERE ARE YOU BASED?
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { value: 'nigeria_resident', label: 'I live in Nigeria 🇳🇬' },
+                    { value: 'diaspora', label: 'I\'m in the diaspora / visiting 🌍' },
+                  ].map(opt => (
+                    <button key={opt.value} onClick={() => setLocationType(locationType === opt.value ? '' : opt.value)} style={{
+                      ...pillStyle(locationType === opt.value),
+                      textAlign: 'left',
+                      padding: '12px 16px',
+                    }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={handleSaveAbout} disabled={aboutLoading} style={btnStyle(aboutLoading)}>
+                {aboutLoading ? 'Saving…' : "Let's go! →"}
+              </button>
+
+              <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '4px 0' }}>
+                Skip for now
+              </button>
+
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: '4px 0 0' }}>
+                Step 3 of 3
+              </p>
+            </div>
+          </>
+        )}
+
       </div>
     </main>
   )

@@ -18,6 +18,9 @@ interface Service {
   price_from: number | null
   bio: string | null
   website: string | null
+  discount_code: string | null
+  discount_description: string | null
+  discount_expiry: string | null
 }
 
 type ServiceStats = {
@@ -88,8 +91,15 @@ const SUB_COLOR: Record<string, string> = {
 }
 
 const CATEGORY_ACCENT = '#B4690E'
+const PROMO_COLOR = '#C0A060'
 const emptyStats: ServiceStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 type SortMode = 'most_used' | 'most_rec'
+
+function isPromoActive(service: Service): boolean {
+  if (!service.discount_code) return false
+  if (!service.discount_expiry) return false
+  return new Date(service.discount_expiry) >= new Date(new Date().toDateString())
+}
 
 function InstagramIcon() {
   return (
@@ -168,7 +178,7 @@ function ReviewsDivider({ manrope }: { manrope: string }) {
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
       {showInfo && (
-        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',zIndex: 100, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 24px rgba(28,25,23,0.12)', minWidth: 220, maxWidth: 260 }}>
+        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 24px rgba(28,25,23,0.12)', minWidth: 220, maxWidth: 260 }}>
           <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 8 }}>How reviews work</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {[
@@ -293,8 +303,6 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-      {/* Score circle + category breakdown */}
       {loaded && reviews.length > 0 && avgOverall !== null && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -316,7 +324,6 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
         </div>
       )}
 
-      {/* Comment snippets */}
       {loaded && allReviews.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {visibleReviews.filter(r => r.comment).slice(0, 2).map(r => (
@@ -328,7 +335,6 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
         </div>
       )}
 
-      {/* CTA buttons */}
       {loaded && (
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <button
@@ -346,7 +352,6 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
         </div>
       )}
 
-      {/* Review form */}
       {showForm && (
         <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {REVIEW_CATS.map(c => (
@@ -390,7 +395,6 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
         </div>
       )}
 
-      {/* Full reviews list */}
       {showAll && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {allReviews.map(r => {
@@ -449,7 +453,7 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+      <button onClick={() => { setOpen(o => !o); setInteracted(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
         {currentLabel}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
       </button>
@@ -572,12 +576,13 @@ function ServicesPage() {
   const [subCity, setSubCity] = useState('')
   const [search, setSearch] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('most_rec')
+  const [showPromos, setShowPromos] = useState(false)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState<Record<string, ServiceStats>>({})
   const [suggestOpen, setSuggestOpen] = useState(false)
   const [displayName, setDisplayName] = useState('')
 
-  useEffect(() => { setSubs([]); setSearch('') }, [cat])
+  useEffect(() => { setSubs([]); setSearch(''); setShowPromos(false) }, [cat])
   useEffect(() => { if (city !== 'London') setSubCity('') }, [city])
 
   useEffect(() => {
@@ -605,7 +610,7 @@ function ServicesPage() {
 
   const fetchServices = useCallback(async () => {
     setLoading(true)
-    let q = supabase.from('services').select('*').eq('category', cat).order('verified', { ascending: false }).order('name')
+    let q = supabase.from('services').select('id, name, category, subcategories, city, location, instagram, phone, price_from, bio, website, discount_code, discount_description, discount_expiry').eq('category', cat).order('verified', { ascending: false }).order('name')
     if (city === 'London') {
       q = q.eq('city', 'London')
       if (subCity && subCity !== 'All London') q = q.ilike('location', '%' + subCity + '%')
@@ -686,6 +691,7 @@ function ServicesPage() {
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
 
   const filteredServices = services.filter(sv => {
+    if (showPromos && !isPromoActive(sv)) return false
     if (!search.trim()) return true
     const q = search.toLowerCase()
     return sv.name?.toLowerCase().includes(q) || sv.bio?.toLowerCase().includes(q) || sv.instagram?.toLowerCase().includes(q) || sv.subcategories?.some(s => s.toLowerCase().includes(q))
@@ -725,6 +731,11 @@ function ServicesPage() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <SubcategoryDropdown cat={cat} subs={subs} setSubs={setSubs} manrope={manrope} />
             <CityDropdown city={city} setCity={setCity} subCity={subCity} setSubCity={setSubCity} manrope={manrope} />
+            <button
+              onClick={() => setShowPromos(p => !p)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + PROMO_COLOR, background: showPromos ? PROMO_COLOR : 'transparent', color: showPromos ? '#fff' : PROMO_COLOR, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+              {'🏷️ Promos'}
+            </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
@@ -740,6 +751,7 @@ function ServicesPage() {
               {search ? ' for "' + search + '"' : ''}
               {subs.length > 0 ? ' \u00b7 ' + subs.join(', ') : ''}
               {city !== 'All' ? ' \u00b7 ' + (subCity && subCity !== 'All London' ? subCity : city) : ''}
+              {showPromos ? ' \u00b7 Active promos' : ''}
             </p>
             <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
               + Suggest
@@ -753,9 +765,9 @@ function ServicesPage() {
         )}
         {!loading && sortedServices.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-            <p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>No results found</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>Try a different search or filter</p>
-            <button onClick={() => { setSearch(''); setSubs([]); setCity('All'); setSubCity('') }} style={{ marginTop: 12, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>Clear filters</button>
+            <p style={{ fontFamily: newsreader, fontSize: 24, marginBottom: 8 }}>{showPromos ? 'No active promos right now' : 'No results found'}</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, fontFamily: manrope }}>{showPromos ? 'Check back soon \u2014 deals get added regularly' : 'Try a different search or filter'}</p>
+            <button onClick={() => { setSearch(''); setSubs([]); setCity('All'); setSubCity(''); setShowPromos(false) }} style={{ marginTop: 12, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>Clear filters</button>
           </div>
         )}
         {!loading && sortedServices.length > 0 && (
@@ -791,6 +803,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   currentUserId: string | null; displayName: string
 }) {
   const [moreOpen, setMoreOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const subs = service.subcategories || []
   const ac = SUB_COLOR[subs[0]] || CATEGORY_ACCENT
   const igUrl = service.instagram ? 'https://instagram.com/' + service.instagram : null
@@ -800,10 +813,19 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   const { usedCount, recCount, hasUsed, hasRec } = stats
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
+  const promoActive = isPromoActive(service)
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)', letterSpacing: '0.04em' }
 
+  function handleCopy() {
+    if (!service.discount_code) return
+    navigator.clipboard.writeText(service.discount_code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
   return (
-    <div id={'service-' + service.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
+    <div id={'service-' + service.id} style={{ background: '#fff', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid var(--border)', position: 'relative', boxShadow: promoActive ? '0 2px 12px rgba(192,160,96,0.15)' : '0 1px 4px rgba(28,25,23,0.06)' }}>
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
         <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
           <HeartIcon filled={isSaved} />
@@ -822,6 +844,28 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap', paddingRight: 40 }}>
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: manrope, letterSpacing: '0.04em' }}>{s}</span>))}
         </div>
+
+        {promoActive && (
+          <div style={{ background: PROMO_COLOR + '12', border: '1px solid ' + PROMO_COLOR + '40', borderRadius: 10, padding: '8px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{'🏷️ Active promo'}</span>
+              {service.discount_expiry && (
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>
+                  {'Expires ' + new Date(service.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+              )}
+            </div>
+            {service.discount_description && (
+              <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{service.discount_description}</p>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '18', padding: '3px 10px', borderRadius: 6, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{service.discount_code}</code>
+              <button onClick={handleCopy} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {copied ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
         {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}

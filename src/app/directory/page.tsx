@@ -18,7 +18,9 @@ type Vendor = {
   email: string
   instagram: string
   website: string
-  discount_code: string
+  discount_code: string | null
+  discount_description: string | null
+  discount_expiry: string | null
   price_from: string
   rating: string
   notes: string
@@ -71,6 +73,7 @@ type VendorStats = {
 type SortMode = 'most_used' | 'most_rec'
 
 const CATEGORY_ACCENT = '#B4690E'
+const PROMO_COLOR = '#C0A060'
 
 const REVIEW_CATS_BY_CATEGORY: Record<string, ReviewCat[]> = {
   'Event Planning': [
@@ -207,6 +210,12 @@ const CATEGORY_META: Record<string, { colour: string }> = {
 }
 
 const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
+
+function isPromoActive(v: Vendor): boolean {
+  if (!v.discount_code) return false
+  if (!v.discount_expiry) return false
+  return new Date(v.discount_expiry) >= new Date(new Date().toDateString())
+}
 
 const isNewVendor = (v: Vendor) => {
   if (!v.created_at) return false
@@ -396,7 +405,6 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
       {loaded && reviews.length > 0 && avgOverall !== null && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -694,6 +702,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const isSaved = savedIds.has(v.id)
   const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
   const reviewCats = REVIEW_CATS_BY_CATEGORY[v.category] || REVIEW_CATS_BY_CATEGORY['Event Planning']
+  const promoActive = isPromoActive(v)
 
   async function toggleUsed() {
     if (!currentUser) { onOpenAuth(); return }
@@ -723,7 +732,10 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
     setRecSubmitting(false)
   }
 
-  function copyCode() { navigator.clipboard.writeText(v.discount_code); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+  function handleCopy() {
+    if (!v.discount_code) return
+    navigator.clipboard.writeText(v.discount_code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
 
   const whatsappNumber = v.phone?.replace(/\D/g, '')
   const whatsappUrl = whatsappNumber ? 'https://wa.me/' + whatsappNumber : null
@@ -740,7 +752,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
 
   return (
-    <div id={'vendor-' + v.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
+    <div id={'vendor-' + v.id} style={{ background: '#fff', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: promoActive ? '0 2px 12px rgba(192,160,96,0.15)' : '0 1px 4px rgba(28,25,23,0.06)' }}>
       {saverLabel && (
         <div style={{ background: colour + '0D', borderBottom: '1px solid ' + colour + '20', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ display: 'flex' }}>
@@ -778,6 +790,28 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         {v.location   && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 3, fontFamily: manrope }}>&#128205; {v.location}</div>}
         {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 3, fontFamily: manrope }}>From &#8358;{v.price_from}</div>}
 
+        {promoActive && (
+          <div style={{ background: PROMO_COLOR + '12', border: '1px solid ' + PROMO_COLOR + '40', borderRadius: 10, padding: '8px 12px', marginBottom: 10, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{'🏷️ Active promo'}</span>
+              {v.discount_expiry && (
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>
+                  {'Expires ' + new Date(v.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+              )}
+            </div>
+            {v.discount_description && (
+              <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{v.discount_description}</p>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '18', padding: '3px 10px', borderRadius: 6, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{v.discount_code}</code>
+              <button onClick={handleCopy} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {copied ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           {igHandle && (
             <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
@@ -790,13 +824,6 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
             </a>
           )}
         </div>
-
-        {v.discount_code && (
-          <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: 'var(--text)', color: 'var(--accent-light)', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: manrope }}>&#127991; {v.discount_code}</span>
-            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)', background: copied ? 'var(--accent-light)' : '#fff', fontSize: 10, color: copied ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: manrope }}>{copied ? 'Copied!' : 'Copy'}</button>
-          </div>
-        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {hasDetails && (
@@ -862,6 +889,7 @@ export default function DirectoryPage() {
   const [location, setLocation] = useState('All')
   const [subLocation, setSubLocation] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('most_rec')
+  const [showPromos, setShowPromos] = useState(false)
   const [loading, setLoading] = useState(true)
   const [cardResetKey, setCardResetKey] = useState(0)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
@@ -897,6 +925,7 @@ export default function DirectoryPage() {
     setSelectedCats([])
     setWeddingType('All')
     setSearch('')
+    setShowPromos(false)
     setCardResetKey(k => k + 1)
   }, [occasion])
 
@@ -991,6 +1020,7 @@ export default function DirectoryPage() {
   const occasionCats = OCCASION_CATEGORIES[occasion] || []
 
   const filtered = vendors.filter(v => {
+    if (showPromos && !isPromoActive(v)) return false
     const q = search.toLowerCase()
     const matchSearch = !q || v.name?.toLowerCase().includes(q) || v.services?.toLowerCase().includes(q) || v.instagram?.toLowerCase().includes(q) || v.notes?.toLowerCase().includes(q)
     const matchOccasion = occasionCats.includes(v.category)
@@ -1061,6 +1091,11 @@ export default function DirectoryPage() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
             <LocationDropdown location={location} subLocation={subLocation} setLocation={setLocation} setSubLocation={setSubLocation} manrope={manrope} />
+            <button
+              onClick={() => setShowPromos(p => !p)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + PROMO_COLOR, background: showPromos ? PROMO_COLOR : 'transparent', color: showPromos ? '#fff' : PROMO_COLOR, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+              {'🏷️ Promos'}
+            </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
@@ -1071,7 +1106,7 @@ export default function DirectoryPage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 16px 2px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
-            {sorted.length} vendors{search ? ' for "' + search + '"' : ''}
+            {sorted.length} vendors{search ? ' for "' + search + '"' : ''}{showPromos ? ' \u00b7 Active promos' : ''}
           </p>
           <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             + Suggest
@@ -1087,9 +1122,9 @@ export default function DirectoryPage() {
           : sorted.length === 0
             ? (
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
-                <p style={{ fontFamily: newsreader, fontSize: 22, marginBottom: 8 }}>No vendors found</p>
-                <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: manrope }}>Try adjusting your filters</p>
-                <button onClick={() => { setSearch(''); setSelectedCats([]); setLocation('All'); setSubLocation(''); setWeddingType('All') }} style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>
+                <p style={{ fontFamily: newsreader, fontSize: 22, marginBottom: 8 }}>{showPromos ? 'No active promos right now' : 'No vendors found'}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: manrope }}>{showPromos ? 'Check back soon \u2014 deals get added regularly' : 'Try adjusting your filters'}</p>
+                <button onClick={() => { setSearch(''); setSelectedCats([]); setLocation('All'); setSubLocation(''); setWeddingType('All'); setShowPromos(false) }} style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>
                   Show all
                 </button>
               </div>

@@ -673,22 +673,17 @@ useEffect(() => {
 
 useEffect(() => {
   const id = searchParams.get('id')
-  if (!id || loading) return
-  let attempts = 0
-  const tryScroll = () => {
-    const el = document.getElementById('service-' + id)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      el.style.outline = '2px solid #B4690E'
-      el.style.outlineOffset = '3px'
-      setTimeout(() => { el.style.outline = 'none' }, 2500)
-    } else if (attempts < 10) {
-      attempts++
-      setTimeout(tryScroll, 200)
-    }
+  if (!id) return
+  const match = services.find(s => s.id === id)
+  if (!match) return
+  const el = document.getElementById('service-' + id)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.style.outline = '2px solid #B4690E'
+    el.style.outlineOffset = '3px'
+    setTimeout(() => { el.style.outline = 'none' }, 2500)
   }
-  tryScroll()
-}, [searchParams, loading])
+}, [searchParams, services])
 
   useEffect(() => {
     if (!user?.id) { setDisplayName(''); return }

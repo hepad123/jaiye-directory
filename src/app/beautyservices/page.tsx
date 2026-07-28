@@ -645,7 +645,10 @@ function ServicesPage() {
   const searchParams = useSearchParams()
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
-  const [cat, setCat] = useState('Hair')
+  const [cat, setCat] = useState(() => {
+  const c = searchParams.get('cat')
+  return c && Object.keys(CATEGORIES).includes(c) ? c : 'Hair'
+})
   const [subs, setSubs] = useState<string[]>([])
   const [city, setCity] = useState('All')
   const [subCity, setSubCity] = useState('')

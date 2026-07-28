@@ -660,22 +660,32 @@ function ServicesPage() {
   useEffect(() => { setSubs([]); setSearch(''); setShowPromos(false) }, [cat])
   useEffect(() => { if (city !== 'London') setSubCity('') }, [city])
 
-  useEffect(() => {
-    const c = searchParams.get('cat')
-    if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
-    const id = searchParams.get('id')
-    if (id) {
-      setTimeout(() => {
-        const el = document.getElementById('service-' + id)
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          el.style.outline = '2px solid #B4690E'
-          el.style.outlineOffset = '3px'
-          setTimeout(() => { el.style.outline = 'none' }, 2500)
-        }
-      }, 800)
+  useEffect(() => { setSubs([]); setSearch(''); setShowPromos(false) }, [cat])
+useEffect(() => { if (city !== 'London') setSubCity('') }, [city])
+
+useEffect(() => {
+  const c = searchParams.get('cat')
+  if (c && Object.keys(CATEGORIES).includes(c)) setCat(c)
+}, [searchParams])
+
+useEffect(() => {
+  const id = searchParams.get('id')
+  if (!id || loading) return
+  let attempts = 0
+  const tryScroll = () => {
+    const el = document.getElementById('service-' + id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.style.outline = '2px solid #B4690E'
+      el.style.outlineOffset = '3px'
+      setTimeout(() => { el.style.outline = 'none' }, 2500)
+    } else if (attempts < 10) {
+      attempts++
+      setTimeout(tryScroll, 200)
     }
-  }, [searchParams])
+  }
+  tryScroll()
+}, [searchParams, loading])
 
   useEffect(() => {
     if (!user?.id) { setDisplayName(''); return }

@@ -207,7 +207,7 @@ function NavDrawer({ open, onClose, pathname, savedCount }: { open: boolean; onC
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(28,25,23,0.4)', opacity: open ? 1 : 0, pointerEvents: open ? 'all' : 'none', transition: 'opacity 0.2s', backdropFilter: 'blur(2px)' }} />
       <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 260, zIndex: 50, background: 'var(--bg-card)', borderRight: '1px solid var(--border)', transform: open ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.22s ease', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-          <div style={{ fontFamily: play, fontSize: 22, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em' }}>Jaiye</div>
+          <div style={{ fontFamily: play, fontSize: 22, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em' }}>Jaiyé</div>
           <div style={{ fontFamily: manrope, fontSize: 10, color: 'var(--text-muted)', marginTop: 3, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Nigerian beauty services and events directory</div>
         </div>
 
@@ -318,7 +318,7 @@ export default function Navbar() {
             <div style={{ width: 14, height: 1.5, background: 'var(--text)', borderRadius: 2, transition: 'all 0.2s', opacity: drawerOpen ? 0 : 1 }} />
             <div style={{ width: 18, height: 1.5, background: 'var(--text)', borderRadius: 2, transition: 'all 0.2s', transform: drawerOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }} />
           </button>
-          <Link href="/" style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 16, fontWeight: 700, color: 'var(--accent)', textDecoration: 'none', letterSpacing: '0.08em', flexShrink: 0 }}>Jaiye</Link>
+          <Link href="/" style={{ fontFamily: 'var(--font-playfair, serif)', fontSize: 16, fontWeight: 700, color: 'var(--accent)', textDecoration: 'none', letterSpacing: '0.08em', flexShrink: 0 }}>Jaiyé</Link>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

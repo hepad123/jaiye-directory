@@ -192,7 +192,7 @@ export default function HomePage() {
     <div style={{ background: "#faf9f6", color: "#1C1917", fontFamily: "var(--font-jost, 'Jost', sans-serif)", overflowX: "hidden", position: "relative" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;1,400&display=swap');
-        @keyframes jaiye-ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes jaiyé-ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .hero-content { position: relative; width: 100%; padding: 0 1.5rem; max-width: 680px; }
         @media (min-width: 768px) { .hero-content { padding: 0 3rem; } }
         .category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 560px; }
@@ -218,7 +218,7 @@ export default function HomePage() {
         <img src={UNSPLASH_HERO} alt="Editorial portrait" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", filter: "sepia(8%) brightness(0.88)" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(15,10,5,0.82) 0%, rgba(15,10,5,0.38) 45%, transparent 100%)" }} />
         <div style={{ position: "absolute", top: "5.5rem", right: "1.5rem", writingMode: "vertical-rl", fontSize: "9px", letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-jost, 'Jost', sans-serif)" }}>
-          Jaiye Directory &mdash; Est. 2025
+          Jaiyé Directory &mdash; Est. 2025
         </div>
         <div className="hero-content">
           <p data-reveal style={{ ...revealBase, fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#D97706", fontWeight: 600, marginBottom: "1rem" }}>
@@ -268,7 +268,7 @@ export default function HomePage() {
 
       {/* TICKER */}
       <div style={{ background: "#8d4b00", overflow: "hidden", padding: "0.75rem 0", whiteSpace: "nowrap", position: "relative", zIndex: 1 }}>
-        <div style={{ display: "inline-flex", gap: "3rem", animation: "jaiye-ticker 28s linear infinite", fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>
+        <div style={{ display: "inline-flex", gap: "3rem", animation: "jaiyé-ticker 28s linear infinite", fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>
           {[...tickerItems, ...tickerItems].map((t, i) => (
             <span key={i}>{t}<span style={{ margin: "0 1.5rem", opacity: 0.4 }}>&bull;</span></span>
           ))}
@@ -330,7 +330,7 @@ export default function HomePage() {
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#8d4b00", padding: "7px 14px", display: "flex", alignItems: "center", gap: "7px" }}>
                     <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#ffffff" }}>Top Rated</span>
                     <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.45)" }}>&#10022;</span>
-                    <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.65)", fontWeight: 500, letterSpacing: "0.08em" }}>Jaiye Directory</span>
+                    <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.65)", fontWeight: 500, letterSpacing: "0.08em" }}>Jaiyé Directory</span>
                   </div>
                 </div>
                 <div style={{ padding: "1.25rem" }}>
@@ -392,14 +392,14 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <footer style={{ background: "#1C1917", padding: "3.5rem 1.5rem", textAlign: "center" }}>
-        <h4 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.4rem", fontWeight: 700, color: "#ffffff", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>JAIYE DIRECTORY</h4>
+        <h4 style={{ fontFamily: "var(--font-playfair, 'Fraunces', serif)", fontSize: "1.4rem", fontWeight: 700, color: "#ffffff", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>JAIYÉ DIRECTORY</h4>
         <p style={{ fontSize: "9px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#D97706", marginBottom: "2rem" }}>Crafting Tradition</p>
         <div style={{ display: "flex", justifyContent: "center", gap: "2rem", flexWrap: "wrap", marginBottom: "2rem" }}>
           {["Beauty Services", "Events", "Community", "Contact"].map((link) => (
             <a key={link} href="#" style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>{link}</a>
           ))}
         </div>
-        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)" }}>&copy; 2026 Jaiye Directory. All rights reserved.</p>
+        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)" }}>&copy; 2026 Jaiyé Directory. All rights reserved.</p>
       </footer>
     </div>
   );

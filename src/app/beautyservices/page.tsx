@@ -21,6 +21,7 @@ interface Service {
   discount_code: string | null
   discount_description: string | null
   discount_expiry: string | null
+  linked_vendor_id: string | null
 }
 
 type ServiceStats = {
@@ -205,8 +206,9 @@ function ReviewsDivider({ manrope }: { manrope: string }) {
   )
 }
 
-function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsreader, onScoreUpdate }: {
+function ReviewsSection({ serviceId, linkedVendorId, currentUserId, displayName, manrope, newsreader, onScoreUpdate }: {
   serviceId: string
+  linkedVendorId: string | null
   currentUserId: string | null
   displayName: string
   manrope: string
@@ -216,6 +218,7 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
   const supabase = useSupabase()
   const { openSignIn } = useClerk()
   const [reviews, setReviews] = useState<ServiceReview[]>([])
+  const [linkedReviews, setLinkedReviews] = useState<ServiceReview[]>([])
   const [loaded, setLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -228,12 +231,14 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
   const [lastUsedMonth, setLastUsedMonth] = useState('')
   const [lastUsedYear, setLastUsedYear] = useState('')
 
-  const myReview = reviews.find(r => r.clerk_user_id === currentUserId) || null
-  const otherReviews = reviews.filter(r => r.clerk_user_id !== currentUserId)
+  const combinedReviews = [...reviews, ...linkedReviews]
+
+  const myReview = combinedReviews.find(r => r.clerk_user_id === currentUserId) || null
+  const otherReviews = combinedReviews.filter(r => r.clerk_user_id !== currentUserId)
   const allReviews = myReview ? [myReview, ...otherReviews] : otherReviews
   const visibleReviews = showAll ? allReviews : allReviews.slice(0, 3)
 
-  const validScores = reviews.map(calcOverallScore).filter((v): v is number => v !== null)
+  const validScores = combinedReviews.map(calcOverallScore).filter((v): v is number => v !== null)
   const avgOverall = validScores.length > 0
     ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length * 10) / 10
     : null
@@ -256,8 +261,17 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
   }, [serviceId])
 
   useEffect(() => {
-    if (loaded && onScoreUpdate) onScoreUpdate(avgOverall, reviews.length)
-  }, [avgOverall, loaded, reviews.length])
+    if (!linkedVendorId) { setLinkedReviews([]); return }
+    supabase.from('vendor_reviews')
+      .select('*')
+      .eq('vendor_id', linkedVendorId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setLinkedReviews(data || []))
+  }, [linkedVendorId])
+
+  useEffect(() => {
+    if (loaded && onScoreUpdate) onScoreUpdate(avgOverall, combinedReviews.length)
+  }, [avgOverall, loaded, combinedReviews.length])
 
   function startEdit() {
     if (myReview) {
@@ -344,7 +358,7 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {loaded && reviews.length > 0 && avgOverall !== null && (
+      {loaded && combinedReviews.length > 0 && avgOverall !== null && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: manrope, lineHeight: 1 }}>{avgOverall}</span>
@@ -352,7 +366,7 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
             {REVIEW_CATS.map(c => {
-              const avg = calcCatAvg(reviews, c.key)
+              const avg = calcCatAvg(combinedReviews, c.key)
               if (avg === null) return null
               return (
                 <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -693,7 +707,7 @@ useEffect(() => {
 
   const fetchServices = useCallback(async () => {
     setLoading(true)
-    let q = supabase.from('services').select('id, name, category, subcategories, city, location, instagram, phone, price_from, bio, website, discount_code, discount_description, discount_expiry').eq('category', cat).order('verified', { ascending: false }).order('name')
+    let q = supabase.from('services').select('id, name, category, subcategories, city, location, instagram, phone, price_from, bio, website, discount_code, discount_description, discount_expiry, linked_vendor_id').eq('category', cat).order('verified', { ascending: false }).order('name')
     if (city === 'London') {
       q = q.eq('city', 'London')
       if (subCity && subCity !== 'All London') q = q.ilike('location', '%' + subCity + '%')
@@ -986,6 +1000,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
         <ReviewsSection
           serviceId={service.id}
+          linkedVendorId={service.linked_vendor_id}
           currentUserId={currentUserId}
           displayName={displayName}
           manrope={manrope}

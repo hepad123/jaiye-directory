@@ -28,6 +28,7 @@ type Vendor = {
   verified?: boolean
   wedding_type?: string
   occasions?: string[]
+  linked_service_id: string | null
 }
 
 type VendorReview = {
@@ -320,8 +321,9 @@ function ReviewsDivider({ manrope, cats }: { manrope: string; cats: ReviewCat[] 
   )
 }
 
-function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsreader }: {
+function ReviewSection({ vendorId, linkedServiceId, vendorCategory, currentUser, manrope, newsreader }: {
   vendorId: string
+  linkedServiceId: string | null
   vendorCategory: string
   currentUser: CurrentUser | null
   manrope: string
@@ -330,6 +332,7 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
   const supabase = useSupabase()
   const { openSignIn } = useClerk()
   const [reviews, setReviews] = useState<VendorReview[]>([])
+  const [linkedReviews, setLinkedReviews] = useState<VendorReview[]>([])
   const [loaded, setLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -344,12 +347,14 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
 
   const REVIEW_CATS = REVIEW_CATS_BY_CATEGORY[vendorCategory] || REVIEW_CATS_BY_CATEGORY['Event Planning']
 
-  const myReview = reviews.find(r => r.clerk_user_id === currentUser?.id) || null
-  const otherReviews = reviews.filter(r => r.clerk_user_id !== currentUser?.id)
+  const combinedReviews = [...reviews, ...linkedReviews]
+
+  const myReview = combinedReviews.find(r => r.clerk_user_id === currentUser?.id) || null
+  const otherReviews = combinedReviews.filter(r => r.clerk_user_id !== currentUser?.id)
   const allReviews = myReview ? [myReview, ...otherReviews] : otherReviews
   const visibleReviews = showAll ? allReviews : allReviews.slice(0, 3)
 
-  const validScores = reviews.map(r => calcOverallScore(r, REVIEW_CATS)).filter((v): v is number => v !== null)
+  const validScores = combinedReviews.map(r => calcOverallScore(r, REVIEW_CATS)).filter((v): v is number => v !== null)
   const avgOverall = validScores.length > 0
     ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length * 10) / 10
     : null
@@ -363,6 +368,12 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
     supabase.from('vendor_reviews').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false })
       .then(({ data }) => { setReviews(data || []); setLoaded(true); setLoading(false) })
   }, [vendorId])
+
+  useEffect(() => {
+    if (!linkedServiceId) { setLinkedReviews([]); return }
+    supabase.from('service_reviews').select('*').eq('service_id', linkedServiceId).order('created_at', { ascending: false })
+      .then(({ data }) => setLinkedReviews(data || []))
+  }, [linkedServiceId])
 
   function startEdit() {
     if (myReview) {
@@ -449,7 +460,7 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {loaded && reviews.length > 0 && avgOverall !== null && (
+      {loaded && combinedReviews.length > 0 && avgOverall !== null && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: manrope, lineHeight: 1 }}>{avgOverall}</span>
@@ -457,7 +468,7 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
             {REVIEW_CATS.map(c => {
-              const avg = calcCatAvg(reviews, c.key)
+              const avg = calcCatAvg(combinedReviews, c.key)
               if (avg === null) return null
               return (
                 <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -947,7 +958,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
           )}
 
           <ReviewsDivider manrope={manrope} cats={reviewCats} />
-          <ReviewSection vendorId={v.id} vendorCategory={v.category} currentUser={currentUser} manrope={manrope} newsreader={newsreader} />
+          <ReviewSection vendorId={v.id} linkedServiceId={v.linked_service_id} vendorCategory={v.category} currentUser={currentUser} manrope={manrope} newsreader={newsreader} />
         </div>
       </div>
     </div>

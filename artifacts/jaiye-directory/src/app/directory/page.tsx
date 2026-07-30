@@ -1,0 +1,1271 @@
+
+
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { Link } from 'wouter'
+import { useUser, useClerk } from '@clerk/clerk-react'
+import { useSupabase } from '@/hooks/useSupabase'
+import { useAuthFetch } from '@/hooks/useAuthFetch'
+import { sanitizeSearch, safeVendorUrl, LIMITS } from '@/lib/sanitize'
+import SuggestVendorModal from '@/components/SuggestVendorModal'
+
+type Vendor = {
+  id: string
+  category: string
+  name: string
+  services: string
+  location: string
+  contact_name: string
+  phone: string
+  email: string
+  instagram: string
+  website: string
+  discount_code: string | null
+  discount_description: string | null
+  discount_expiry: string | null
+  price_from: string
+  rating: string
+  notes: string
+  created_at?: string
+  verified?: boolean
+  wedding_type?: string
+  occasions?: string[]
+}
+
+type VendorReview = {
+  id: string
+  clerk_user_id: string
+  reviewer_name: string
+  rating_experience: number
+  rating_quality: number
+  rating_quality_results: number | null
+  rating_value: number | null
+  rating_professionalism: number | null
+  rating_cleanliness: number | null
+  rating_reliability: number | null
+  rating_flexibility: number | null
+  comment: string | null
+  created_at: string
+  is_repeat_user: boolean | null
+  last_used_date: string | null
+}
+
+type ReviewCat = { key: string; label: string; hint: string; required: boolean }
+
+type CurrentUser = {
+  id: string
+  name: string
+  email: string
+  username: string
+}
+
+type FollowProfile = {
+  id: string
+  display_name: string
+  username: string
+  avatar_url?: string
+}
+
+type VendorStats = {
+  avgRating: number | null
+  usedCount: number
+  recCount: number
+  hasUsed: boolean
+  hasRec: boolean
+}
+
+type SortMode = 'most_used' | 'most_rec'
+
+const CATEGORY_ACCENT = '#B4690E'
+const PROMO_COLOR = '#C0A060'
+
+const REVIEW_CATS_BY_CATEGORY: Record<string, ReviewCat[]> = {
+  'Event Planning': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Photography': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Videography & Content': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Decor & Venue': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Catering': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Entertainment': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Outfits': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Styling': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Accessories': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Hair & Gele': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+  'Makeup': [
+    { key: 'rating_quality_results', label: 'Quality of results', hint: 'overall satisfaction', required: true },
+    { key: 'rating_value', label: 'Value for money', hint: '', required: true },
+    { key: 'rating_professionalism', label: 'Professionalism', hint: 'listening, communication, care', required: true },
+    { key: 'rating_cleanliness', label: 'Cleanliness & comfort', hint: '', required: false },
+    { key: 'rating_reliability', label: 'Reliability', hint: 'punctuality, keeping to hours', required: false },
+    { key: 'rating_flexibility', label: 'Flexibility', hint: '', required: false },
+  ],
+}
+
+function calcOverallScore(r: VendorReview, cats: ReviewCat[]): number | null {
+  const vals = cats
+    .map(c => (r as unknown as Record<string, number | null>)[c.key])
+    .filter((v): v is number => v !== null && v !== undefined)
+  if (vals.length < 3) return null
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 2 * 10) / 10
+}
+
+function calcCatAvg(reviews: VendorReview[], key: string): number | null {
+  const vals = reviews
+    .map(r => (r as unknown as Record<string, number | null>)[key])
+    .filter((v): v is number => v !== null && v !== undefined)
+  if (vals.length === 0) return null
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+}
+
+const OCCASION_TABS = [
+  { key: 'weddings',      label: 'Weddings' },
+  { key: 'birthdays',     label: 'Birthdays' },
+  { key: 'corporate',     label: 'Corporate' },
+  { key: 'celebrations',  label: 'Celebrations' },
+  { key: 'babyshower',    label: 'Baby Showers' },
+  { key: 'naming',        label: 'Naming Ceremonies' },
+]
+
+const OCCASION_CATEGORIES: Record<string, string[]> = {
+  weddings:     ['Event Planning', 'Outfits', 'Styling', 'Makeup', 'Hair & Gele', 'Photography', 'Videography & Content', 'Decor & Venue', 'Catering', 'Entertainment', 'Accessories'],
+  birthdays:    ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Videography & Content'],
+  corporate:    ['Event Planning', 'Decor & Venue', 'Catering', 'Photography', 'Videography & Content'],
+  celebrations: ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Videography & Content', 'Makeup'],
+  babyshower:   ['Event Planning', 'Decor & Venue', 'Catering', 'Photography'],
+  naming:       ['Event Planning', 'Decor & Venue', 'Catering', 'Entertainment', 'Photography', 'Outfits', 'Hair & Gele', 'Makeup'],
+}
+
+const WEDDING_TYPE_CATS = ['Outfits', 'Styling', 'Accessories']
+
+const CATEGORY_META: Record<string, { colour: string }> = {
+  'Event Planning':        { colour: '#6366F1' },
+  'Styling':               { colour: '#0D9488' },
+  'Outfits':               { colour: '#D97706' },
+  'Makeup':                { colour: '#DB2777' },
+  'Hair & Gele':           { colour: '#EA580C' },
+  'Photography':           { colour: '#2563EB' },
+  'Videography & Content': { colour: '#78716C' },
+  'Decor & Venue':         { colour: '#92400E' },
+  'Catering':              { colour: '#C2410C' },
+  'Entertainment':         { colour: '#7C3AED' },
+  'Accessories':           { colour: '#B45309' },
+}
+
+const getColour = (cat: string) => CATEGORY_META[cat]?.colour ?? '#D97706'
+
+function isPromoActive(v: Vendor): boolean {
+  if (!v.discount_code) return false
+  if (!v.discount_expiry) return false
+  return new Date(v.discount_expiry) >= new Date(new Date().toDateString())
+}
+
+const isNewVendor = (v: Vendor) => {
+  if (!v.created_at) return false
+  const created = new Date(v.created_at)
+  const weekAgo = new Date()
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  return created > weekAgo
+}
+
+function InstagramIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+    </svg>
+  )
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+  )
+}
+
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'var(--accent)' : 'none'} stroke={filled ? 'var(--accent)' : 'var(--border)'} strokeWidth="2" style={{ flexShrink: 0, transition: 'all 0.15s ease' }}>
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+  )
+}
+
+function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div style={{ display: 'flex', gap: 2 }}>
+      {[1,2,3,4,5].map(s => (
+        <span key={s} onClick={() => onChange(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)}
+          style={{ cursor: 'pointer', fontSize: 20, color: s <= (hover || value) ? '#D97706' : '#D1C9BE', transition: 'color 0.1s', userSelect: 'none' }}>
+          &#9733;
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function StarDisplay({ value }: { value: number }) {
+  return (
+    <span style={{ fontSize: 13, letterSpacing: 1 }}>
+      {[1,2,3,4,5].map(s => (
+        <span key={s} style={{ color: s <= Math.round(value) ? '#D97706' : '#D1C9BE' }}>&#9733;</span>
+      ))}
+    </span>
+  )
+}
+
+function ReviewsDivider({ manrope, cats }: { manrope: string; cats: ReviewCat[] }) {
+  const [showInfo, setShowInfo] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setShowInfo(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', margin: '4px 0 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope }}>Reviews</span>
+          <button onClick={() => setShowInfo(o => !o)} style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid ' + CATEGORY_ACCENT, background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}>
+            <span style={{ fontSize: 8, fontWeight: 700, color: CATEGORY_ACCENT, fontFamily: manrope, lineHeight: 1 }}>i</span>
+          </button>
+        </div>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      </div>
+      {showInfo && (
+        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 24px rgba(28,25,23,0.12)', minWidth: 220, maxWidth: 260 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 8 }}>How reviews work</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {cats.map(c => (
+              <div key={c.label} style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                <span style={{ color: '#D97706', fontSize: 10, flexShrink: 0 }}>&#9733;</span>
+                <span style={{ fontSize: 10, color: 'var(--text)', fontFamily: manrope }}>
+                  {c.label}{c.hint ? <span style={{ color: 'var(--text-muted)' }}> — {c.hint}</span> : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsreader }: {
+  vendorId: string
+  vendorCategory: string
+  currentUser: CurrentUser | null
+  manrope: string
+  newsreader: string
+}) {
+  const supabase = useSupabase()
+  const authFetch = useAuthFetch()
+  const { openSignIn } = useClerk()
+  const [reviews, setReviews] = useState<VendorReview[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+  const [ratings, setRatings] = useState<Record<string, number>>({})
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [isRepeatUser, setIsRepeatUser] = useState<boolean | null>(null)
+  const [lastUsedMonth, setLastUsedMonth] = useState('')
+  const [lastUsedYear, setLastUsedYear] = useState('')
+
+  const REVIEW_CATS = REVIEW_CATS_BY_CATEGORY[vendorCategory] || REVIEW_CATS_BY_CATEGORY['Event Planning']
+
+  const myReview = reviews.find(r => r.clerk_user_id === currentUser?.id) || null
+  const otherReviews = reviews.filter(r => r.clerk_user_id !== currentUser?.id)
+  const allReviews = myReview ? [myReview, ...otherReviews] : otherReviews
+  const visibleReviews = showAll ? allReviews : allReviews.slice(0, 3)
+
+  const validScores = reviews.map(r => calcOverallScore(r, REVIEW_CATS)).filter((v): v is number => v !== null)
+  const avgOverall = validScores.length > 0
+    ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length * 10) / 10
+    : null
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const currentYear = new Date().getFullYear()
+  const YEARS = Array.from({ length: currentYear - 2017 }, (_, i) => String(currentYear - i))
+
+  useEffect(() => {
+    setLoading(true)
+    supabase.from('vendor_reviews').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false })
+      .then(({ data }) => { setReviews(data || []); setLoaded(true); setLoading(false) })
+  }, [vendorId])
+
+  function startEdit() {
+    if (myReview) {
+      const r: Record<string, number> = {}
+      REVIEW_CATS.forEach(c => {
+        const v = (myReview as unknown as Record<string, number | null>)[c.key]
+        if (v !== null && v !== undefined) r[c.key] = v
+      })
+      setRatings(r)
+      setComment(myReview.comment || '')
+      setIsRepeatUser(myReview.is_repeat_user ?? null)
+      if (myReview.last_used_date) {
+        const d = new Date(myReview.last_used_date)
+        setLastUsedMonth(String(d.getMonth() + 1))
+        setLastUsedYear(String(d.getFullYear()))
+      } else {
+        setLastUsedMonth('')
+        setLastUsedYear('')
+      }
+    } else {
+      setRatings({})
+      setComment('')
+      setIsRepeatUser(null)
+      setLastUsedMonth('')
+      setLastUsedYear('')
+    }
+    setShowForm(true)
+  }
+
+  const mandatoryMet = REVIEW_CATS.filter(c => c.required).every(c => (ratings[c.key] || 0) > 0)
+
+  function buildLastUsedDate(): string | null {
+    if (isRepeatUser && lastUsedMonth && lastUsedYear) {
+      const month = lastUsedMonth.padStart(2, '0')
+      return lastUsedYear + '-' + month + '-01'
+    }
+    return null
+  }
+
+  function formatLastUsed(dateStr: string): string {
+    const d = new Date(dateStr)
+    return MONTHS[d.getMonth()] + ' ' + d.getFullYear()
+  }
+
+  async function handleSubmit() {
+    if (!currentUser) { openSignIn(); return }
+    if (!mandatoryMet) return
+    setSubmitting(true)
+    const payload: Record<string, string | number | boolean | null> = {
+      vendor_id: vendorId,
+      clerk_user_id: currentUser.id,
+      reviewer_name: currentUser.name,
+      comment: comment.trim() || null,
+      rating_experience: ratings['rating_professionalism'] || 0,
+      rating_quality: ratings['rating_quality_results'] || 0,
+      is_repeat_user: isRepeatUser,
+      last_used_date: buildLastUsedDate(),
+    }
+    REVIEW_CATS.forEach(c => { payload[c.key] = ratings[c.key] !== undefined ? ratings[c.key] : null })
+    const { data, error } = await supabase.from('vendor_reviews').upsert(payload, { onConflict: 'vendor_id,clerk_user_id' }).select()
+    if (!error && data) {
+      setReviews(prev => { const without = prev.filter(r => r.clerk_user_id !== currentUser.id); return [data[0], ...without] })
+      setShowForm(false)
+    }
+    setSubmitting(false)
+  }
+
+  async function handleDelete() {
+    if (!currentUser || !myReview) return
+    setDeleting(true)
+    await supabase.from('vendor_reviews').delete().eq('id', myReview.id)
+    setReviews(prev => prev.filter(r => r.id !== myReview.id))
+    setShowForm(false); setDeleting(false)
+  }
+
+  const selectStyle: React.CSSProperties = {
+    padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+    fontSize: 12, color: 'var(--text)', background: '#fff',
+    fontFamily: manrope, outline: 'none', cursor: 'pointer',
+  }
+
+  if (loading) return <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>Loading reviews...</p>
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+      {loaded && reviews.length > 0 && avgOverall !== null && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: CATEGORY_ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: manrope, lineHeight: 1 }}>{avgOverall}</span>
+            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)', fontFamily: manrope, lineHeight: 1 }}>/10</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
+            {REVIEW_CATS.map(c => {
+              const avg = calcCatAvg(reviews, c.key)
+              if (avg === null) return null
+              return (
+                <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>{c.label} <span style={{ color: CATEGORY_ACCENT }}>({avg})</span></span>
+                  <StarDisplay value={avg} />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {loaded && allReviews.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {visibleReviews.filter(r => r.comment).slice(0, 2).map(r => (
+            <div key={r.id} style={{ background: 'var(--bg-pill)', borderRadius: 8, padding: '8px 10px' }}>
+              <p style={{ fontSize: 11, color: 'var(--text)', margin: '0 0 3px', lineHeight: 1.5, fontFamily: manrope, fontStyle: 'italic' }}>{'\u201c'}{r.comment}{'\u201d'}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                {r.is_repeat_user && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontWeight: 700, fontFamily: manrope, background: CATEGORY_ACCENT + '12', padding: '1px 6px', borderRadius: 20 }}>Repeat customer</span>}
+                {r.last_used_date && <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>{'Used ' + formatLastUsed(r.last_used_date)}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {loaded && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => { if (!currentUser) { openSignIn(); return }; showForm ? setShowForm(false) : startEdit() }}
+            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1.5px solid ' + CATEGORY_ACCENT, background: CATEGORY_ACCENT, color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+            {myReview ? 'Edit your review' : '+ Leave a review'}
+          </button>
+          {allReviews.length > 0 && (
+            <button onClick={() => setShowAll(o => !o)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 20, border: '1px solid var(--border)', background: 'none', color: 'var(--text-muted)', fontSize: 10, fontWeight: 600, fontFamily: manrope, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+              {showAll ? 'Show less' : 'See all ' + allReviews.length + ' reviews'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {showForm && (
+        <div style={{ background: 'var(--bg-pill)', borderRadius: 10, padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {REVIEW_CATS.map(c => (
+            <div key={c.key}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>
+                  {c.label}{c.hint ? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> ({c.hint})</span> : ''}
+                  {c.required && <span style={{ color: CATEGORY_ACCENT }}> *</span>}
+                </span>
+                {!c.required && (ratings[c.key] || 0) === 0 && (
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope, letterSpacing: '0.06em' }}>OPTIONAL</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <StarPicker value={ratings[c.key] || 0} onChange={v => setRatings(prev => ({ ...prev, [c.key]: v }))} />
+                {(ratings[c.key] || 0) > 0 && !c.required && (
+                  <button onClick={() => setRatings(prev => { const n = { ...prev }; delete n[c.key]; return n })} style={{ fontSize: 9, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope }}>clear</button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>Have you used this vendor before?</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setIsRepeatUser(true)} style={{ padding: '6px 16px', borderRadius: 20, border: '1.5px solid ' + (isRepeatUser === true ? CATEGORY_ACCENT : 'var(--border)'), background: isRepeatUser === true ? CATEGORY_ACCENT : '#fff', color: isRepeatUser === true ? '#fff' : 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s' }}>Yes</button>
+              <button onClick={() => { setIsRepeatUser(false); setLastUsedMonth(''); setLastUsedYear('') }} style={{ padding: '6px 16px', borderRadius: 20, border: '1.5px solid ' + (isRepeatUser === false ? 'var(--text-muted)' : 'var(--border)'), background: isRepeatUser === false ? 'var(--bg-pill)' : '#fff', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s' }}>No</button>
+            </div>
+
+            {isRepeatUser === true && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>When did you last use them?</span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select value={lastUsedMonth} onChange={e => setLastUsedMonth(e.target.value)} style={selectStyle}>
+                    <option value="">Month</option>
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={String(i + 1)}>{m}</option>
+                    ))}
+                  </select>
+                  <select value={lastUsedYear} onChange={e => setLastUsedYear(e.target.value)} style={selectStyle}>
+                    <option value="">Year</option>
+                    {YEARS.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <textarea placeholder="Any additional comments? (optional)" value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 16, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
+              {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
+            </button>
+            <button onClick={() => setShowForm(false)} style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', fontFamily: manrope }}>Cancel</button>
+            {myReview && (
+              <button onClick={handleDelete} disabled={deleting} style={{ padding: '7px 14px', background: 'none', border: '1px solid #DC2626', borderRadius: 20, fontSize: 11, color: '#DC2626', cursor: 'pointer', fontFamily: manrope, marginLeft: 'auto' }}>
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showAll && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {allReviews.map(r => {
+            const isMe = r.clerk_user_id === currentUser?.id
+            return (
+              <div key={r.id} style={{ background: isMe ? 'var(--accent-light)' : 'var(--bg-pill)', border: isMe ? '1px solid var(--gold)' : 'none', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {isMe && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, letterSpacing: '0.06em', background: CATEGORY_ACCENT + '15', padding: '2px 7px', borderRadius: 20 }}>YOUR REVIEW</span>}
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                    {r.is_repeat_user && <span style={{ fontSize: 9, color: CATEGORY_ACCENT, fontWeight: 700, fontFamily: manrope, background: CATEGORY_ACCENT + '12', padding: '1px 6px', borderRadius: 20 }}>Repeat customer</span>}
+                    {r.last_used_date && <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>{'Used ' + formatLastUsed(r.last_used_date)}</span>}
+                  </div>
+                  {isMe && <button onClick={startEdit} style={{ fontSize: 10, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: manrope }}>Edit</button>}
+                </div>
+                {REVIEW_CATS.map(c => {
+                  const v = (r as unknown as Record<string, number | null>)[c.key]
+                  if (!v) return null
+                  return (
+                    <div key={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>{c.label}</span>
+                      <StarDisplay value={v} />
+                    </div>
+                  )
+                })}
+                {r.comment && <p style={{ fontSize: 11, color: 'var(--text)', margin: '6px 0 0', lineHeight: 1.5, fontFamily: manrope }}>{r.comment}</p>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {loaded && allReviews.length === 0 && !showForm && (
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, textAlign: 'center', padding: '4px 0' }}>No reviews yet {'\u2014'} be the first!</p>
+      )}
+    </div>
+  )
+}
+
+function CategoryDropdown({ occasion, selectedCats, setSelectedCats, weddingType, setWeddingType, manrope }: {
+  occasion: string
+  selectedCats: string[]
+  setSelectedCats: (c: string[]) => void
+  weddingType: string
+  setWeddingType: (t: string) => void
+  manrope: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const availableCats = OCCASION_CATEGORIES[occasion] || []
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mouseup', handleClick)
+    return () => document.removeEventListener('mouseup', handleClick)
+  }, [])
+
+  const toggle = (cat: string) => {
+    if (selectedCats.includes(cat)) {
+      setSelectedCats(selectedCats.filter(c => c !== cat))
+    } else {
+      setSelectedCats([...selectedCats, cat])
+    }
+  }
+
+  const label = selectedCats.length === 0 ? 'All Vendors' : selectedCats.length === 1 ? selectedCats[0] : selectedCats.length + ' Categories'
+  const isFiltered = selectedCats.length > 0
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: isFiltered ? CATEGORY_ACCENT : 'transparent', color: isFiltered ? '#fff' : CATEGORY_ACCENT, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+        {label}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 220, maxHeight: 380, overflowY: 'auto' }}>
+          <button onClick={() => { setSelectedCats([]); setWeddingType('All') }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: selectedCats.length === 0 ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', borderBottom: '1px solid var(--border)', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: selectedCats.length === 0 ? 700 : 400, color: selectedCats.length === 0 ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer' }}>
+            All Vendors
+            {selectedCats.length === 0 && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+          </button>
+          {availableCats.map(cat => (
+            <div key={cat}>
+              <button onClick={() => toggle(cat)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: selectedCats.includes(cat) ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: selectedCats.includes(cat) ? 700 : 400, color: selectedCats.includes(cat) ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (!selectedCats.includes(cat)) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (!selectedCats.includes(cat)) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                {cat}
+                {selectedCats.includes(cat) && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              </button>
+              {selectedCats.includes(cat) && WEDDING_TYPE_CATS.includes(cat) && occasion === 'weddings' && (
+                <div style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                  {['All', 'White Wedding', 'Traditional'].map(type => (
+                    <button key={type} onClick={() => setWeddingType(type)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '7px 16px 7px 28px', background: weddingType === type ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 11, fontFamily: manrope, fontWeight: weddingType === type ? 700 : 400, color: weddingType === type ? CATEGORY_ACCENT : 'var(--text-muted)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (weddingType !== type) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (weddingType !== type) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                      {type === 'All' ? 'All styles' : type}
+                      {weddingType === type && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; setSortMode: (s: SortMode) => void; manrope: string }) {
+  const [open, setOpen] = useState(false)
+  const [interacted, setInteracted] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mouseup', handleClick)
+    return () => document.removeEventListener('mouseup', handleClick)
+  }, [])
+
+  const options: { key: SortMode; label: string }[] = [
+    { key: 'most_rec',  label: 'Most Recommended' },
+    { key: 'most_used', label: 'Most Used' },
+  ]
+  const currentLabel = interacted ? (options.find(o => o.key === sortMode)?.label || 'Sort') : 'Sort'
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: interacted ? CATEGORY_ACCENT : 'transparent', color: interacted ? '#fff' : CATEGORY_ACCENT, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+        {currentLabel}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 200, overflow: 'hidden' }}>
+          {options.map(o => (
+            <button key={o.key} onClick={() => { setSortMode(o.key); setInteracted(true); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: interacted && sortMode === o.key ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: interacted && sortMode === o.key ? 700 : 400, color: interacted && sortMode === o.key ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (!(interacted && sortMode === o.key)) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (!(interacted && sortMode === o.key)) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+              {o.label}
+              {interacted && sortMode === o.key && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LocationDropdown({ location, subLocation, setLocation, setSubLocation, manrope }: { location: string; subLocation: string; setLocation: (l: string) => void; setSubLocation: (s: string) => void; manrope: string }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const topLevel = ['All', 'Lagos', 'Abuja']
+  const lagosAreas = ['All Lagos', 'Lekki', 'Victoria Island', 'Ikoyi']
+  const isFiltered = location !== 'All'
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mouseup', handleClick)
+    return () => document.removeEventListener('mouseup', handleClick)
+  }, [])
+
+  const label = location === 'All' ? 'All Locations' : subLocation !== 'All Lagos' && subLocation !== '' ? subLocation : location
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + CATEGORY_ACCENT, background: isFiltered ? CATEGORY_ACCENT : 'transparent', color: isFiltered ? '#fff' : CATEGORY_ACCENT, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+        {label}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(28,25,23,0.1)', minWidth: 180, overflow: 'hidden' }}>
+          {topLevel.map(l => (
+            <div key={l}>
+              <button onClick={() => { setLocation(l); setSubLocation(l === 'Lagos' ? 'All Lagos' : ''); if (l !== 'Lagos') setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: location === l ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 12, fontFamily: manrope, fontWeight: location === l ? 700 : 400, color: location === l ? CATEGORY_ACCENT : 'var(--text)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (location !== l) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (location !== l) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                {l === 'All' ? 'All Locations' : l}
+                {l === 'Lagos' && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>}
+              </button>
+              {l === 'Lagos' && location === 'Lagos' && (
+                <div style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                  {lagosAreas.map(area => (
+                    <button key={area} onClick={() => { setSubLocation(area); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 16px 8px 28px', background: subLocation === area ? CATEGORY_ACCENT + '10' : 'transparent', border: 'none', textAlign: 'left', fontSize: 11, fontFamily: manrope, fontWeight: subLocation === area ? 700 : 400, color: subLocation === area ? CATEGORY_ACCENT : 'var(--text-muted)', cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => { if (subLocation !== area) (e.currentTarget as HTMLElement).style.background = 'var(--bg-pill)' }} onMouseLeave={e => { if (subLocation !== area) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                      {area}
+                      {subLocation === area && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={CATEGORY_ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth, followSavers, stats, onStatChange }: {
+  v: Vendor; isNew: boolean; resetKey: number; currentUser: CurrentUser | null
+  savedIds: Set<string>; onToggleSave: (vendorId: string) => void
+  onOpenAuth: () => void; followSavers: FollowProfile[]
+  stats: VendorStats; onStatChange: (vendorId: string, patch: Partial<VendorStats>) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [usedSubmitting, setUsedSubmitting] = useState(false)
+  const [recSubmitting, setRecSubmitting] = useState(false)
+  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const newsreader = "'Newsreader', var(--font-playfair, serif)"
+
+  useEffect(() => { setExpanded(false) }, [resetKey])
+
+  const colour = getColour(v.category)
+  const igHandle = v.instagram?.replace('@', '').trim()
+  const hasDetails = v.services || v.phone || v.email || v.notes || v.website
+  const isSaved = savedIds.has(v.id)
+  const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
+  const reviewCats = REVIEW_CATS_BY_CATEGORY[v.category] || REVIEW_CATS_BY_CATEGORY['Event Planning']
+  const promoActive = isPromoActive(v)
+
+  async function toggleUsed() {
+    if (!currentUser) { onOpenAuth(); return }
+    if (usedSubmitting) return
+    setUsedSubmitting(true)
+    if (hasUsed) {
+      await authFetch('/api/interactions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: v.id, type: 'used' }) })
+      onStatChange(v.id, { usedCount: Math.max(0, usedCount - 1), hasUsed: false })
+    } else {
+      await authFetch('/api/interactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: v.id, type: 'used' }) })
+      onStatChange(v.id, { usedCount: usedCount + 1, hasUsed: true })
+    }
+    setUsedSubmitting(false)
+  }
+
+  async function toggleRecommend() {
+    if (!currentUser) { onOpenAuth(); return }
+    if (recSubmitting) return
+    setRecSubmitting(true)
+    if (hasRec) {
+      await authFetch('/api/interactions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: v.id, type: 'recommend' }) })
+      onStatChange(v.id, { recCount: Math.max(0, recCount - 1), hasRec: false })
+    } else {
+      await authFetch('/api/interactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: v.id, type: 'recommend' }) })
+      onStatChange(v.id, { recCount: recCount + 1, hasRec: true })
+    }
+    setRecSubmitting(false)
+  }
+
+  function handleCopy() {
+    if (!v.discount_code) return
+    navigator.clipboard.writeText(v.discount_code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
+
+  const whatsappNumber = v.phone?.replace(/\D/g, '')
+  const whatsappUrl = whatsappNumber ? 'https://wa.me/' + whatsappNumber : null
+
+  const followSaverLabel = () => {
+    if (followSavers.length === 0) return null
+    const names = followSavers.map(p => p.display_name.split(' ')[0])
+    if (names.length === 1) return names[0] + ' saved this'
+    if (names.length === 2) return names[0] + ' & ' + names[1] + ' saved this'
+    return names[0] + ', ' + names[1] + ' +' + (names.length - 2) + ' saved this'
+  }
+
+  const saverLabel = followSaverLabel()
+  const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
+
+  return (
+    <div id={'vendor-' + v.id} style={{ background: '#fff', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: promoActive ? '0 2px 12px rgba(192,160,96,0.15)' : '0 1px 4px rgba(28,25,23,0.06)' }}>
+      {saverLabel && (
+        <div style={{ background: colour + '0D', borderBottom: '1px solid ' + colour + '20', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex' }}>
+            {followSavers.slice(0, 3).map((p, i) => (
+              <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: colour + '25', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: manrope }}>
+                {p.display_name[0].toUpperCase()}
+              </div>
+            ))}
+          </div>
+          <span style={{ fontSize: 10, color: colour, fontWeight: 600, fontFamily: manrope }}>{saverLabel}</span>
+        </div>
+      )}
+
+      <div style={{ position: 'absolute', top: saverLabel ? 38 : 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
+        {v.verified && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: manrope }}>Verified</div>}
+        {isNew      && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: manrope }}>New</div>}
+      </div>
+
+      <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }} style={{ position: 'absolute', top: saverLabel ? 38 : 12, right: 12, background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
+        <HeartIcon filled={isSaved} />
+      </button>
+
+      <div style={{ padding: '14px 14px 12px', paddingTop: (v.verified || isNew) ? (saverLabel ? 52 : 36) : (saverLabel ? 18 : 14) }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: colour, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>{v.category}</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: newsreader }}>{v.name}</div>
+
+        {(avgRating !== null || usedCount > 0 || recCount > 0) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
+            {avgRating !== null && <span style={{ fontSize: 11, color: 'var(--gold)', fontFamily: manrope }}>&#9733; {avgRating}</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used &#128075;</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
+          </div>
+        )}
+
+        {v.location   && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 3, fontFamily: manrope }}>&#128205; {v.location}</div>}
+        {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 3, fontFamily: manrope }}>From &#8358;{v.price_from}</div>}
+
+        {promoActive && (
+          <div style={{ background: PROMO_COLOR + '12', border: '1px solid ' + PROMO_COLOR + '40', borderRadius: 10, padding: '8px 12px', marginBottom: 10, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{'🏷️ Active promo'}</span>
+              {v.discount_expiry && (
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>
+                  {'Expires ' + new Date(v.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+              )}
+            </div>
+            {v.discount_description && (
+              <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{v.discount_description}</p>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '18', padding: '3px 10px', borderRadius: 6, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{v.discount_code}</code>
+              <button onClick={handleCopy} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {copied ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+          {igHandle && (
+            <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+              <InstagramIcon />Instagram
+            </a>
+          )}
+          {whatsappUrl && (
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+              <WhatsAppIcon />WhatsApp
+            </a>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {hasDetails && (
+            <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+              <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{expanded ? '-' : '+'}</span>
+              {expanded ? 'Less info' : 'More info'}
+            </button>
+          )}
+
+          {expanded && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 4 }}>
+              {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
+              {v.phone    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope }}>&#128222; {v.phone}</p>}
+              {v.email    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope }}>&#9993; {v.email}</p>}
+              {safeVendorUrl(v.website) && (
+                <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: manrope }}>&#127760; {v.website}</a>
+              )}
+              {v.notes && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
+
+              {followSavers.length > 0 && (
+                <div style={{ marginTop: 4, padding: '8px 10px', background: 'var(--bg-pill)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginBottom: 6, fontFamily: manrope }}>Saved by people you follow</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {followSavers.map(p => (
+                      <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: 'var(--accent)', textDecoration: 'none', background: '#fff', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ marginTop: 4 }}>
+                <button onClick={toggleUsed} disabled={usedSubmitting} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)', opacity: usedSubmitting ? 0.6 : 1 }}>
+                  &#128075; {hasUsed ? 'Used this' : 'I used this vendor'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> {'\u00b7'} {usedCount}</span>}
+                </button>
+              </div>
+              <div>
+                <button onClick={toggleRecommend} disabled={recSubmitting} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)', opacity: recSubmitting ? 0.6 : 1 }}>
+                  &#11088; {hasRec ? 'Recommended' : 'I recommend this'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> {'\u00b7'} {recCount}</span>}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <ReviewsDivider manrope={manrope} cats={reviewCats} />
+          <ReviewSection vendorId={v.id} vendorCategory={v.category} currentUser={currentUser} manrope={manrope} newsreader={newsreader} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function DirectoryPage() {
+  const supabase = useSupabase()
+  const { user: authUser } = useUser()
+  const { openSignIn } = useClerk()
+  const openAuthModal = () => openSignIn()
+
+  const [vendors, setVendors] = useState<Vendor[]>([])
+  const [search, setSearch] = useState('')
+  const [occasion, setOccasion] = useState('weddings')
+  const [selectedCats, setSelectedCats] = useState<string[]>([])
+  const [weddingType, setWeddingType] = useState('All')
+  const [location, setLocation] = useState('All')
+  const [subLocation, setSubLocation] = useState('')
+  const [sortMode, setSortMode] = useState<SortMode>('most_rec')
+  const [showPromos, setShowPromos] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [cardResetKey, setCardResetKey] = useState(0)
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
+  const [vendorStats, setVendorStats] = useState<Record<string, VendorStats>>({})
+  const [suggestOpen, setSuggestOpen] = useState(false)
+
+  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const newsreader = "'Newsreader', var(--font-playfair, serif)"
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const q = params.get('search')
+    if (q) setSearch(q)
+    const occ = params.get('occasion')
+    if (occ && OCCASION_TABS.find(t => t.key === occ)) setOccasion(occ)
+    const id = params.get('id')
+    if (id) {
+      // Retry until the vendor element exists in the DOM (data may still be loading)
+      let attempts = 0
+      const timer = setInterval(() => {
+        attempts++
+        const el = document.getElementById('vendor-' + id)
+        if (el) {
+          clearInterval(timer)
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          el.style.outline = '2px solid #B4690E'
+          el.style.outlineOffset = '3px'
+          setTimeout(() => { el.style.outline = 'none' }, 2500)
+        } else if (attempts >= 40) { // 8 seconds max
+          clearInterval(timer)
+        }
+      }, 200)
+      return () => clearInterval(timer)
+    }
+  }, [])
+
+  useEffect(() => {
+    setSelectedCats([])
+    setWeddingType('All')
+    setSearch('')
+    setShowPromos(false)
+    setCardResetKey(k => k + 1)
+  }, [occasion])
+
+  useEffect(() => {
+    if (!authUser?.id) { setCurrentUser(null); return }
+    supabase.from('profiles').select('username, display_name').eq('clerk_user_id', authUser.id).maybeSingle()
+      .then(({ data }) => {
+        const email = authUser.primaryEmailAddress?.emailAddress || ''
+        const username = data?.username || email.split('@')[0]
+        const displayName = data?.display_name || authUser.fullName || email.split('@')[0]
+        setCurrentUser({ id: authUser.id, name: displayName, email, username })
+      })
+  }, [authUser])
+
+  useEffect(() => {
+    if (!authUser?.id) { setSavedIds(new Set()); return }
+    supabase.from('saved_vendors').select('vendor_id').eq('clerk_user_id', authUser.id)
+      .then(({ data }) => { if (data) setSavedIds(new Set(data.map((r: { vendor_id: string }) => r.vendor_id))) })
+  }, [authUser])
+
+  useEffect(() => {
+    if (!authUser?.id) { setFollowSaverMap({}); return }
+    async function loadFollowContext() {
+      const { data: followRows } = await supabase.from('follows').select('clerk_following_id').eq('clerk_follower_id', authUser!.id)
+      if (!followRows || followRows.length === 0) { setFollowSaverMap({}); return }
+      const followingIds = followRows.map((r: { clerk_following_id: string }) => r.clerk_following_id)
+      const { data: profiles } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').in('clerk_user_id', followingIds)
+      if (!profiles || profiles.length === 0) { setFollowSaverMap({}); return }
+      const profileMap: Record<string, FollowProfile> = {}
+      profiles.forEach((p: { clerk_user_id: string; display_name: string; username: string; avatar_url?: string }) => { profileMap[p.clerk_user_id] = { ...p, id: p.clerk_user_id } })
+      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, clerk_user_id').in('clerk_user_id', followingIds)
+      if (!savedRows || savedRows.length === 0) { setFollowSaverMap({}); return }
+      const map: Record<string, FollowProfile[]> = {}
+      savedRows.forEach((row: { vendor_id: string; clerk_user_id: string }) => {
+        const profile = profileMap[row.clerk_user_id]
+        if (!profile) return
+        if (!map[row.vendor_id]) map[row.vendor_id] = []
+        if (!map[row.vendor_id].find(p => p.id === profile.id)) map[row.vendor_id].push(profile)
+      })
+      setFollowSaverMap(map)
+    }
+    loadFollowContext()
+  }, [authUser])
+
+  // Load vendor list + community counts ONCE on mount (no auth dependency).
+  // Keeping this effect auth-free prevents the vendor grid from remounting
+  // whenever Clerk finishes loading, which would destroy any open review forms.
+  useEffect(() => {
+    async function loadAll() {
+      setLoading(true)
+      const [vendorsRes, recsRes, usedRes] = await Promise.all([
+        supabase.from('vendors').select('*'),
+        supabase.from('vendor_recommendations').select('vendor_id, clerk_user_id'),
+        supabase.from('vendor_used').select('vendor_id, clerk_user_id'),
+      ])
+      const allVendors = vendorsRes.data || []
+      const allRecs    = recsRes.data    || []
+      const allUsed    = usedRes.data    || []
+      const mapped = allVendors.map((v: Vendor) => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
+      setVendors(mapped)
+      const stats: Record<string, VendorStats> = {}
+      mapped.forEach((v: Vendor) => {
+        const vendorRecs = allRecs.filter((r: { vendor_id: string }) => r.vendor_id === v.id)
+        const vendorUsed = allUsed.filter((r: { vendor_id: string }) => r.vendor_id === v.id)
+        // hasUsed / hasRec default false here; the auth effect below patches them in
+        stats[v.id] = {
+          avgRating: null,
+          usedCount: vendorUsed.length,
+          recCount:  vendorRecs.length,
+          hasUsed:   false,
+          hasRec:    false,
+        }
+      })
+      setVendorStats(stats)
+      setLoading(false)
+    }
+    loadAll()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Separately patch in hasUsed / hasRec flags when the user's auth state is
+  // known. This runs WITHOUT causing a full vendor reload, so the grid stays
+  // mounted and any open review forms are preserved.
+  useEffect(() => {
+    if (!authUser?.id) {
+      // Logged-out: clear personal flags only (don't reload)
+      setVendorStats(prev => {
+        const next = { ...prev }
+        Object.keys(next).forEach(id => {
+          next[id] = { ...next[id], hasUsed: false, hasRec: false }
+        })
+        return next
+      })
+      return
+    }
+    async function patchAuthFlags() {
+      const [recsRes, usedRes] = await Promise.all([
+        supabase.from('vendor_recommendations').select('vendor_id').eq('clerk_user_id', authUser!.id),
+        supabase.from('vendor_used').select('vendor_id').eq('clerk_user_id', authUser!.id),
+      ])
+      const myRecs = new Set((recsRes.data || []).map((r: { vendor_id: string }) => r.vendor_id))
+      const myUsed = new Set((usedRes.data || []).map((r: { vendor_id: string }) => r.vendor_id))
+      setVendorStats(prev => {
+        const next = { ...prev }
+        Object.keys(next).forEach(id => {
+          next[id] = { ...next[id], hasUsed: myUsed.has(id), hasRec: myRecs.has(id) }
+        })
+        return next
+      })
+    }
+    patchAuthFlags()
+  }, [authUser])
+
+  const handleToggleSave = useCallback(async (vendorId: string) => {
+    if (!authUser?.id) return
+    const isSaved = savedIds.has(vendorId)
+    setSavedIds(prev => { const n = new Set(prev); if (isSaved) n.delete(vendorId); else n.add(vendorId); return n })
+    if (isSaved) {
+      await authFetch('/api/saved', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId }) })
+    } else {
+      await authFetch('/api/saved', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId }) })
+    }
+    window.dispatchEvent(new Event('saved-change'))
+  }, [authUser, savedIds])
+
+  const handleStatChange = useCallback((vendorId: string, patch: Partial<VendorStats>) => {
+    setVendorStats(prev => ({ ...prev, [vendorId]: { ...prev[vendorId], ...patch } }))
+  }, [])
+
+  const occasionCats = OCCASION_CATEGORIES[occasion] || []
+
+  const filtered = vendors.filter(v => {
+    if (showPromos && !isPromoActive(v)) return false
+    const q = search.toLowerCase()
+    const matchSearch = !q || v.name?.toLowerCase().includes(q) || v.services?.toLowerCase().includes(q) || v.instagram?.toLowerCase().includes(q) || v.notes?.toLowerCase().includes(q)
+    const matchOccasion = occasionCats.includes(v.category)
+    const matchCat = selectedCats.length === 0 || selectedCats.includes(v.category)
+    const matchLoc = (() => {
+      if (location === 'All') return true
+      if (location === 'Abuja') return v.location?.toLowerCase().includes('abuja')
+      if (location === 'Lagos') {
+        if (!v.location?.toLowerCase().includes('lagos') && !v.location?.toLowerCase().includes('lekki') && !v.location?.toLowerCase().includes('victoria island') && !v.location?.toLowerCase().includes('ikoyi')) return false
+        if (subLocation === 'All Lagos' || subLocation === '') return true
+        if (subLocation === 'Lekki') return v.location?.toLowerCase().includes('lekki')
+        if (subLocation === 'Victoria Island') return v.location?.toLowerCase().includes('victoria island') || v.location?.toLowerCase().includes('v.i') || v.location?.toLowerCase().includes('vi,')
+        if (subLocation === 'Ikoyi') return v.location?.toLowerCase().includes('ikoyi')
+      }
+      return true
+    })()
+    const matchWeddingType = (() => {
+      if (weddingType === 'All') return true
+      if (!WEDDING_TYPE_CATS.includes(v.category)) return true
+      return v.wedding_type === weddingType || v.wedding_type === 'Both'
+    })()
+    return matchSearch && matchOccasion && matchCat && matchLoc && matchWeddingType
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    const aStats = vendorStats[a.id] || { recCount: 0, usedCount: 0 }
+    const bStats = vendorStats[b.id] || { recCount: 0, usedCount: 0 }
+    if (sortMode === 'most_rec')  return bStats.recCount  - aStats.recCount
+    if (sortMode === 'most_used') return bStats.usedCount - aStats.usedCount
+    return 0
+  })
+
+  const currentTab = OCCASION_TABS.find(t => t.key === occasion)
+  const emptyStats: VendorStats = { avgRating: null, usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
+
+  return (
+    <main style={{ fontFamily: manrope, background: '#fff8f5', minHeight: '100vh' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.15} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
+
+      <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
+        <img src="/pexels-directory-hero.jpg" alt="Directory" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(15,10,5,0.7) 0%, transparent 100%)', padding: '24px 24px 16px' }}>
+          <div style={{ fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontFamily: manrope, fontWeight: 600, marginBottom: 4 }}>Events Directory</div>
+          <div style={{ fontFamily: newsreader, fontSize: 28, fontWeight: 700, color: '#fff' }}>{currentTab?.label || 'Weddings'}</div>
+        </div>
+      </div>
+
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#fff8f5', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
+          {OCCASION_TABS.map(tab => {
+            const isActive = occasion === tab.key
+            return (
+              <button key={tab.key} onClick={() => setOccasion(tab.key)} style={{ padding: '18px 20px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '10px 16px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
+            {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+            <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
+            <LocationDropdown location={location} subLocation={subLocation} setLocation={setLocation} setSubLocation={setSubLocation} manrope={manrope} />
+            <button
+              onClick={() => setShowPromos(p => !p)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 999, border: '1.5px solid ' + PROMO_COLOR, background: showPromos ? PROMO_COLOR : 'transparent', color: showPromos ? '#fff' : PROMO_COLOR, fontSize: 11, fontFamily: manrope, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' }}>
+              {'🏷️ Promos'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <SortDropdown sortMode={sortMode} setSortMode={setSortMode} manrope={manrope} />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 16px 2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
+            {sorted.length} vendors{search ? ' for "' + search + '"' : ''}{showPromos ? ' \u00b7 Active promos' : ''}
+          </p>
+          <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            + Suggest
+          </button>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 14 }}>
+        {loading
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{ background: '#fff', borderRadius: 14, height: 100, opacity: 0.3, border: '1px solid var(--border)' }} />
+            ))
+          : sorted.length === 0
+            ? (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '52px 16px' }}>
+                <p style={{ fontFamily: newsreader, fontSize: 22, marginBottom: 8 }}>{showPromos ? 'No active promos right now' : 'No vendors found'}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: manrope }}>{showPromos ? 'Check back soon \u2014 deals get added regularly' : 'Try adjusting your filters'}</p>
+                <button onClick={() => { setSearch(''); setSelectedCats([]); setLocation('All'); setSubLocation(''); setWeddingType('All'); setShowPromos(false) }} style={{ marginTop: 8, padding: '6px 18px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: manrope }}>
+                  Show all
+                </button>
+              </div>
+            )
+            : sorted.map(v => (
+              <VendorCard key={v.id} v={v} isNew={isNewVendor(v)} resetKey={cardResetKey} currentUser={currentUser} savedIds={savedIds} onToggleSave={handleToggleSave} onOpenAuth={openAuthModal} followSavers={followSaverMap[v.id] || []} stats={vendorStats[v.id] || emptyStats} onStatChange={handleStatChange} />
+            ))
+        }
+      </div>
+
+      <footer style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 11, fontFamily: manrope, letterSpacing: '0.04em' }}>
+        Made with love for Nigerian brides and families
+      </footer>
+
+      <SuggestVendorModal open={suggestOpen} onClose={() => setSuggestOpen(false)} />
+    </main>
+  )
+}

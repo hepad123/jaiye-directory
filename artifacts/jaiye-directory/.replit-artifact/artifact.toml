@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Jaiye Directory"
+version = "1.0.0"
+id = "artifacts/jaiye-directory"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18924
+
+[services.development]
+run = "pnpm --filter @workspace/jaiye-directory run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/jaiye-directory", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/jaiye-directory/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18924"
+BASE_PATH = "/"

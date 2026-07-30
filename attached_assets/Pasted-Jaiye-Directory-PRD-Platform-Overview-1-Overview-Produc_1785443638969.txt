@@ -1,0 +1,92 @@
+Jaiye Directory — PRD: Platform Overview
+1. Overview
+Product name: Jaiye Directory
+Founder / sole developer: Helloa
+Live at: jaiye-directory.vercel.app
+Repo: hepad123/jaiye-directory
+One-line summary: A Nigerian wedding and beauty vendor discovery platform,
+originally a spin-off from The Bridal Chat, built for a WhatsApp bridal community.
+2. Problem / Goal
+Nigerian brides (and beauty clients) need a trustworthy, centralized way to discover,
+compare, and save vendors — instead of relying on scattered WhatsApp recommendations.
+Jaiye Directory turns that word-of-mouth community (900+ members) into a structured,
+searchable, reviewable platform.
+3. Scope
+Current product scope:
+Vendor and service directory (wedding + beauty)
+User profiles and social follow system
+Reviews and recommendations
+Saved vendor lists / shortlists
+Discounts and promotions
+Vendor discovery via search and category browsing
+Out of scope (not currently built):
+Anything beyond wedding/beauty vendor categories
+Payments or booking/transactions on-platform (assumed — confirm if this has changed)
+4. Core User Stories
+As a user, I can browse vendors by category (wedding, beauty) and city, so I can find
+options relevant to my location and needs.
+As a user, I can search for a specific vendor by name and land on their profile, so I can
+quickly check them out.
+As a user, I can save vendors to a shortlist and share it, so I can compare options with
+my partner/family or bridal party.
+As a user, I can leave a detailed review across multiple categories (quality, value,
+professionalism, cleanliness, reliability, flexibility), so other users get a rounded picture
+of a vendor.
+As a user, I can track a budget with quoted prices in Naira, so I can manage wedding
+costs across vendors.
+As a user, I can see active discounts/promotions from vendors, so I can find deals.
+As a new user, I go through a short onboarding flow (age range, gender, location type),
+so the platform can tailor my experience.
+As a user, I can follow other users/vendors, so I stay updated on their activity.
+5. Requirements
+Functional (as currently built)
+Vendor directory with category and city filtering (e.g. beauty services with subcategory
+multi-select)
+Event services page with three-level navigation drawer
+6-category review system with category-specific mappings
+Shareable shortlist feature
+Budget tracker (Naira)
+Promotions with active banners and auto-expiry
+Three-step onboarding
+User search in nav bar
+Vendor management directly via Supabase (including Lagos-based vendor records)
+Non-functional
+Must work well on mobile, since traffic largely comes from a WhatsApp community
+sharing links
+Visual design should stay consistent with the current “Editorial Heirloom” system
+6. Technical Notes
+Stack: Next.js (App Router), TypeScript, Tailwind CSS, Supabase (project ID
+rchuhowqhfgsxagtxlba), Clerk for auth, Vercel for deployment
+No local terminal — all development happens via the GitHub web editor and Supabase
+dashboard; code must be delivered as complete, ready-to-paste files
+GitHub web editor corrupts template literals, backticks, and multi-line JSX —
+workaround is pre-computed variables and string concatenation
+Auth: Clerk JWT sub claim is the primary user identifier across all tables; RLS uses
+auth.jwt() ->> 'sub' = clerk_user_id
+Supabase pauses when inactive — must be manually resumed via dashboard before
+queries work
+Schema changes: use execute_sql (reliable) over apply_migration (has timed out in
+past sessions)
+7. Design / UX Notes
+Current visual system: Newsreader + Manrope fonts, warm cream (#fff8f5) background,
+ochre (#B4690E) accent — “Editorial Heirloom” direction
+Homepage went through a major redesign in this direction (earlier version used
+Fraunces + Jost)
+Beauty services page lives at /beautyservices (renamed from /services )
+8. Success Criteria
+Users can discover, shortlist, and review vendors without friction
+Platform reflects the trust and word-of-mouth quality of the original WhatsApp
+community it’s replacing/extending
+Vendor data (especially Lagos-based contacts) stays accurate and current
+9. Known Issues / Risks
+Saved page doesn’t auto-size properly on entry
+Home Screen vendor search doesn’t navigate to the vendor’s profile page
+Review form sometimes auto-reloads and loses in-progress input
+Sole-developer setup with no local terminal means every change carries more
+overhead/risk than a typical dev environment
+10. Open Questions
+Is monetization (vendor subscriptions, featured listings, lead-gen fees) part of the
+roadmap?
+Is there a plan to expand beyond wedding/beauty categories?
+What’s the current active user count vs. the 900+ WhatsApp community — is the
+platform capturing that audience effectively?

@@ -1,0 +1,2 @@
+- [Jaiyé port decisions](jaiye-port.md) — key decisions for the Vercel→Replit migration of this app
+- [Clerk no-key dev mode](clerk-dev-mode.md) — how to render the app gracefully when VITE_CLERK_PUBLISHABLE_KEY is absent

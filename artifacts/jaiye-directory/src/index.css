@@ -1,0 +1,72 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* ── Jaiyé Directory: Noir Heirloom palette ── */
+:root {
+  /* Dark surfaces */
+  --bg:           #0D0A08;
+  --bg-card:      #1A1410;
+  --bg-surface:   #221C17;
+  --bg-pill:      #2A221B;
+  --border:       rgba(255,255,255,0.08);
+  --border-warm:  rgba(201,168,76,0.18);
+
+  /* Cream/light surfaces */
+  --cream:        #F5EFE4;
+  --cream-dark:   #EDE4D6;
+
+  /* Text */
+  --text:         #F5EFE4;
+  --text-muted:   rgba(245,239,228,0.45);
+  --text-dim:     rgba(245,239,228,0.65);
+  --text-dark:    #1A1410;
+
+  /* Brand accents */
+  --gold:         #C9A84C;
+  --gold-light:   #E8C96A;
+  --gold-dim:     rgba(201,168,76,0.15);
+  --amber:        #D97706;
+  --amber-dark:   #B45309;
+
+  /* Shadows */
+  --shadow-card:  0 2px 16px rgba(0,0,0,0.6);
+  --shadow-glow:  0 0 40px rgba(201,168,76,0.12);
+
+  /* Font families */
+  --font-display: 'Bebas Neue', 'Fraunces', serif;
+  --font-serif:   'Newsreader', Georgia, serif;
+  --font-ui:      'Manrope', sans-serif;
+  --font-playfair:'Fraunces', serif;
+  --font-jost:    'Manrope', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); overflow-x: hidden; font-family: var(--font-ui); }
+
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+@keyframes spin  { to { transform: rotate(360deg); } }
+@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes fade-up { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+@keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+
+/* Gold shimmer on display headings */
+.text-gold-shimmer {
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 40%, var(--gold) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Utility: cream section */
+.section-cream { background: var(--cream); color: var(--text-dark); }
+.section-dark  { background: var(--bg); color: var(--text); }
+.section-mid   { background: var(--bg-card); color: var(--text); }
+
+/* Vendor card hover lift */
+.card-lift { transition: transform 0.22s ease, box-shadow 0.22s ease; }
+.card-lift:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.5); }

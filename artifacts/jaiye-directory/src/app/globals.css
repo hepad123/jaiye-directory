@@ -1,0 +1,36 @@
+/* ── Slate & Amber — Light mode only ── */
+:root {
+  --bg:          #F5F5F4;
+  --bg-card:     #FFFFFF;
+  --bg-pill:     #EEE8E0;
+  --border:      #E8E3DC;
+  --text:        #1C1917;
+  --text-muted:  #A8A29E;
+  --text-pill:   #57534E;
+  --accent:      #D97706;
+  --accent-light:#FEF3C7;
+  --gold:        #B45309;
+  --hero-grad:   linear-gradient(180deg, #E8E0D5 0%, #EDE8E0 40%, #F5F5F4 100%);
+  --shadow-card: 0 1px 3px rgba(28, 25, 23, 0.06);
+  --shadow-nav:  0 1px 0 #E8E3DC;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

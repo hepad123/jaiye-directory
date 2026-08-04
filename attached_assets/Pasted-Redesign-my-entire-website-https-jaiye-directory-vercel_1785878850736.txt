@@ -1,0 +1,55 @@
+Redesign my entire website https://jaiye-directory.vercel.app/ so that the design, layout, typography, spacing, and especially the animations are a near 100% copy of https://www.o-kconsulting.com/
+
+I want the visual language and motion to feel almost identical to O-K Consulting. Only change the content, logos, and text to match Jaiyé Directory. Everything else (style + animation) must be copied as closely as possible.
+
+### STRICT DESIGN RULES (Copy Exactly)
+
+**Typography**
+- Almost every heading, navigation item, button, and label must be in ALL CAPS
+- Use a bold, condensed, modern display font (same feeling as O-K Consulting)
+- Very large, oversized headlines that dominate the screen
+- Tight letter-spacing on big titles
+- Clean, secondary body text underneath
+
+**Color System**
+- Pure black / near-black backgrounds mixed with soft cream / off-white sections
+- High contrast white text on black
+- Minimal elegant accents only
+- Same overall mood: luxurious, editorial, minimal, confident
+
+**Animations (Most Important – Copy 100%)**
+- Exact same smooth Framer-style scroll animations (fade + slight upward movement + stagger)
+- Infinite horizontal marquees / tickers that move continuously (exactly like “MADE IN NY ✦ MADE IN NY ✦” and “WORKS ✦ WORKS ✦”)
+- Soft, slow, expensive easing (no bounce, no spring)
+- Elegant hover effects on cards and buttons
+- Smooth section reveals as user scrolls
+- Large text that appears with cinematic timing
+- Same refined, high-end motion quality throughout the whole site
+
+**Layout & Spacing**
+- Generous whitespace
+- Strong editorial hierarchy
+- Same clean card style and section rhythm as O-K Consulting
+- Cinematic treatment of images (dark overlays, high quality)
+
+### What to Keep from My Current Site
+- Brand name: JAIYÉ
+- Navigation: BEAUTY | EVENTS | CALENDAR
+- Hero message: “Reclaim Your Glow.”
+- Search bar
+- “Where would you like to start?” section (Beauty Services + Events cards)
+- “Artisans of Note” featured section
+- “How it works” 5-step section
+- Testimonial
+- Footer links and structure
+
+### What to Completely Change
+- All visual design
+- All typography
+- All animations and motion
+- All spacing and layout rhythm
+- All hover effects and transitions
+
+Make the Home page first. The final result should feel like someone opened O-K Consulting’s website but the content is Jaiyé Directory.
+
+Do not make it look generic. Push the animations and typography as close as possible to the original inspiration site.

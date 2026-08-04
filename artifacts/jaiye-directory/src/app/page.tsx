@@ -405,96 +405,119 @@ function ArtisanCard({ v, i }: { v: Partial<Vendor>; i: number }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   Mosaic panel (hero image grid)
+───────────────────────────────────────────────────────────────────────────── */
+function MosaicPanel({ img, label, sub, borderRight, delay }: { img: string; label: string; sub: string; borderRight: boolean; delay: number }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1.1, ease: C.ease, delay }}
+      style={{ position: "relative", overflow: "hidden", borderRight: borderRight ? `1px solid rgba(245,240,230,0.07)` : undefined }}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+    >
+      <img
+        src={img} alt={label}
+        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", transition: "transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94)", transform: hov ? "scale(1.05)" : "scale(1)", display: "block" }}
+      />
+      <div style={{ position: "absolute", inset: 0, background: hov ? "linear-gradient(to top, rgba(13,11,8,0.85) 0%, rgba(13,11,8,0.30) 60%)" : "linear-gradient(to top, rgba(13,11,8,0.65) 0%, rgba(13,11,8,0.15) 55%)", transition: "background 0.5s" }} />
+      <div style={{ position: "absolute", bottom: "clamp(16px,2.5vw,28px)", left: "clamp(16px,2.5vw,28px)", right: 8 }}>
+        <div style={{ fontFamily: C.disp, fontSize: "clamp(1.1rem,2.8vw,2rem)", letterSpacing: "0.06em", color: C.white, lineHeight: 0.95, marginBottom: 6 }}>{label}</div>
+        <div style={{ fontSize: 8, letterSpacing: "0.22em", color: "rgba(245,240,230,0.42)", fontFamily: C.ui, textTransform: "uppercase" }}>{sub}</div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    Page
 ───────────────────────────────────────────────────────────────────────────── */
 export default function HomePage() {
   const heroRef = useRef<HTMLElement>(null);
-  const { scrollY } = useScroll();
-  // Parallax: hero image moves slower than scroll
-  const heroImgY = useTransform(scrollY, [0, 700], [0, 110]);
 
   return (
     <div style={{ fontFamily: C.ui, background: C.black, overflowX: "hidden" }}>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          §1  HERO — Dark, full-bleed, "Reclaim Your Glow."
+          §1  HERO — O-K Consulting grid structure, Jaiyé dark edition
+          Top grid (3 cells) ➜ 3-panel mosaic ➜ Headline + stats band
       ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={heroRef} style={{ background: C.black, minHeight: "100svh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
-        {/* Parallax hero image */}
-        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-          <motion.img
-            src="/pexels-heibbymarvel-4285539.jpg"
-            alt="Hero"
-            style={{ width: "100%", height: "115%", objectFit: "cover", objectPosition: "50% 20%", y: heroImgY, willChange: "transform" }}
-          />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(13,11,8,0.78) 0%, rgba(13,11,8,0.50) 40%, rgba(13,11,8,0.82) 100%)" }} />
+      <section ref={heroRef} style={{ background: C.black, borderBottom: `1px solid rgba(245,240,230,0.07)` }}>
+
+        {/* ── Top grid: 3 cells divided by thin lines ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", borderBottom: `1px solid rgba(245,240,230,0.07)` }}>
+
+          {/* Cell 1 — Brand name stacked */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: C.ease, delay: 0.1 }}
+            style={{ padding: "clamp(28px,4vw,52px)", borderRight: `1px solid rgba(245,240,230,0.07)` }}
+          >
+            <div style={{ fontFamily: C.disp, fontSize: "clamp(3rem,7.5vw,7rem)", lineHeight: 0.86, letterSpacing: "0.02em", color: C.white }}>
+              JAIYÉ<br />DIRECTORY
+            </div>
+            <div style={{ marginTop: 18, fontSize: 8, letterSpacing: "0.30em", color: "rgba(245,240,230,0.28)", textTransform: "uppercase", fontFamily: C.ui }}>Est. 2023 · Lagos, Nigeria</div>
+          </motion.div>
+
+          {/* Cell 2 — Badge + tagline + search */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.9, ease: C.ease, delay: 0.25 }}
+            style={{ padding: "clamp(28px,4vw,52px)", borderRight: `1px solid rgba(245,240,230,0.07)`, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 28 }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+              <div style={{ width: 58, height: 58, borderRadius: "50%", border: `1px solid rgba(180,105,14,0.40)`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ fontFamily: C.disp, fontSize: 10, color: C.gold, letterSpacing: "0.04em", textAlign: "center", lineHeight: 1.2 }}>500+<br />VENDORS</div>
+              </div>
+              <p style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(13px,1.4vw,16px)", color: "rgba(245,240,230,0.55)", lineHeight: 1.75, margin: 0 }}>
+                We believe the right stylist or vendor makes your moment unforgettable — and that finding them should take minutes, not months.
+              </p>
+            </div>
+            <HeroSearch />
+          </motion.div>
+
+          {/* Cell 3 — CTAs */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, ease: C.ease, delay: 0.4 }}
+            style={{ padding: "clamp(28px,4vw,52px) clamp(24px,3vw,44px)", display: "flex", flexDirection: "column", justifyContent: "space-between", minWidth: 160 }}
+          >
+            <ArrowLink href="/beautyservices" label="BROWSE BEAUTY" />
+            <ArrowLink href="/directory" label="ALL VENDORS" faint />
+          </motion.div>
         </div>
 
-        {/* Top meta bar */}
+        {/* ── 3-panel image mosaic ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1.3fr 0.85fr", height: "clamp(320px,48vw,580px)" }}>
+          <MosaicPanel img="/pexels-heibbymarvel-4285539.jpg" label="BEAUTY SERVICES"  sub="Hair · Makeup · Lashes · Nails" borderRight delay={0.35} />
+          <MosaicPanel img="/pexels-bridal1.jpg"              label="EVENT VENDORS"    sub="Weddings · Celebrations · Corporate" borderRight delay={0.48} />
+          <MosaicPanel img="/pexels-directory-hero.jpg"       label="YOUR SHORTLIST"  sub="Save · Compare · Book" borderRight={false} delay={0.61} />
+        </div>
+
+        {/* ── "RECLAIM YOUR GLOW." bottom headline band ── */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          style={{ position: "relative", zIndex: 1, padding: "0 clamp(20px,4vw,52px)", height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid rgba(245,240,230,0.08)` }}>
-          <span style={{ fontSize: 8, letterSpacing: "0.36em", textTransform: "uppercase", color: "rgba(245,240,230,0.35)", fontFamily: C.ui }}>Est. 2023 · Lagos, Nigeria</span>
-          <span style={{ fontSize: 8, letterSpacing: "0.36em", textTransform: "uppercase", color: "rgba(245,240,230,0.35)", fontFamily: C.ui }}>The Nigerian Beauty &amp; Events Edit</span>
-        </motion.div>
-
-        {/* Main hero content */}
-        <div style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "clamp(32px,5vw,56px) clamp(20px,4vw,52px) clamp(40px,6vw,68px)" }}>
-
-          {/* No.1 editorial accent — top right */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.6 }}
-            style={{ position: "absolute", top: "clamp(20px,4vw,40px)", right: "clamp(20px,4vw,52px)", textAlign: "right" }}>
-            <div style={{ fontFamily: C.disp, fontSize: "clamp(3rem,8vw,7rem)", color: "rgba(245,240,230,0.08)", letterSpacing: "0.06em", lineHeight: 1 }}>No.1</div>
-          </motion.div>
-
-          {/* Headline — massive Bebas, stacked, clip-reveals */}
-          <div style={{ marginBottom: "clamp(20px,3vw,28px)" }}>
-            <ClipText delay={0.15}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.white, margin: 0 }}>RECLAIM</h1>
-            </ClipText>
-            <ClipText delay={0.28}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.white, margin: 0 }}>YOUR</h1>
-            </ClipText>
-            <ClipText delay={0.41}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.gold, margin: 0 }}>GLOW.</h1>
-            </ClipText>
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, ease: C.ease, delay: 0.65 }}
+          style={{ padding: "clamp(20px,3vw,36px) clamp(20px,4vw,52px)", borderTop: `1px solid rgba(245,240,230,0.07)`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}
+        >
+          <div style={{ fontFamily: C.disp, fontSize: "clamp(2rem,6vw,5.5rem)", letterSpacing: "0.03em", color: C.white, lineHeight: 0.9 }}>
+            RECLAIM YOUR <span style={{ color: C.gold }}>GLOW.</span>
           </div>
-
-          {/* Tagline + search + CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: C.ease, delay: 0.58 }}
-            style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 540 }}>
-            <p style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(14px,1.8vw,18px)", color: "rgba(245,240,230,0.62)", lineHeight: 1.7, margin: 0 }}>
-              Discover the finest beauty services and event vendors in the Nigerian community.
-            </p>
-            <HeroSearch />
-            <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-              <ArrowLink href="/beautyservices" label="BROWSE BEAUTY" />
-              <ArrowLink href="/directory" label="ALL VENDORS" faint />
-            </div>
-          </motion.div>
-
-          {/* Stats row at very bottom */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            style={{ display: "flex", gap: "clamp(24px,4vw,48px)", marginTop: "clamp(32px,5vw,52px)", paddingTop: 20, borderTop: `1px solid rgba(245,240,230,0.08)` }}>
+          <div style={{ display: "flex", gap: "clamp(28px,4.5vw,56px)", alignItems: "flex-start" }}>
             {[["500+", "VENDORS"], ["6", "CITIES"], ["900+", "REVIEWS"]].map(([n, l]) => (
               <div key={n}>
-                <div style={{ fontFamily: C.disp, fontSize: "clamp(1.8rem,3.5vw,2.8rem)", color: C.white, lineHeight: 1, letterSpacing: "0.04em" }}>{n}</div>
-                <div style={{ fontSize: 8, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(245,240,230,0.3)", marginTop: 4, fontFamily: C.ui }}>{l}</div>
+                <div style={{ fontFamily: C.disp, fontSize: "clamp(1.8rem,3vw,2.6rem)", color: C.white, lineHeight: 1, letterSpacing: "0.04em" }}>{n}</div>
+                <div style={{ fontSize: 8, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(245,240,230,0.28)", marginTop: 4, fontFamily: C.ui }}>{l}</div>
               </div>
             ))}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -666,17 +689,17 @@ function HowItWorksSection() {
 ───────────────────────────────────────────────────────────────────────────── */
 function TestimonialsSection() {
   const quotes = [
-    { name: "Amara O.",   role: "Bride · Lagos",          letter: "A", quote: "I finally found a space that allows me to discover new beauty providers. No longer keeping saved folders on Instagram and TikTok that I can never find. Jaiyé is the one tab I always have open." },
-    { name: "Chisom N.",  role: "Event Planner · Abuja",  letter: "C", quote: "The vendor directory is genuinely useful — I can recommend it to every client. The community reviews are honest and the shortlist feature saves me hours every week." },
-    { name: "Temi A.",    role: "MUA · Port Harcourt",    letter: "T", quote: "As a beauty provider, being on Jaiyé has connected me with brides who actually want my style. The community vouching system builds trust in a way Instagram just can't." },
+    { name: "Amara O.",  role: "Bride · Lagos",         img: "/pexels-heibbymarvel-4285539.jpg", quote: "I finally found a space that allows me to discover new beauty providers. No longer keeping saved folders on Instagram and TikTok that I can never find. Jaiyé is the one tab I always have open." },
+    { name: "Chisom N.", role: "Event Planner · Abuja", img: "/pexels-bridal1.jpg",              quote: "The vendor directory is genuinely useful — I can recommend it to every client. The community reviews are honest and the shortlist feature saves me hours every week." },
+    { name: "Temi A.",   role: "MUA · Port Harcourt",   img: "/pexels-services.jpg",             quote: "As a beauty provider, being on Jaiyé has connected me with brides who actually want my style. The community vouching system builds trust in a way Instagram just can't." },
   ];
 
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
 
   return (
-    <section style={{ background: C.black2, padding: "clamp(72px,10vw,112px) clamp(20px,4vw,52px)", borderTop: "1px solid rgba(245,240,230,0.06)" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+    <section style={{ background: C.black2, borderTop: "1px solid rgba(245,240,230,0.06)" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(64px,9vw,104px) clamp(20px,4vw,52px)" }}>
         <div ref={ref}>
           <FadeUp><Eyebrow text="Kind Words" /></FadeUp>
           <div style={{ marginTop: 12, marginBottom: "clamp(40px,6vw,60px)" }}>
@@ -686,29 +709,37 @@ function TestimonialsSection() {
               </h2>
             </ClipText>
           </div>
+        </div>
 
-          <div style={{ borderTop: "1px solid rgba(245,240,230,0.08)" }}>
-            {quotes.map((q, i) => (
-              <motion.div
-                key={q.name}
-                initial={{ opacity: 0, y: 28 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.75, ease: C.ease, delay: 0.12 * i + 0.15 }}
-                style={{ display: "flex", alignItems: "flex-start", gap: "clamp(20px,4vw,52px)", padding: "clamp(28px,4vw,44px) 0", borderBottom: "1px solid rgba(245,240,230,0.08)" }}
-              >
-                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(180,105,14,0.12)", border: "1.5px solid rgba(180,105,14,0.28)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: C.disp, fontSize: "1.5rem", letterSpacing: "0.06em", color: C.gold, flexShrink: 0 }}>
-                  {q.letter}
+        {/* Photo grid + quotes — O-K Consulting style */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 2 }}>
+          {quotes.map((q, i) => (
+            <motion.div
+              key={q.name}
+              initial={{ opacity: 0, y: 28 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.75, ease: C.ease, delay: 0.12 * i + 0.15 }}
+              style={{ display: "flex", flexDirection: "column" }}
+            >
+              {/* Photo */}
+              <div style={{ width: "100%", aspectRatio: "4/3", overflow: "hidden", position: "relative" }}>
+                <img src={q.img} alt={q.name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(13,11,8,0.55) 0%, transparent 60%)" }} />
+              </div>
+              {/* Quote card */}
+              <div style={{ background: "#110E0B", border: "1px solid rgba(245,240,230,0.06)", borderTop: "none", padding: "clamp(20px,3vw,32px)", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 20 }}>
+                <blockquote style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(0.9rem,1.6vw,1.1rem)", color: "rgba(245,240,230,0.72)", lineHeight: 1.75, margin: 0 }}>
+                  "{q.quote}"
+                </blockquote>
+                <div>
+                  <div style={{ height: 1, background: `rgba(180,105,14,0.22)`, marginBottom: 14 }} />
+                  <div style={{ fontFamily: C.ui, fontSize: 12, fontWeight: 800, color: C.white, letterSpacing: "0.05em" }}>{q.name}</div>
+                  <div style={{ fontFamily: C.ui, fontSize: 10, color: "rgba(245,240,230,0.35)", marginTop: 3, letterSpacing: "0.05em" }}>{q.role}</div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <blockquote style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(1rem,2vw,1.2rem)", color: "rgba(245,240,230,0.80)", lineHeight: 1.72, margin: "0 0 16px" }}>
-                    "{q.quote}"
-                  </blockquote>
-                  <div style={{ fontFamily: C.ui, fontSize: 12, fontWeight: 800, color: C.white, letterSpacing: "0.04em" }}>{q.name}</div>
-                  <div style={{ fontFamily: C.ui, fontSize: 10, color: "rgba(245,240,230,0.38)", marginTop: 3, letterSpacing: "0.04em" }}>{q.role}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

@@ -1,0 +1,53 @@
+Redesign my current live website https://jaiye-directory.vercel.app/ completely.
+
+Use the exact visual style, typography, animations, spacing, and luxury aesthetic of the inspiration site: https://www.o-kconsulting.com/
+
+### Main Goal
+Transform Jaiyé Directory into a premium, editorial, high-end platform while keeping all the original content, sections, and purpose (Nigerian Beauty Services & Events Directory).
+
+### Design System to Copy Exactly from O-K Consulting
+
+**Typography**
+- Almost everything in ALL CAPS (headings, navigation, labels, buttons, section titles)
+- Bold, condensed, modern display font (heavy capital letter style)
+- Very large oversized headlines
+- Tight letter-spacing on big titles
+- Clean secondary body text
+
+**Color**
+- Pure black / near-black backgrounds mixed with soft cream / off-white sections
+- High contrast white text on black
+- Minimal elegant accents only
+
+**Animations (very important)**
+- Smooth, expensive Framer-style scroll animations (fade + slight upward move + stagger)
+- Infinite horizontal marquees / tickers (exactly like the ones on o-kconsulting.com)
+- Soft elegant hover effects on cards
+- Slow, refined easing — no cheap bounce
+
+**Layout**
+- Generous whitespace
+- Strong editorial hierarchy
+- Cinematic photography treatment
+- Clean, confident card designs
+
+### Keep These Sections From My Current Site (but fully redesign them)
+
+1. Header → JAIYÉ logo + BEAUTY | EVENTS | CALENDAR + Find
+2. Hero → “Reclaim Your Glow.” + search bar + “No.1”
+3. Category ticker / marquee
+4. “Where would you like to start?” (Beauty Services + Events cards)
+5. Featured – “Artisans of Note”
+6. Dark “How it works” section (Discover, Vouch & Verify, Save & Note, Follow Your Circle, Book Directly)
+7. Testimonial section
+8. Footer
+
+### Special Instructions
+- Make the Beauty Services section feel luxurious and editorial (inspired by beauty projects on the inspiration site)
+- Make the Events section feel refined and high-end (inspired by event projects on the inspiration site)
+- Add beautiful infinite marquees in multiple places
+- Make the whole site feel expensive, confident, and minimal like O-K Consulting
+- Fully responsive
+- Use modern React + smooth animations (Framer Motion preferred)
+
+Start by redesigning the Home page first with the new visual system. Keep all existing text and content — only change the design, layout, typography, and animations.

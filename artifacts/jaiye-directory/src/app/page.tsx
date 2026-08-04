@@ -1,444 +1,816 @@
+/**
+ * Jaiyé Directory — Homepage
+ * Visual system inspired by O-K Consulting: editorial, high-contrast,
+ * heavy-caps typography, cream/black rhythm, Framer Motion animations.
+ */
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useSupabase } from "@/hooks/useSupabase";
 
-/* ─────────────────────────────────────────────────────────
-   Brand tokens — single source of truth, matches index.css
-───────────────────────────────────────────────────────── */
-const G = {
-  gold:        "#B4690E",
-  goldLight:   "#C8842A",
-  goldDim:     "rgba(180,105,14,0.12)",
-  goldBorder:  "rgba(180,105,14,0.22)",
-  bg:          "#0D0A08",
-  bgCard:      "#1A1208",
-  cream:       "#FDFAF6",
-  creamMid:    "#F5EFE8",
-  creamDark:   "#EDE5D8",
-  text:        "#F5EFE4",
-  textMuted:   "rgba(245,239,228,0.42)",
-  textDark:    "#1C1917",
-  textSubdued: "#57534E",
-  serif:       "'Newsreader', Georgia, serif",
-  ui:          "'Manrope', system-ui, sans-serif",
-  display:     "'Bebas Neue', serif",
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design tokens
+───────────────────────────────────────────────────────────────────────────── */
+const C = {
+  cream:   "#F5F0E6",
+  cream2:  "#EDE8DD",
+  black:   "#0D0B08",
+  black2:  "#161410",
+  white:   "#FDFAF6",
+  gold:    "#B4690E",
+  goldLt:  "rgba(180,105,14,0.14)",
+  goldBrd: "rgba(180,105,14,0.22)",
+  muted:   "#6B6560",
+  disp:    "'Bebas Neue', 'Arial Narrow', Arial, sans-serif",
+  serif:   "'Newsreader', Georgia, serif",
+  ui:      "'Manrope', system-ui, sans-serif",
+  ease:    [0.16, 1, 0.3, 1] as [number,number,number,number],
 };
 
-/* ─────────────────────────────────────────────────────────
-   Data
-───────────────────────────────────────────────────────── */
-const TICKER_ITEMS = [
-  "Nigerian Wedding Vendors",
-  "Verified Artisans",
-  "Bridal Beauty",
-  "Hair Braiding Specialists",
-  "Event Planners",
-  "Makeup Artists",
-  "Community Shortlists",
-  "Lagos · Abuja · Port Harcourt",
-];
+/* ─────────────────────────────────────────────────────────────────────────────
+   Reusable animation components
+───────────────────────────────────────────────────────────────────────────── */
 
-const HOW = [
-  { n: "01", icon: "✦", title: "Discover", body: "Browse hundreds of verified Nigerian wedding and beauty vendors. Filter by category, city, and what the community recommends.", ctas: [{ label: "Browse Beauty →", href: "/beautyservices" }, { label: "Browse Events →", href: "/directory" }] },
-  { n: "02", icon: "◎", title: "Vouch & Verify", body: "Mark vendors you've used and recommend the ones you love. Real experiences from real brides in the community.", ctas: [{ label: "Browse Beauty →", href: "/beautyservices" }] },
-  { n: "03", icon: "♡", title: "Save & Note", body: "Build your personal shortlist with private notes and budget quotes in Naira — your planning HQ.", ctas: [{ label: "View Saved →", href: "/saved" }] },
-  { n: "04", icon: "◈", title: "Follow Your Circle", body: "Follow people you trust to see who they've used and recommend for your day.", ctas: [{ label: "Find Friends →", href: "/saved" }] },
-  { n: "05", icon: "✓", title: "Book Directly", body: "Some vendors and artists offer direct booking links — go straight from discovery to booking.", ctas: [{ label: "Browse Beauty →", href: "/beautyservices" }] },
-];
+/** Text that slides up from overflow:hidden container on scroll */
+function ClipText({
+  children,
+  delay = 0,
+  style,
+  as: Tag = "div",
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  style?: React.CSSProperties;
+  as?: keyof JSX.IntrinsicElements;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -80px 0px" });
+  return (
+    <div ref={ref} style={{ overflow: "hidden", ...style }}>
+      <motion.div
+        initial={{ y: "108%" }}
+        animate={inView ? { y: 0 } : {}}
+        transition={{ duration: 0.9, ease: C.ease, delay }}
+        style={{ willChange: "transform" }}
+      >
+        {children}
+      </motion.div>
+    </div>
+  );
+}
 
-/* ─────────────────────────────────────────────────────────
-   Search hook
-───────────────────────────────────────────────────────── */
-type SearchResults = {
-  vendors: { id: string; name: string; location: string }[];
-  services: { id: string; name: string; category: string }[];
+/** Fade + slide-up on scroll */
+function FadeUp({
+  children,
+  delay = 0,
+  style,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  style?: React.CSSProperties;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 32 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.75, ease: C.ease, delay }}
+      style={style}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** Stagger wrapper — applies stagger to direct motion children */
+function Stagger({
+  children,
+  stagger = 0.08,
+  style,
+}: {
+  children: React.ReactNode;
+  stagger?: number;
+  style?: React.CSSProperties;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
+  return (
+    <motion.div
+      ref={ref}
+      variants={{ visible: { transition: { staggerChildren: stagger, delayChildren: 0.1 } } }}
+      initial="hidden"
+      animate={inView ? "visible" : "hidden"}
+      style={style}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** Single stagger child */
+const StaggerItem = motion.div;
+const STAGGER_ITEM = {
+  hidden:  { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.72, ease: C.ease } },
 };
-function useSearchDropdown(query: string, supabase: ReturnType<typeof useSupabase>, cb: (r: SearchResults, open: boolean, loading: boolean) => void) {
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Infinite Marquee
+───────────────────────────────────────────────────────────────────────────── */
+function Marquee({
+  items,
+  speed = 32,
+  reverse = false,
+  separator = "◆",
+  textColor,
+  borderTop = true,
+  borderBot = true,
+  bg,
+}: {
+  items: string[];
+  speed?: number;
+  reverse?: boolean;
+  separator?: string;
+  textColor?: string;
+  borderTop?: boolean;
+  borderBot?: boolean;
+  bg?: string;
+}) {
+  const doubled = [...items, ...items];
+  return (
+    <div style={{
+      overflow: "hidden",
+      background: bg,
+      borderTop: borderTop ? `1px solid rgba(180,105,14,0.12)` : undefined,
+      borderBottom: borderBot ? `1px solid rgba(180,105,14,0.12)` : undefined,
+    }}>
+      <motion.div
+        style={{ display: "flex", whiteSpace: "nowrap", width: "max-content" }}
+        animate={{ x: reverse ? ["-50%", "0%"] : ["0%", "-50%"] }}
+        transition={{ duration: speed, repeat: Infinity, ease: "linear" }}
+      >
+        {doubled.map((t, i) => (
+          <span key={i} style={{
+            display: "inline-flex", alignItems: "center", gap: 14,
+            padding: "12px 22px",
+            fontSize: 9, fontWeight: 700, letterSpacing: "0.28em",
+            textTransform: "uppercase", fontFamily: C.ui,
+            color: textColor ?? "rgba(245,240,230,0.38)",
+          }}>
+            {t}
+            <span style={{ color: C.gold, fontSize: 5, opacity: 0.8 }}>{separator}</span>
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Eyebrow label
+───────────────────────────────────────────────────────────────────────────── */
+function Eyebrow({ text, light = false }: { text: string; light?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ width: 20, height: 1, background: C.gold, opacity: 0.7 }} />
+      <span style={{
+        fontSize: 8, fontWeight: 800, letterSpacing: "0.34em",
+        textTransform: "uppercase", fontFamily: C.ui,
+        color: light ? C.gold : C.gold,
+      }}>{text}</span>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Search bar (used in hero)
+───────────────────────────────────────────────────────────────────────────── */
+function HeroSearch() {
+  const supabase = useSupabase();
+  const [, navigate] = useLocation();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<{ vendors: { id: string; name: string; location: string }[]; services: { id: string; name: string; category: string }[] }>({ vendors: [], services: [] });
+  const [open, setOpen] = useState(false);
+
   useEffect(() => {
-    if (!query.trim() || query.length < 2) { cb({ vendors: [], services: [] }, false, false); return; }
+    if (!query.trim() || query.length < 2) { setResults({ vendors: [], services: [] }); setOpen(false); return; }
     const t = setTimeout(async () => {
-      cb({ vendors: [], services: [] }, true, true);
       const q = query.toLowerCase();
       const [vr, sr] = await Promise.all([
         supabase.from("vendors").select("id,name,location").ilike("name", `%${q}%`).limit(5),
         supabase.from("services").select("id,name,category").ilike("name", `%${q}%`).limit(5),
       ]);
-      cb({ vendors: vr.data ?? [], services: sr.data ?? [] }, true, false);
-    }, 280);
+      setResults({ vendors: vr.data ?? [], services: sr.data ?? [] });
+      setOpen(true);
+    }, 260);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
-}
 
-/* ─────────────────────────────────────────────────────────
-   Sub-components
-───────────────────────────────────────────────────────── */
-function Ticker() {
-  const items = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  useEffect(() => {
+    const fn = (e: MouseEvent) => { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mouseup", fn);
+    return () => document.removeEventListener("mouseup", fn);
+  }, []);
+
+  const has = results.vendors.length > 0 || results.services.length > 0;
+
   return (
-    <div style={{ background: "#1A1208", overflow: "hidden", borderTop: `1px solid ${G.goldBorder}`, borderBottom: `1px solid ${G.goldBorder}` }}>
-      <style>{`@keyframes tk { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }`}</style>
-      <div style={{ display: "flex", whiteSpace: "nowrap", animation: "tk 30s linear infinite" }}>
-        {items.map((t, i) => (
-          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 14, padding: "11px 18px", fontSize: 9, fontWeight: 700, letterSpacing: "0.26em", textTransform: "uppercase", color: G.textMuted, fontFamily: G.ui }}>
-            {t}
-            <span style={{ color: G.gold, opacity: 0.6, fontSize: 7 }}>◆</span>
-          </span>
-        ))}
+    <div ref={wrapRef} style={{ position: "relative", maxWidth: 480, width: "100%" }}>
+      <div style={{
+        display: "flex", alignItems: "center",
+        border: `1px solid rgba(245,240,230,0.18)`,
+        borderRadius: 4, overflow: "hidden",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(8px)",
+        transition: "border-color 0.2s",
+      }}
+        onFocus={() => { if (query.length >= 2) setOpen(true); }}
+      >
+        <input
+          type="text"
+          placeholder="Search vendors, services, locations…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          style={{
+            flex: 1, border: "none", outline: "none", background: "transparent",
+            padding: "14px 18px", fontSize: 13, color: C.white,
+            fontFamily: C.ui,
+          }}
+        />
+        <button
+          onClick={() => { if (query.trim()) navigate(`/directory?search=${encodeURIComponent(query)}`); }}
+          style={{
+            background: C.gold, border: "none", height: 48, padding: "0 20px",
+            cursor: "pointer", color: "#fff", display: "flex", alignItems: "center",
+            transition: "background 0.15s", flexShrink: 0,
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = "#C8842A")}
+          onMouseLeave={e => (e.currentTarget.style.background = C.gold)}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
       </div>
+      {open && has && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0,
+          background: "#fff", borderRadius: 6, overflow: "hidden", zIndex: 9999,
+          boxShadow: "0 20px 60px rgba(0,0,0,0.20)", border: "1px solid rgba(0,0,0,0.06)",
+        }}>
+          {results.vendors.map(v => (
+            <button key={v.id}
+              onClick={() => { setOpen(false); setQuery(""); navigate(`/directory?search=${encodeURIComponent(v.name)}&id=${v.id}`); }}
+              style={{ width: "100%", display: "flex", justifyContent: "space-between", padding: "11px 16px", background: "none", border: "none", borderBottom: "1px solid rgba(0,0,0,0.05)", cursor: "pointer", fontFamily: C.ui, textAlign: "left" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(180,105,14,0.06)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}
+            >
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.black }}>{v.name}</span>
+              {v.location && <span style={{ fontSize: 11, color: C.muted }}>{v.location}</span>}
+            </button>
+          ))}
+          {results.services.map(s => (
+            <button key={s.id}
+              onClick={() => { setOpen(false); setQuery(""); navigate(`/beautyservices?cat=${encodeURIComponent(s.category)}&id=${s.id}`); }}
+              style={{ width: "100%", display: "flex", justifyContent: "space-between", padding: "11px 16px", background: "none", border: "none", borderBottom: "1px solid rgba(0,0,0,0.05)", cursor: "pointer", fontFamily: C.ui, textAlign: "left" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(180,105,14,0.06)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}
+            >
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.black }}>{s.name}</span>
+              <span style={{ fontSize: 11, color: C.muted }}>{s.category}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function CategoryCard({ href, img, eyebrow, title, sub, align = "left" }: { href: string; img: string; eyebrow: string; title: string; sub: string; align?: "left" | "right" }) {
-  const [hov, setHov] = useState(false);
+/* ─────────────────────────────────────────────────────────────────────────────
+   Artisans of Note — fetched from Supabase
+───────────────────────────────────────────────────────────────────────────── */
+type Vendor = { id: string; name: string; category: string; location: string; city: string; bio: string; instagram: string; usedCount: number; recCount: number; };
+
+function ArtisansSection() {
+  const supabase = useSupabase();
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const titleInView = useInView(titleRef, { once: true, margin: "0px 0px -80px 0px" });
+
+  useEffect(() => {
+    supabase.from("vendors")
+      .select("id,name,category,location,city,bio,instagram,usedCount:used_count,recCount:rec_count")
+      .order("rec_count", { ascending: false })
+      .limit(4)
+      .then(({ data }) => { if (data) setVendors(data as Vendor[]); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fallback placeholder cards while loading
+  const display: Partial<Vendor>[] = vendors.length
+    ? vendors
+    : [
+        { id: "1", name: "Adaeze Beauty Studio", category: "MAKEUP",  city: "Lagos",       bio: "Bridal & editorial makeup for the modern Nigerian woman.", recCount: 47 },
+        { id: "2", name: "Kemi Braids",          category: "HAIR",    city: "Abuja",       bio: "Specialist in protective styles, knotless and box braids.", recCount: 38 },
+        { id: "3", name: "Elegance Events Co.",  category: "EVENTS",  city: "Port Harcourt", bio: "Luxury event planning with an eye for refined detail.",    recCount: 31 },
+        { id: "4", name: "Glam by Tola",         category: "LASHES",  city: "Lagos",       bio: "Lash extensions and lifts trusted by 300+ clients.",        recCount: 26 },
+      ];
+
   return (
-    <Link href={href} style={{ position: "relative", display: "block", textDecoration: "none", flex: 1, minWidth: 0, borderRadius: 16, overflow: "hidden", aspectRatio: "3/4" }}
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
-      <img src={img} alt={title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)", transform: hov ? "scale(1.06)" : "scale(1)" }} />
-      {/* Gradient overlay — stronger at bottom */}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,7,3,0.88) 0%, rgba(10,7,3,0.35) 50%, transparent 100%)" }} />
-      {/* Hover tint */}
-      <div style={{ position: "absolute", inset: 0, background: `rgba(180,105,14,0.08)`, opacity: hov ? 1 : 0, transition: "opacity 0.3s" }} />
-      {/* Content */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 22px 26px", textAlign: align as "left" | "right" }}>
-        <div style={{ fontSize: 8, letterSpacing: "0.32em", textTransform: "uppercase", color: G.gold, fontWeight: 700, fontFamily: G.ui, marginBottom: 8 }}>{eyebrow}</div>
-        <div style={{ fontFamily: G.serif, fontWeight: 700, fontSize: "clamp(1.4rem,2.8vw,1.9rem)", color: "#fff", lineHeight: 1.15, marginBottom: 5 }}>{title}</div>
-        <div style={{ fontFamily: G.ui, fontSize: 11, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>{sub}</div>
-        {/* Arrow indicator */}
-        <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: G.gold, fontFamily: G.ui, opacity: hov ? 1 : 0, transform: hov ? "translateY(0)" : "translateY(4px)", transition: "all 0.3s" }}>
-          Explore <span>→</span>
+    <section style={{ background: C.black, padding: "clamp(72px,10vw,112px) clamp(20px,4vw,52px)" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        {/* Header */}
+        <div ref={titleRef} style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "clamp(40px,6vw,60px)", flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <FadeUp delay={0}>
+              <Eyebrow text="Featured" />
+            </FadeUp>
+            <div style={{ marginTop: 12 }}>
+              <ClipText delay={0.1}>
+                <h2 style={{ fontFamily: C.disp, fontSize: "clamp(3rem,8vw,6.5rem)", letterSpacing: "0.04em", color: C.white, lineHeight: 0.92, margin: 0 }}>
+                  ARTISANS<br />OF NOTE
+                </h2>
+              </ClipText>
+            </div>
+          </div>
+          <FadeUp delay={0.2} style={{ alignSelf: "flex-end" }}>
+            <Link href="/beautyservices" style={{ display: "inline-flex", alignItems: "center", gap: 12, textDecoration: "none" }}
+              onMouseEnter={e => { const l = e.currentTarget.querySelector(".al") as HTMLElement; if (l) l.style.width = "48px"; }}
+              onMouseLeave={e => { const l = e.currentTarget.querySelector(".al") as HTMLElement; if (l) l.style.width = "24px"; }}
+            >
+              <div className="al" style={{ width: 24, height: 1, background: C.gold, transition: "width 0.3s ease" }} />
+              <span style={{ fontFamily: C.ui, fontSize: 10, fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase", color: C.gold }}>VIEW ALL</span>
+            </Link>
+          </FadeUp>
+        </div>
+
+        {/* Cards */}
+        <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 2 }}>
+          {display.map((v, i) => (
+            <StaggerItem key={v.id} variants={STAGGER_ITEM}>
+              <ArtisanCard v={v} i={i} />
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </div>
+    </section>
+  );
+}
+
+function ArtisanCard({ v, i }: { v: Partial<Vendor>; i: number }) {
+  const [hov, setHov] = useState(false);
+  const photos = ["/pexels-heibbymarvel-4285539.jpg", "/pexels-services.jpg", "/pexels-bridal.jpg", "/pexels-directory-hero.jpg"];
+  return (
+    <Link href={`/beautyservices`} style={{ textDecoration: "none", display: "block" }}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+    >
+      <div style={{ border: `1px solid rgba(245,240,230,0.07)`, background: hov ? "#1A1714" : "#110E0B", transition: "background 0.25s", padding: "0 0 24px" }}>
+        {/* Photo */}
+        <div style={{ width: "100%", aspectRatio: "4/3", overflow: "hidden", position: "relative" }}>
+          <img src={photos[i % photos.length]} alt={v.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.65s cubic-bezier(0.25,0.46,0.45,0.94)", transform: hov ? "scale(1.06)" : "scale(1)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,8,5,0.6) 0%, transparent 50%)" }} />
+          {/* Category badge */}
+          <div style={{ position: "absolute", top: 14, left: 14, fontSize: 8, fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase", fontFamily: C.ui, color: C.gold }}>
+            {v.category}
+          </div>
+        </div>
+        {/* Info */}
+        <div style={{ padding: "20px 20px 0" }}>
+          <div style={{ fontFamily: C.disp, fontSize: "clamp(1.2rem,2.5vw,1.7rem)", letterSpacing: "0.06em", color: C.white, lineHeight: 1, marginBottom: 8 }}>{v.name}</div>
+          <div style={{ fontFamily: C.ui, fontSize: 11, color: "rgba(245,240,230,0.4)", marginBottom: 10 }}>{v.city}</div>
+          {v.bio && (
+            <p style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: 13, color: "rgba(245,240,230,0.55)", lineHeight: 1.6, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {v.bio}
+            </p>
+          )}
+          <div style={{ display: "flex", gap: 16, marginTop: 14 }}>
+            {v.recCount != null && (
+              <div style={{ fontFamily: C.ui, fontSize: 10, color: C.gold }}>
+                <span style={{ fontWeight: 800 }}>{v.recCount}</span>
+                <span style={{ marginLeft: 4, opacity: 0.6 }}>rec</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Link>
   );
 }
 
-function SectionLabel({ text, light = false }: { text: string; light?: boolean }) {
+/* ─────────────────────────────────────────────────────────────────────────────
+   Page
+───────────────────────────────────────────────────────────────────────────── */
+export default function HomePage() {
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollY } = useScroll();
+  // Parallax: hero image moves slower than scroll
+  const heroImgY = useTransform(scrollY, [0, 700], [0, 110]);
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-      <span style={{ fontSize: 8, letterSpacing: "0.32em", textTransform: "uppercase", color: G.gold, fontWeight: 700, fontFamily: G.ui }}>{text}</span>
-      <div style={{ flex: 1, height: "1px", background: light ? G.goldBorder : `rgba(180,105,14,0.18)`, maxWidth: 60 }} />
+    <div style={{ fontFamily: C.ui, background: C.cream, overflowX: "hidden" }}>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          §1  HERO — Dark, full-bleed, "Reclaim Your Glow."
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section ref={heroRef} style={{ background: C.black, minHeight: "100svh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+        {/* Parallax hero image */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+          <motion.img
+            src="/pexels-heibbymarvel-4285539.jpg"
+            alt="Hero"
+            style={{ width: "100%", height: "115%", objectFit: "cover", objectPosition: "50% 20%", y: heroImgY, willChange: "transform" }}
+          />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(13,11,8,0.78) 0%, rgba(13,11,8,0.50) 40%, rgba(13,11,8,0.82) 100%)" }} />
+        </div>
+
+        {/* Top meta bar */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
+          style={{ position: "relative", zIndex: 1, padding: "0 clamp(20px,4vw,52px)", height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid rgba(245,240,230,0.08)` }}>
+          <span style={{ fontSize: 8, letterSpacing: "0.36em", textTransform: "uppercase", color: "rgba(245,240,230,0.35)", fontFamily: C.ui }}>Est. 2023 · Lagos, Nigeria</span>
+          <span style={{ fontSize: 8, letterSpacing: "0.36em", textTransform: "uppercase", color: "rgba(245,240,230,0.35)", fontFamily: C.ui }}>The Nigerian Beauty &amp; Events Edit</span>
+        </motion.div>
+
+        {/* Main hero content */}
+        <div style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "clamp(32px,5vw,56px) clamp(20px,4vw,52px) clamp(40px,6vw,68px)" }}>
+
+          {/* No.1 editorial accent — top right */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.6 }}
+            style={{ position: "absolute", top: "clamp(20px,4vw,40px)", right: "clamp(20px,4vw,52px)", textAlign: "right" }}>
+            <div style={{ fontFamily: C.disp, fontSize: "clamp(3rem,8vw,7rem)", color: "rgba(245,240,230,0.08)", letterSpacing: "0.06em", lineHeight: 1 }}>No.1</div>
+          </motion.div>
+
+          {/* Headline — massive Bebas, stacked, clip-reveals */}
+          <div style={{ marginBottom: "clamp(20px,3vw,28px)" }}>
+            <ClipText delay={0.15}>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.white, margin: 0 }}>RECLAIM</h1>
+            </ClipText>
+            <ClipText delay={0.28}>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.white, margin: 0 }}>YOUR</h1>
+            </ClipText>
+            <ClipText delay={0.41}>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.gold, margin: 0 }}>GLOW.</h1>
+            </ClipText>
+          </div>
+
+          {/* Tagline + search + CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: C.ease, delay: 0.58 }}
+            style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 540 }}>
+            <p style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(14px,1.8vw,18px)", color: "rgba(245,240,230,0.62)", lineHeight: 1.7, margin: 0 }}>
+              Discover the finest beauty services and event vendors in the Nigerian community.
+            </p>
+            <HeroSearch />
+            <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+              <ArrowLink href="/beautyservices" label="BROWSE BEAUTY" />
+              <ArrowLink href="/directory" label="ALL VENDORS" faint />
+            </div>
+          </motion.div>
+
+          {/* Stats row at very bottom */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            style={{ display: "flex", gap: "clamp(24px,4vw,48px)", marginTop: "clamp(32px,5vw,52px)", paddingTop: 20, borderTop: `1px solid rgba(245,240,230,0.08)` }}>
+            {[["500+", "VENDORS"], ["6", "CITIES"], ["900+", "REVIEWS"]].map(([n, l]) => (
+              <div key={n}>
+                <div style={{ fontFamily: C.disp, fontSize: "clamp(1.8rem,3.5vw,2.8rem)", color: C.white, lineHeight: 1, letterSpacing: "0.04em" }}>{n}</div>
+                <div style={{ fontSize: 8, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(245,240,230,0.3)", marginTop: 4, fontFamily: C.ui }}>{l}</div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          §2  TICKER / MARQUEE #1
+      ══════════════════════════════════════════════════════════════════════ */}
+      <Marquee
+        items={["Nigerian Wedding Vendors", "Verified Artisans", "Bridal Beauty", "Hair Braiding Specialists", "Event Planners", "Makeup Artists", "Community Shortlists", "Lagos · Abuja · Port Harcourt"]}
+        speed={34}
+        bg={C.black2}
+      />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          §3  WHERE TO START — two cinematic full-height cards
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section style={{ background: C.cream, padding: "clamp(64px,8vw,96px) clamp(20px,4vw,52px)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          {/* Header */}
+          <div style={{ marginBottom: "clamp(36px,5vw,52px)" }}>
+            <FadeUp><Eyebrow text="Curation" light /></FadeUp>
+            <ClipText delay={0.12} style={{ marginTop: 10 }}>
+              <h2 style={{ fontFamily: C.disp, fontSize: "clamp(2.4rem,7vw,6rem)", lineHeight: 0.9, letterSpacing: "0.04em", color: C.black, margin: 0 }}>
+                WHERE WOULD YOU<br />LIKE TO START?
+              </h2>
+            </ClipText>
+          </div>
+
+          {/* Two cards */}
+          <Stagger style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 8 }}>
+            {[
+              { label: "BEAUTY", sub: "SERVICES", img: "/pexels-services.jpg",        href: "/beautyservices", cats: ["Hair", "Makeup", "Lashes", "Nails", "Brows"] },
+              { label: "EVENTS", sub: "& WEDDINGS", img: "/pexels-bridal1.jpg",       href: "/directory",      cats: ["Weddings", "Birthdays", "Corporate", "Celebrations"] },
+            ].map(c => (
+              <StaggerItem key={c.label} variants={STAGGER_ITEM}>
+                <WhereCard {...c} />
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          §4  ARTISANS OF NOTE
+      ══════════════════════════════════════════════════════════════════════ */}
+      <ArtisansSection />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          §5  SERVICES MARQUEE #2 (reversed direction)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <Marquee
+        items={["Hair Braids", "Bridal MUA", "Lash Extensions", "Silk Press", "Airbrush Makeup", "Knotless Braids", "Wedding Photography", "Decor & Venue", "Catering", "Gele Tying", "Nail Art"]}
+        speed={28}
+        reverse
+        bg={C.black2}
+        textColor="rgba(245,240,230,0.30)"
+      />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          §6  HOW IT WORKS — dark bg, O-K Consulting numbered list style
+      ══════════════════════════════════════════════════════════════════════ */}
+      <HowItWorksSection />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          §7  TESTIMONIALS — "Kind Words"
+      ══════════════════════════════════════════════════════════════════════ */}
+      <TestimonialsSection />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          §8  CTA BAND + FOOTER
+      ══════════════════════════════════════════════════════════════════════ */}
+      <CtaFooter />
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────
-   Main
-───────────────────────────────────────────────────────── */
-export default function HomePage() {
-  const supabase = useSupabase();
-  const [, navigate] = useLocation();
-  const searchRef = useRef<HTMLDivElement>(null);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResults>({ vendors: [], services: [] });
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
+/* ─────────────────────────────────────────────────────────────────────────────
+   Where to Start card
+───────────────────────────────────────────────────────────────────────────── */
+function WhereCard({ label, sub, img, href, cats }: { label: string; sub: string; img: string; href: string; cats: string[] }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <Link href={href} style={{ textDecoration: "none", display: "block" }}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      <div style={{ position: "relative", aspectRatio: "3/4", overflow: "hidden", borderRadius: 2 }}>
+        <img src={img} alt={label} style={{
+          width: "100%", height: "100%", objectFit: "cover",
+          transition: "transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)",
+          transform: hov ? "scale(1.05)" : "scale(1)",
+        }} />
+        <div style={{
+          position: "absolute", inset: 0,
+          background: hov
+            ? "linear-gradient(to top, rgba(10,8,5,0.88) 0%, rgba(10,8,5,0.45) 60%)"
+            : "linear-gradient(to top, rgba(10,8,5,0.72) 0%, rgba(10,8,5,0.20) 55%)",
+          transition: "background 0.4s",
+        }} />
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "clamp(20px,3vw,32px)" }}>
+          {/* Category chips — slide in on hover */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 16, opacity: hov ? 1 : 0, transform: hov ? "translateY(0)" : "translateY(12px)", transition: "all 0.35s" }}>
+            {cats.map(c => (
+              <span key={c} style={{ fontSize: 8, padding: "3px 10px", border: `1px solid rgba(245,240,230,0.30)`, borderRadius: 20, color: "rgba(245,240,230,0.75)", fontFamily: C.ui, fontWeight: 600, letterSpacing: "0.08em" }}>{c}</span>
+            ))}
+          </div>
+          <div style={{ fontFamily: C.ui, fontSize: 8, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: C.gold, marginBottom: 6 }}>{sub}</div>
+          <div style={{ fontFamily: C.disp, fontSize: "clamp(2.2rem,5vw,4rem)", letterSpacing: "0.06em", color: "#fff", lineHeight: 0.95 }}>{label}</div>
+          <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10, opacity: hov ? 1 : 0, transform: hov ? "translateX(0)" : "translateX(-12px)", transition: "all 0.35s 0.05s" }}>
+            <div style={{ width: 28, height: 1, background: C.gold }} />
+            <span style={{ fontFamily: C.ui, fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: C.gold }}>EXPLORE</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
-  useSearchDropdown(query, supabase, (r, open, loading) => { setResults(r); setSearchOpen(open); setSearchLoading(loading); });
+/* ─────────────────────────────────────────────────────────────────────────────
+   How It Works
+───────────────────────────────────────────────────────────────────────────── */
+function HowItWorksSection() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -80px 0px" });
 
-  useEffect(() => {
-    const close = (e: MouseEvent) => { if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false); };
-    document.addEventListener("mouseup", close);
-    return () => document.removeEventListener("mouseup", close);
-  }, []);
-
-  const hasResults = results.vendors.length > 0 || results.services.length > 0;
+  const steps = [
+    { n: "01", title: "DISCOVER",        body: "Browse hundreds of verified Nigerian beauty and wedding vendors. Filter by category, city, and what the community recommends." },
+    { n: "02", title: "VOUCH & VERIFY",  body: "Mark vendors you've used and recommend the ones you love. Real experiences from real people in the community." },
+    { n: "03", title: "SAVE & NOTE",     body: "Build your personal shortlist with private notes and Naira quotes — your planning headquarters in one place." },
+    { n: "04", title: "FOLLOW YOUR CIRCLE", body: "Follow people you trust to see who they've used and would recommend for your milestone moments." },
+    { n: "05", title: "BOOK DIRECTLY",   body: "Some vendors offer direct booking links — go straight from discovery to booking without any friction." },
+  ];
 
   return (
-    <div style={{ fontFamily: G.ui, background: G.cream, color: G.textDark }}>
-      <style>{`
-        body { background: ${G.bg}; }
-        .srch-input::placeholder { color: rgba(28,25,23,0.38); }
-        .srch-input:focus { outline: none; }
-        .srch-wrap:focus-within { border-color: ${G.gold} !important; box-shadow: 0 0 0 3px rgba(180,105,14,0.10); }
-        .srch-row:hover { background: rgba(180,105,14,0.06) !important; }
-        .how-btn:hover { background: rgba(180,105,14,0.18) !important; color: ${G.goldLight} !important; }
-        .nav-pill:hover { color: ${G.textDark} !important; }
-        @media (max-width: 700px) {
-          .cat-flex { flex-direction: column !important; gap: 12px !important; }
-          .cat-flex > * { aspect-ratio: 4/3 !important; }
-          .how-grid { grid-template-columns: 1fr 1fr !important; }
-        }
-        @media (max-width: 480px) {
-          .how-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+    <section style={{ background: C.black, padding: "clamp(72px,10vw,112px) clamp(20px,4vw,52px)" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div ref={ref}>
+          <FadeUp delay={0}><Eyebrow text="The Process" /></FadeUp>
+          <div style={{ marginTop: 12, marginBottom: "clamp(40px,6vw,64px)" }}>
+            <ClipText delay={0.1}>
+              <h2 style={{ fontFamily: C.disp, fontSize: "clamp(2.4rem,6.5vw,5.5rem)", letterSpacing: "0.04em", color: C.white, lineHeight: 0.92, margin: 0 }}>HOW IT WORKS</h2>
+            </ClipText>
+          </div>
 
-      {/* ── HERO ───────────────────────────────────────── */}
-      <section style={{ position: "relative", minHeight: "72vh", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-        {/* Photo */}
-        <img src="/pexels-heibbymarvel-4285539.jpg" alt="" aria-hidden="true"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} />
-        {/* Gradient — dark bottom for text, lighter top for photo */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(175deg, rgba(10,7,3,0.30) 0%, rgba(10,7,3,0.68) 55%, rgba(10,7,3,0.92) 100%)" }} />
-        {/* Grain texture via SVG filter */}
-        <div style={{ position: "absolute", inset: 0, opacity: 0.035, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")", backgroundRepeat: "repeat", pointerEvents: "none" }} />
-
-        {/* Top label */}
-        <div style={{ position: "absolute", top: "clamp(68px,9vh,88px)", left: "clamp(20px,5vw,56px)", zIndex: 2 }}>
-          <span style={{ fontSize: 8, letterSpacing: "0.38em", textTransform: "uppercase", color: "rgba(245,239,228,0.45)", fontWeight: 700, fontFamily: G.ui }}>The Nigerian Beauty Services &amp; Events Edit</span>
-        </div>
-
-        {/* Issue number */}
-        <div style={{ position: "absolute", bottom: "clamp(36px,6vh,60px)", right: "clamp(20px,5vw,56px)", zIndex: 2, fontFamily: G.serif, fontSize: "clamp(2.5rem,7vw,5.5rem)", fontWeight: 700, color: "rgba(245,239,228,0.07)", lineHeight: 1, userSelect: "none", letterSpacing: "-0.03em" }}>No.1</div>
-
-        {/* Main content */}
-        <div style={{ position: "relative", zIndex: 2, padding: "0 clamp(20px,5vw,56px) clamp(36px,6vh,60px)" }}>
-          <h1 style={{ fontFamily: G.serif, fontWeight: 700, fontSize: "clamp(3.2rem,9.5vw,6.5rem)", lineHeight: 1.02, color: "#F5EFE4", margin: "0 0 18px", maxWidth: 700, letterSpacing: "-0.01em" }}>
-            Reclaim<br />Your Glow.
-          </h1>
-          <p style={{ fontFamily: G.ui, fontSize: "clamp(13px,1.8vw,15px)", color: "rgba(245,239,228,0.60)", maxWidth: 360, lineHeight: 1.70, margin: "0 0 30px", fontWeight: 400 }}>
-            Discover the finest beauty services and event vendors in the Nigerian community.
-          </p>
-
-          {/* Search */}
-          <div ref={searchRef} style={{ position: "relative", maxWidth: 500 }}>
-            <div className="srch-wrap" style={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: 10, border: "1.5px solid rgba(28,25,23,0.10)", overflow: "visible", transition: "border-color 0.2s, box-shadow 0.2s" }}>
-              <input className="srch-input" type="text" placeholder="Search vendors, services, locations…" value={query}
-                onChange={e => setQuery(e.target.value)}
-                onFocus={() => { if (query.trim().length >= 2) setSearchOpen(true); }}
-                style={{ flex: 1, border: "none", outline: "none", fontSize: 13, padding: "14px 16px", color: G.textDark, fontFamily: G.ui, background: "transparent", minWidth: 0 }} />
-              <button onClick={() => { if (query.trim()) navigate(`/directory?search=${encodeURIComponent(query)}`); }}
-                style={{ background: G.gold, border: "none", padding: "0 20px", height: 48, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", flexShrink: 0, transition: "background 0.18s", borderRadius: "0 8px 8px 0" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = G.goldLight; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = G.gold; }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              </button>
-            </div>
-
-            {/* Dropdown */}
-            {searchOpen && (hasResults || searchLoading) && (
-              <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, background: "#fff", border: "1px solid rgba(28,25,23,0.09)", borderRadius: 10, overflow: "hidden", zIndex: 9999, boxShadow: "0 16px 48px rgba(0,0,0,0.14)", fontFamily: G.ui }}>
-                {searchLoading && <div style={{ padding: "14px 16px", fontSize: 12, color: G.textSubdued }}>Searching…</div>}
-                {results.vendors.length > 0 && (
-                  <>
-                    <div style={{ padding: "9px 16px 4px", fontSize: 8, letterSpacing: "0.28em", textTransform: "uppercase", color: G.gold, fontWeight: 700 }}>Vendors</div>
-                    {results.vendors.map(v => (
-                      <button key={v.id} className="srch-row"
-                        onClick={() => { setSearchOpen(false); setQuery(""); navigate(`/directory?search=${encodeURIComponent(v.name)}&id=${v.id}`); }}
-                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", background: "none", border: "none", borderBottom: "1px solid rgba(28,25,23,0.05)", cursor: "pointer", textAlign: "left", transition: "background 0.12s" }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: G.textDark }}>{v.name}</span>
-                        {v.location && <span style={{ fontSize: 11, color: G.textSubdued }}>{v.location}</span>}
-                      </button>
-                    ))}
-                  </>
-                )}
-                {results.services.length > 0 && (
-                  <>
-                    <div style={{ padding: "9px 16px 4px", fontSize: 8, letterSpacing: "0.28em", textTransform: "uppercase", color: "#0D9488", fontWeight: 700 }}>Services</div>
-                    {results.services.map(s => (
-                      <button key={s.id} className="srch-row"
-                        onClick={() => { setSearchOpen(false); setQuery(""); navigate(`/beautyservices?cat=${encodeURIComponent(s.category)}&id=${s.id}`); }}
-                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", background: "none", border: "none", borderBottom: "1px solid rgba(28,25,23,0.05)", cursor: "pointer", textAlign: "left", transition: "background 0.12s" }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: G.textDark }}>{s.name}</span>
-                        <span style={{ fontSize: 11, color: G.textSubdued }}>{s.category}</span>
-                      </button>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
+          <div style={{ borderTop: `1px solid rgba(245,240,230,0.08)` }}>
+            {steps.map((s, i) => (
+              <motion.div
+                key={s.n}
+                initial={{ opacity: 0, y: 24 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.7, ease: C.ease, delay: 0.1 * i + 0.2 }}
+                style={{
+                  display: "flex", alignItems: "flex-start",
+                  gap: "clamp(20px,5vw,60px)",
+                  padding: "clamp(22px,3vw,30px) 0",
+                  borderBottom: `1px solid rgba(245,240,230,0.08)`,
+                }}
+              >
+                <span style={{ fontFamily: C.ui, fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", color: C.gold, flexShrink: 0, paddingTop: 7 }}>{s.n}</span>
+                <div style={{ fontFamily: C.disp, fontSize: "clamp(1.6rem,3.5vw,2.8rem)", letterSpacing: "0.06em", color: C.white, lineHeight: 1, flexShrink: 0, width: "clamp(160px,28vw,300px)" }}>{s.title}</div>
+                <p style={{ fontFamily: C.ui, fontSize: 13, color: "rgba(245,240,230,0.45)", lineHeight: 1.7, maxWidth: 480, margin: 0, paddingTop: 6 }}>{s.body}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* ── TICKER ─────────────────────────────────────── */}
-      <Ticker />
+/* ─────────────────────────────────────────────────────────────────────────────
+   Testimonials
+───────────────────────────────────────────────────────────────────────────── */
+function TestimonialsSection() {
+  const quotes = [
+    { name: "Amara O.",   role: "Bride · Lagos",          letter: "A", quote: "I finally found a space that allows me to discover new beauty providers. No longer keeping saved folders on Instagram and TikTok that I can never find. Jaiyé is the one tab I always have open." },
+    { name: "Chisom N.",  role: "Event Planner · Abuja",  letter: "C", quote: "The vendor directory is genuinely useful — I can recommend it to every client. The community reviews are honest and the shortlist feature saves me hours every week." },
+    { name: "Temi A.",    role: "MUA · Port Harcourt",    letter: "T", quote: "As a beauty provider, being on Jaiyé has connected me with brides who actually want my style. The community vouching system builds trust in a way Instagram just can't." },
+  ];
 
-      {/* ── WHERE TO START ─────────────────────────────── */}
-      <section style={{ background: G.cream, padding: "clamp(52px,8vw,88px) clamp(20px,5vw,56px)" }}>
-        <div style={{ maxWidth: 1140, margin: "0 auto" }}>
-          <SectionLabel text="Curation" />
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 12 }}>
-            <h2 style={{ fontFamily: G.serif, fontSize: "clamp(1.8rem,4vw,2.8rem)", fontWeight: 700, color: G.textDark, lineHeight: 1.12, letterSpacing: "-0.01em" }}>
-              Where would you<br />like to start?
-            </h2>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link href="/beautyservices" style={{ fontSize: 11, fontWeight: 600, color: G.gold, textDecoration: "none", fontFamily: G.ui, border: `1px solid ${G.goldBorder}`, padding: "7px 14px", borderRadius: 20, transition: "all 0.15s" }}>Beauty Services</Link>
-              <Link href="/directory" style={{ fontSize: 11, fontWeight: 600, color: G.gold, textDecoration: "none", fontFamily: G.ui, border: `1px solid ${G.goldBorder}`, padding: "7px 14px", borderRadius: 20, transition: "all 0.15s" }}>Events</Link>
-            </div>
-          </div>
-          <div className="cat-flex" style={{ display: "flex", gap: 16, height: "clamp(380px,50vw,520px)" }}>
-            <CategoryCard href="/beautyservices" img="/pexels-services.jpg" eyebrow="Beauty" title="Beauty Services" sub="Hair · Makeup · Lashes & more" />
-            <CategoryCard href="/directory"      img="/pexels-bridal.jpg"   eyebrow="Events" title="Events & Weddings" sub="Planners · Venues · Styling" align="right" />
-          </div>
-        </div>
-      </section>
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
 
-      {/* ── ARTISANS OF NOTE ───────────────────────────── */}
-      <section style={{ background: G.creamMid, padding: "0 clamp(20px,5vw,56px) clamp(52px,8vw,88px)", borderTop: `1px solid ${G.creamDark}` }}>
-        <div style={{ maxWidth: 1140, margin: "0 auto", paddingTop: "clamp(40px,6vw,64px)" }}>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 28 }}>
-            <div>
-              <SectionLabel text="Featured" />
-              <h2 style={{ fontFamily: G.serif, fontStyle: "italic", fontSize: "clamp(1.6rem,3.5vw,2.4rem)", fontWeight: 700, color: G.textDark, margin: 0, lineHeight: 1.1 }}>
-                Artisans of Note
+  return (
+    <section style={{ background: C.cream, padding: "clamp(72px,10vw,112px) clamp(20px,4vw,52px)", borderTop: `1px solid ${C.cream2}` }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div ref={ref}>
+          <FadeUp><Eyebrow text="Kind Words" light /></FadeUp>
+          <div style={{ marginTop: 12, marginBottom: "clamp(40px,6vw,60px)" }}>
+            <ClipText delay={0.1}>
+              <h2 style={{ fontFamily: C.disp, fontSize: "clamp(2.4rem,6.5vw,5.5rem)", letterSpacing: "0.04em", color: C.black, lineHeight: 0.92, margin: 0 }}>
+                WHAT THE<br />COMMUNITY SAYS
               </h2>
-            </div>
-            <Link href="/directory" style={{ fontSize: 11, fontWeight: 700, color: G.gold, textDecoration: "none", fontFamily: G.ui, letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 5, borderBottom: `1px solid ${G.gold}`, paddingBottom: 1 }}>
-              View all <span>→</span>
-            </Link>
+            </ClipText>
           </div>
 
-          {/* Vendor cards */}
-          <div style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 8 }} className="hide-scrollbar">
-            {/* K.Mari featured card */}
-            <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${G.creamDark}`, overflow: "hidden", minWidth: 210, maxWidth: 230, flexShrink: 0, boxShadow: "0 1px 4px rgba(28,25,23,0.07)" }}>
-              <div style={{ height: 150, overflow: "hidden", position: "relative" }}>
-                <img src="/:kmari.jpg" alt="K.Mari" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 5 }}>
-                  <span style={{ fontSize: 8, fontWeight: 700, background: G.gold, color: "#fff", padding: "3px 8px", borderRadius: 20, fontFamily: G.ui, letterSpacing: "0.06em", textTransform: "uppercase" }}>Top Rated</span>
+          <div style={{ borderTop: `1px solid ${C.cream2}` }}>
+            {quotes.map((q, i) => (
+              <motion.div
+                key={q.name}
+                initial={{ opacity: 0, y: 28 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.75, ease: C.ease, delay: 0.12 * i + 0.15 }}
+                style={{ display: "flex", alignItems: "flex-start", gap: "clamp(20px,4vw,52px)", padding: "clamp(28px,4vw,44px) 0", borderBottom: `1px solid ${C.cream2}` }}
+              >
+                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(180,105,14,0.10)", border: `1.5px solid rgba(180,105,14,0.22)`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: C.disp, fontSize: "1.5rem", letterSpacing: "0.06em", color: C.gold, flexShrink: 0 }}>
+                  {q.letter}
                 </div>
-              </div>
-              <div style={{ padding: "14px 14px 16px" }}>
-                <div style={{ fontFamily: G.serif, fontSize: 16, fontWeight: 700, color: G.textDark, marginBottom: 3 }}>K.Mari</div>
-                <div style={{ fontSize: 11, color: G.textSubdued, fontFamily: G.ui, marginBottom: 10 }}>Makeup Artist · Lagos</div>
-                <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
-                  {["Makeup", "Bridal"].map(t => (
-                    <span key={t} style={{ fontSize: 9, padding: "3px 10px", borderRadius: 20, border: `1px solid ${G.creamDark}`, color: G.textSubdued, fontFamily: G.ui, fontWeight: 600 }}>{t}</span>
-                  ))}
+                <div style={{ flex: 1 }}>
+                  <blockquote style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(1rem,2vw,1.2rem)", color: C.black, lineHeight: 1.72, margin: "0 0 16px" }}>
+                    "{q.quote}"
+                  </blockquote>
+                  <div style={{ fontFamily: C.ui, fontSize: 12, fontWeight: 800, color: C.black, letterSpacing: "0.04em" }}>{q.name}</div>
+                  <div style={{ fontFamily: C.ui, fontSize: 10, color: C.muted, marginTop: 3, letterSpacing: "0.04em" }}>{q.role}</div>
                 </div>
-                <a href="https://instagram.com/kmariartistry" target="_blank" rel="noopener noreferrer"
-                  style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: G.textSubdued, textDecoration: "none", fontFamily: G.ui }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-                  @kmariartistry
-                </a>
-              </div>
-            </div>
-
-            {/* Placeholder cards */}
-            {[1, 2, 3].map(i => (
-              <div key={i} style={{ background: "#fff", borderRadius: 14, border: `1.5px dashed ${G.creamDark}`, minWidth: 210, maxWidth: 230, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 240 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: G.gold }}>✦</div>
-                <Link href="/directory" style={{ fontSize: 11, color: G.gold, textDecoration: "none", fontFamily: G.ui, fontWeight: 700 }}>Browse vendors →</Link>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* ── HOW IT WORKS ───────────────────────────────── */}
-      <section style={{ background: G.bg, padding: "clamp(52px,8vw,88px) clamp(20px,5vw,56px)", position: "relative", overflow: "hidden" }}>
-        {/* Subtle background glow */}
-        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 600, height: 600, background: `radial-gradient(circle, rgba(180,105,14,0.06) 0%, transparent 70%)`, pointerEvents: "none" }} />
-        <div style={{ maxWidth: 1140, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 52, flexWrap: "wrap", gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 8, letterSpacing: "0.32em", textTransform: "uppercase", color: `rgba(180,105,14,0.6)`, fontWeight: 700, fontFamily: G.ui, marginBottom: 12 }}>The Directory</div>
-              <h2 style={{ fontFamily: G.serif, fontSize: "clamp(1.8rem,4vw,2.8rem)", fontWeight: 700, color: G.text, lineHeight: 1.12 }}>How it works</h2>
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTA Band + Footer — "WE'RE HERE · LET'S TALK" style
+───────────────────────────────────────────────────────────────────────────── */
+function CtaFooter() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -80px 0px" });
+  const [hov, setHov] = useState(false);
+
+  return (
+    <section style={{ background: C.black, borderTop: `1px solid rgba(245,240,230,0.06)` }}>
+      <div ref={ref} style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(60px,9vw,100px) clamp(20px,4vw,52px) clamp(40px,6vw,60px)" }}>
+        {/* CTA link */}
+        <Link href="/directory" style={{ textDecoration: "none", display: "block" }}
+          onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
+            <div style={{ overflow: "hidden" }}>
+              <motion.div
+                initial={{ y: "105%" }}
+                animate={inView ? { y: 0 } : {}}
+                transition={{ duration: 0.9, ease: C.ease, delay: 0 }}
+              >
+                <div style={{ fontFamily: C.disp, fontSize: "clamp(2.4rem,8vw,7.5rem)", letterSpacing: "0.04em", lineHeight: 0.9, transition: "color 0.25s", color: hov ? C.gold : C.white }}>
+                  WE'RE HERE
+                </div>
+              </motion.div>
             </div>
-            <Link href="/directory" style={{ fontSize: 11, fontWeight: 700, color: G.gold, textDecoration: "none", fontFamily: G.ui, border: `1px solid ${G.goldBorder}`, padding: "8px 16px", borderRadius: 20 }}>
-              Start exploring →
-            </Link>
+            <motion.div
+              initial={{ opacity: 0, x: 24 }}
+              animate={inView ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.75, ease: C.ease, delay: 0.25 }}
+              style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}
+            >
+              <span style={{ fontFamily: C.ui, fontSize: 10, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(245,240,230,0.4)" }}>LET'S TALK</span>
+              <motion.div
+                animate={{ width: hov ? 60 : 32 }}
+                transition={{ duration: 0.3 }}
+                style={{ height: 1, background: C.gold }}
+              />
+              <motion.div
+                animate={{ background: hov ? C.gold : "rgba(0,0,0,0)" }}
+                transition={{ duration: 0.25 }}
+                style={{ width: 44, height: 44, borderRadius: "50%", border: `1px solid rgba(180,105,14,0.30)`, display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={hov ? "#fff" : C.gold} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              </motion.div>
+            </motion.div>
           </div>
+        </Link>
 
-          <div className="how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 1, borderTop: `1px solid rgba(180,105,14,0.12)` }}>
-            {HOW.map((h, idx) => (
-              <div key={h.n} style={{ padding: "32px 20px 28px", borderRight: idx < 4 ? `1px solid rgba(180,105,14,0.10)` : "none", display: "flex", flexDirection: "column", gap: 14 }}>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", color: `rgba(180,105,14,0.45)`, fontFamily: G.ui }}>{h.n}</span>
-                  <span style={{ fontSize: 18, color: G.gold, opacity: 0.7 }}>{h.icon}</span>
-                </div>
-                <div style={{ fontFamily: G.ui, fontSize: 13, fontWeight: 700, color: G.text, letterSpacing: "0.01em" }}>{h.title}</div>
-                <p style={{ fontFamily: G.ui, fontSize: 11.5, color: `rgba(245,239,228,0.46)`, lineHeight: 1.65, margin: 0, flex: 1 }}>{h.body}</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
-                  {h.ctas.map(c => (
-                    <Link key={c.label} href={c.href} className="how-btn"
-                      style={{ display: "inline-block", fontSize: 9, fontWeight: 700, color: `rgba(180,105,14,0.65)`, textDecoration: "none", border: `1px solid rgba(180,105,14,0.18)`, borderRadius: 20, padding: "5px 12px", fontFamily: G.ui, letterSpacing: "0.05em", transition: "all 0.15s" }}>
-                      {c.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+        {/* Divider */}
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={inView ? { scaleX: 1 } : {}}
+          transition={{ duration: 0.8, ease: C.ease, delay: 0.35 }}
+          style={{ height: 1, background: "rgba(245,240,230,0.06)", margin: "clamp(36px,5vw,52px) 0", transformOrigin: "left" }}
+        />
+
+        {/* Footer nav */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.7, delay: 0.45 }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}
+        >
+          <div style={{ fontFamily: C.disp, fontSize: "clamp(1rem,2.5vw,1.4rem)", letterSpacing: "0.14em", color: "rgba(245,240,230,0.25)" }}>JAIYÉ DIRECTORY</div>
+          <div style={{ display: "flex", gap: "clamp(16px,3vw,32px)", flexWrap: "wrap" }}>
+            {[{ l: "BEAUTY", h: "/beautyservices" }, { l: "EVENTS", h: "/directory" }, { l: "SAVED", h: "/saved" }, { l: "CALENDAR", h: "/style-calendar" }].map(lnk => (
+              <Link key={lnk.h} href={lnk.h}
+                style={{ fontFamily: C.ui, fontSize: 9, fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(245,240,230,0.28)", textDecoration: "none", transition: "color 0.15s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.gold)}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(245,240,230,0.28)")}
+              >
+                {lnk.l}
+              </Link>
             ))}
           </div>
-        </div>
-      </section>
+          <span style={{ fontFamily: C.ui, fontSize: 10, color: "rgba(245,240,230,0.20)" }}>&copy; 2025 Jaiyé Directory</span>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
-      {/* ── STATS STRIP ────────────────────────────────── */}
-      <section style={{ background: G.gold, padding: "clamp(24px,4vw,36px) clamp(20px,5vw,56px)" }}>
-        <div style={{ maxWidth: 1140, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-around", flexWrap: "wrap", gap: 20 }}>
-          {[["500+", "Verified vendors"], ["6", "Cities covered"], ["900+", "Community reviews"], ["Lagos · Abuja", "& growing"]].map(([n, l]) => (
-            <div key={n} style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: G.serif, fontSize: "clamp(1.6rem,3.5vw,2.4rem)", fontWeight: 700, color: "#fff", lineHeight: 1 }}>{n}</div>
-              <div style={{ fontFamily: G.ui, fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.70)", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 5 }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── TESTIMONIAL ────────────────────────────────── */}
-      <section style={{ background: G.creamMid, padding: "clamp(64px,10vw,100px) clamp(20px,5vw,56px)", borderTop: `1px solid ${G.creamDark}` }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
-          {/* Decorative quote mark */}
-          <div style={{ fontFamily: G.serif, fontSize: "5rem", lineHeight: 0.6, color: G.gold, opacity: 0.18, marginBottom: 28, userSelect: "none" }}>"</div>
-          <blockquote style={{ fontFamily: G.serif, fontStyle: "italic", fontSize: "clamp(1.05rem,2.6vw,1.32rem)", color: G.textDark, lineHeight: 1.68, margin: "0 0 36px", fontWeight: 400 }}>
-            I finally found a space that allows me to discover new beauty providers. No longer keeping saved folders on Instagram and TikTok that I can never find.
-          </blockquote>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: G.goldDim, border: `1.5px solid ${G.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: G.gold, fontFamily: G.ui }}>A</div>
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: G.textDark, fontFamily: G.ui }}>Amara O.</div>
-              <div style={{ fontSize: 10, color: G.textSubdued, fontFamily: G.ui, letterSpacing: "0.04em" }}>Community member</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA BAND ───────────────────────────────────── */}
-      <section style={{ background: G.bgCard, padding: "clamp(44px,7vw,72px) clamp(20px,5vw,56px)", borderTop: `1px solid ${G.goldBorder}` }}>
-        <div style={{ maxWidth: 1140, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
-          <div>
-            <h3 style={{ fontFamily: G.serif, fontSize: "clamp(1.3rem,3vw,2rem)", fontWeight: 700, color: G.text, marginBottom: 8 }}>Ready to find your vendors?</h3>
-            <p style={{ fontFamily: G.ui, fontSize: 13, color: G.textMuted, lineHeight: 1.6 }}>Browse the full directory or explore beauty services.</p>
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Link href="/beautyservices" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#fff", background: G.gold, textDecoration: "none", fontFamily: G.ui, padding: "11px 22px", borderRadius: 8, letterSpacing: "0.04em", transition: "background 0.15s" }}>
-              Browse Beauty
-            </Link>
-            <Link href="/directory" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: G.gold, background: "transparent", textDecoration: "none", fontFamily: G.ui, padding: "11px 22px", borderRadius: 8, border: `1px solid ${G.goldBorder}`, letterSpacing: "0.04em", transition: "all 0.15s" }}>
-              All Vendors
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FOOTER ─────────────────────────────────────── */}
-      <footer style={{ background: G.bg, borderTop: `1px solid rgba(180,105,14,0.12)`, padding: "40px clamp(20px,5vw,56px) 28px" }}>
-        <div style={{ maxWidth: 1140, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 36, flexWrap: "wrap", gap: 24 }}>
-            {/* Brand */}
-            <div>
-              <div style={{ fontFamily: G.display, fontSize: 20, letterSpacing: "0.14em", color: G.text, marginBottom: 8 }}>JAIYÉ</div>
-              <p style={{ fontFamily: G.ui, fontSize: 12, color: G.textMuted, lineHeight: 1.6, maxWidth: 240 }}>The Nigerian beauty services &amp; events edit. Discover. Vouch. Book.</p>
-            </div>
-            {/* Links */}
-            <div style={{ display: "flex", gap: "clamp(24px,5vw,56px)", flexWrap: "wrap" }}>
-              {[
-                { heading: "Directory", links: [{ label: "Beauty Services", href: "/beautyservices" }, { label: "Events", href: "/directory" }, { label: "All Vendors", href: "/directory" }] },
-                { heading: "Account", links: [{ label: "Sign In", href: "/" }, { label: "Saved Vendors", href: "/saved" }, { label: "Style Calendar", href: "/style-calendar" }] },
-              ].map(col => (
-                <div key={col.heading}>
-                  <div style={{ fontSize: 8, letterSpacing: "0.28em", textTransform: "uppercase", color: G.gold, fontWeight: 700, fontFamily: G.ui, marginBottom: 12 }}>{col.heading}</div>
-                  {col.links.map(l => (
-                    <Link key={l.href + l.label} href={l.href} style={{ display: "block", fontSize: 12, color: G.textMuted, textDecoration: "none", fontFamily: G.ui, marginBottom: 8, transition: "color 0.15s" }}>{l.label}</Link>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Bottom bar */}
-          <div style={{ borderTop: `1px solid rgba(255,255,255,0.05)`, paddingTop: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-            <span style={{ fontSize: 10, color: G.textMuted, fontFamily: G.ui }}>&copy; 2025 Jaiyé Directory. All rights reserved.</span>
-            <div style={{ display: "flex", gap: 16 }}>
-              {["Privacy", "Terms"].map(t => (
-                <span key={t} style={{ fontSize: 10, color: G.textMuted, fontFamily: G.ui, cursor: "pointer" }}>{t}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
+/* ─────────────────────────────────────────────────────────────────────────────
+   Shared: arrow text link
+───────────────────────────────────────────────────────────────────────────── */
+function ArrowLink({ href, label, faint = false }: { href: string; label: string; faint?: boolean }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <Link href={href} style={{ display: "inline-flex", alignItems: "center", gap: 12, textDecoration: "none" }}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      <motion.div animate={{ width: hov ? 44 : 22 }} transition={{ duration: 0.28 }}
+        style={{ height: 1, background: faint ? "rgba(245,240,230,0.22)" : C.gold }} />
+      <span style={{ fontFamily: C.ui, fontSize: 9, fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase", color: faint ? "rgba(245,240,230,0.38)" : C.gold }}>
+        {label}
+      </span>
+    </Link>
   );
 }

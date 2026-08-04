@@ -850,8 +850,8 @@ useEffect(() => {
           </div>
         )}
         {loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 14 }}>
-            {[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: 'var(--bg-card)', borderRadius: 14, height: 180, animation: 'pulse 1.5s ease infinite', opacity: 0.4, border: '1px solid var(--border)' }} />))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 20 }}>
+            {[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: '#E8E3DC', borderRadius: 16, height: 200, animation: 'pulse 1.5s ease infinite', opacity: 0.5 }} />))}
           </div>
         )}
         {!loading && sortedServices.length === 0 && (
@@ -916,77 +916,92 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   }
 
   return (
-    <div id={'service-' + service.id} style={{ background: '#fff', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid var(--border)', position: 'relative', boxShadow: promoActive ? '0 2px 12px rgba(192,160,96,0.15)' : '0 1px 4px rgba(28,25,23,0.06)' }}>
-      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
-        <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
+    <div id={'service-' + service.id} style={{ background: '#fff', borderRadius: 16, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid #E0D9CF', position: 'relative', overflow: 'hidden', boxShadow: '0 2px 16px rgba(28,20,8,0.08)', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Category accent bar */}
+      <div style={{ height: 3, background: ac, flexShrink: 0 }} />
+
+      {/* Save + Book — top-right */}
+      <div style={{ position: 'absolute', top: 15, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 2 }}>
+        <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? CATEGORY_ACCENT + '20' : 'rgba(255,255,255,0.95)', border: '1px solid ' + (isSaved ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s', backdropFilter: 'blur(4px)' }}>
           <HeartIcon filled={isSaved} />
         </button>
         {bookUrl && (
-          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999, background: '#1C1917', border: '1px solid #1C1917', fontSize: 10, fontWeight: 700, color: '#ffffff', textDecoration: 'none', letterSpacing: '0.06em', textTransform: 'uppercase' as const, fontFamily: manrope, whiteSpace: 'nowrap', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 11px', borderRadius: 6, background: '#0D0B08', fontSize: 9, fontWeight: 700, color: '#F5EFE4', textDecoration: 'none', letterSpacing: '0.10em', textTransform: 'uppercase' as const, fontFamily: manrope, whiteSpace: 'nowrap' }}>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Book
           </a>
         )}
       </div>
 
-      <div style={{ padding: '14px 14px 14px' }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>{service.category}</div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 6, paddingRight: 52, fontFamily: newsreader }}>{service.name}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap', paddingRight: 40 }}>
-          {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || ac) + '18', color: SUB_COLOR[s] || ac, fontSize: 10, fontWeight: 600, fontFamily: manrope, letterSpacing: '0.04em' }}>{s}</span>))}
-        </div>
+      <div style={{ padding: '14px 14px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Category eyebrow */}
+        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 12, letterSpacing: '0.18em', color: ac, marginBottom: 3 }}>{service.category}</div>
 
+        {/* Vendor name */}
+        <div style={{ fontSize: 18, fontWeight: 600, color: '#1C1917', lineHeight: 1.2, marginBottom: 8, paddingRight: 50, fontFamily: newsreader }}>{service.name}</div>
+
+        {/* Subcategory pills — uniform cream style */}
+        {subs.length > 0 && (
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
+            {subs.map((s: string) => (<span key={s} style={{ padding: '2px 8px', borderRadius: 4, background: '#F0EBE1', color: '#5C4A2A', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, fontFamily: manrope }}>{s}</span>))}
+          </div>
+        )}
+
+        {/* Location */}
+        {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 6, fontFamily: manrope }}>📍 {loc}</div>}
+
+        {/* Bio */}
+        {service.bio && <p style={{ fontSize: 12, color: '#6B5B45', margin: '0 0 10px', lineHeight: 1.65, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
+
+        {/* Social stats */}
+        {(usedCount > 0 || recCount > 0) && (
+          <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+            {usedCount > 0 && <span style={{ fontSize: 11, color: '#78716c', fontFamily: manrope }}>👋 {usedCount} used</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: '#78716c', fontFamily: manrope }}>⭐ {recCount} rec</span>}
+          </div>
+        )}
+
+        {/* Promo banner */}
         {promoActive && (
-          <div style={{ background: PROMO_COLOR + '12', border: '1px solid ' + PROMO_COLOR + '40', borderRadius: 10, padding: '8px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ background: PROMO_COLOR + '10', border: '1px solid ' + PROMO_COLOR + '35', borderRadius: 10, padding: '8px 12px', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{'🏷️ Active promo'}</span>
-              {service.discount_expiry && (
-                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>
-                  {'Expires ' + new Date(service.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                </span>
-              )}
+              <span style={{ fontSize: 9, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>🏷 Active promo</span>
+              {service.discount_expiry && <span style={{ fontSize: 9, color: '#78716c', fontFamily: manrope }}>Expires {new Date(service.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
             </div>
-            {service.discount_description && (
-              <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{service.discount_description}</p>
-            )}
+            {service.discount_description && <p style={{ fontSize: 11, color: '#1C1917', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{service.discount_description}</p>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-              <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '18', padding: '3px 10px', borderRadius: 6, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{service.discount_code}</code>
-              <button onClick={handleCopy} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-                {copied ? '✓ Copied!' : 'Copy'}
+              <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '15', padding: '3px 10px', borderRadius: 5, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{service.discount_code}</code>
+              <button onClick={handleCopy} style={{ padding: '3px 10px', borderRadius: 5, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, letterSpacing: '0.06em' }}>
+                {copied ? '✓ Copied' : 'Copy'}
               </button>
             </div>
           </div>
         )}
 
-        {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
-        {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
-
-        {(usedCount > 0 || recCount > 0) && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#128075; {usedCount} used</span>}
-            {recCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>&#11088; {recCount} rec</span>}
+        {/* Social links — dark editorial style */}
+        {(igUrl || waUrl) && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            {igUrl && (
+              <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#0D0B08', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#F5EFE4', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+                <InstagramIcon /> Instagram
+              </a>
+            )}
+            {waUrl && (
+              <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#0D0B08', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#F5EFE4', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+                <WhatsAppIcon /> WhatsApp
+              </a>
+            )}
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-          {igUrl && (
-            <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
-              <InstagramIcon />Instagram
-            </a>
-          )}
-          {waUrl && (
-            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
-              <WhatsAppIcon />WhatsApp
-            </a>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)' }}>
-            &#128075; {hasUsed ? 'Used this' : 'I used this'}
+        {/* Used / Recommend */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '15' : 'transparent', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : '#78716c', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', transition: 'all 0.15s' }}>
+            👋 {hasUsed ? 'Used ✓' : 'I used this'}
           </button>
-          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleRec() }} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)' }}>
-            &#11088; {hasRec ? 'Recommended' : 'I recommend'}
+          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleRec() }} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '15' : 'transparent', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : '#78716c', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', transition: 'all 0.15s' }}>
+            ⭐ {hasRec ? 'Rec\u2019d \u2713' : 'Recommend'}
           </button>
         </div>
 
@@ -1000,15 +1015,15 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           newsreader={newsreader}
         />
 
-        <div style={{ marginTop: 12 }}>
-          <button onClick={() => setMoreOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-            <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{moreOpen ? '-' : '+'}</span>
-            {moreOpen ? 'Less info' : 'More info'}
+        {/* More info — cream background pill */}
+        <div style={{ marginTop: 14 }}>
+          <button onClick={() => setMoreOpen(o => !o)} style={{ width: '100%', padding: '8px 0', background: '#F5F0E6', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 9, color: '#78716c', fontWeight: 700, fontFamily: manrope, letterSpacing: '0.12em', textTransform: 'uppercase' as const, transition: 'background 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#EDE5D8' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#F5F0E6' }}>
+            {moreOpen ? '− Less info' : '+ More info'}
           </button>
           {moreOpen && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 10 }}>
-              {service.phone && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope }}>&#128222; {service.phone}</p>}
-              {service.website && <a href={service.website} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: manrope }}>&#127760; {service.website}</a>}
+              {service.phone && <p style={{ fontSize: 11, color: '#78716c', margin: 0, fontFamily: manrope }}>📞 {service.phone}</p>}
+              {service.website && <a href={service.website} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: CATEGORY_ACCENT, textDecoration: 'none', fontFamily: manrope }}>🌐 {service.website}</a>}
             </div>
           )}
         </div>

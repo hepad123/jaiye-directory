@@ -833,9 +833,14 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
 
   return (
-    <div id={'vendor-' + v.id} style={{ background: '#fff', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: promoActive ? '0 2px 12px rgba(192,160,96,0.15)' : '0 1px 4px rgba(28,25,23,0.06)' }}>
+    <div id={'vendor-' + v.id} style={{ background: '#fff', borderRadius: 16, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid #E0D9CF', overflow: 'hidden', position: 'relative', boxShadow: '0 2px 16px rgba(28,20,8,0.08)', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Category accent bar */}
+      <div style={{ height: 3, background: colour, flexShrink: 0 }} />
+
+      {/* "Saved by friends" banner */}
       {saverLabel && (
-        <div style={{ background: colour + '0D', borderBottom: '1px solid ' + colour + '20', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ background: '#F5F0E6', borderBottom: '1px solid #E0D9CF', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ display: 'flex' }}>
             {followSavers.slice(0, 3).map((p, i) => (
               <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: colour + '25', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: manrope }}>
@@ -843,106 +848,110 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
               </div>
             ))}
           </div>
-          <span style={{ fontSize: 10, color: colour, fontWeight: 600, fontFamily: manrope }}>{saverLabel}</span>
+          <span style={{ fontSize: 10, color: '#5C4A2A', fontWeight: 600, fontFamily: manrope }}>{saverLabel}</span>
         </div>
       )}
 
-      <div style={{ position: 'absolute', top: saverLabel ? 38 : 12, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start' }}>
-        {v.verified && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: manrope }}>Verified</div>}
-        {isNew      && <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: '#4338CA', fontFamily: manrope }}>New</div>}
+      {/* Verified / New badges */}
+      <div style={{ position: 'absolute', top: saverLabel ? 41 : 15, left: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-start', zIndex: 2 }}>
+        {v.verified && <div style={{ background: '#0D0B08', borderRadius: 4, padding: '2px 8px', fontSize: 8, fontWeight: 700, color: '#F5EFE4', fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>Verified</div>}
+        {isNew      && <div style={{ background: CATEGORY_ACCENT, borderRadius: 4, padding: '2px 8px', fontSize: 8, fontWeight: 700, color: '#fff', fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>New</div>}
       </div>
 
-      <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }} style={{ position: 'absolute', top: saverLabel ? 38 : 12, right: 12, background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease' }}>
+      {/* Save button */}
+      <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }} style={{ position: 'absolute', top: saverLabel ? 41 : 15, right: 12, background: isSaved ? CATEGORY_ACCENT + '20' : 'rgba(255,255,255,0.95)', border: '1px solid ' + (isSaved ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease', zIndex: 2 }}>
         <HeartIcon filled={isSaved} />
       </button>
 
-      <div style={{ padding: '14px 14px 12px', paddingTop: (v.verified || isNew) ? (saverLabel ? 52 : 36) : (saverLabel ? 18 : 14) }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: colour, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>{v.category}</div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 8, paddingRight: 36, fontFamily: newsreader }}>{v.name}</div>
+      <div style={{ padding: '14px 14px 16px', paddingTop: (v.verified || isNew) ? (saverLabel ? 54 : 38) : (saverLabel ? 18 : 14), flex: 1, display: 'flex', flexDirection: 'column' }}>
 
+        {/* Category eyebrow */}
+        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 12, letterSpacing: '0.18em', color: colour, marginBottom: 3 }}>{v.category}</div>
+
+        {/* Vendor name */}
+        <div style={{ fontSize: 18, fontWeight: 600, color: '#1C1917', lineHeight: 1.2, marginBottom: 8, paddingRight: 36, fontFamily: newsreader }}>{v.name}</div>
+
+        {/* Rating + stats row */}
         {(avgRating !== null || usedCount > 0 || recCount > 0) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-            {avgRating !== null && <span style={{ fontSize: 11, color: 'var(--gold)', fontFamily: manrope }}>&#9733; {avgRating}</span>}
-            {usedCount > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{usedCount} used &#128075;</span>}
-            {recCount  > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope }}>{recCount} rec &#11088;</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+            {avgRating !== null && <span style={{ fontSize: 11, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 600 }}>★ {avgRating}</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: '#78716c', fontFamily: manrope }}>👋 {usedCount} used</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: '#78716c', fontFamily: manrope }}>⭐ {recCount} rec</span>}
           </div>
         )}
 
-        {v.location   && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 3, fontFamily: manrope }}>&#128205; {v.location}</div>}
-        {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 3, fontFamily: manrope }}>From &#8358;{v.price_from}</div>}
+        {v.location   && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>📍 {v.location}</div>}
+        {v.price_from && <div style={{ fontSize: 11, color: '#0D7A6E', fontWeight: 600, marginBottom: 6, fontFamily: manrope }}>From ₦{v.price_from}</div>}
 
+        {/* Promo banner */}
         {promoActive && (
-          <div style={{ background: PROMO_COLOR + '12', border: '1px solid ' + PROMO_COLOR + '40', borderRadius: 10, padding: '8px 12px', marginBottom: 10, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ background: PROMO_COLOR + '10', border: '1px solid ' + PROMO_COLOR + '35', borderRadius: 10, padding: '8px 12px', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{'🏷️ Active promo'}</span>
-              {v.discount_expiry && (
-                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontFamily: manrope }}>
-                  {'Expires ' + new Date(v.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                </span>
-              )}
+              <span style={{ fontSize: 9, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>🏷 Active promo</span>
+              {v.discount_expiry && <span style={{ fontSize: 9, color: '#78716c', fontFamily: manrope }}>Expires {new Date(v.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
             </div>
-            {v.discount_description && (
-              <p style={{ fontSize: 11, color: 'var(--text)', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{v.discount_description}</p>
-            )}
+            {v.discount_description && <p style={{ fontSize: 11, color: '#1C1917', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{v.discount_description}</p>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-              <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '18', padding: '3px 10px', borderRadius: 6, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{v.discount_code}</code>
-              <button onClick={handleCopy} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-                {copied ? '✓ Copied!' : 'Copy'}
+              <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '15', padding: '3px 10px', borderRadius: 5, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{v.discount_code}</code>
+              <button onClick={handleCopy} style={{ padding: '3px 10px', borderRadius: 5, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, letterSpacing: '0.06em' }}>
+                {copied ? '✓ Copied' : 'Copy'}
               </button>
             </div>
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-          {igHandle && (
-            <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
-              <InstagramIcon />Instagram
-            </a>
-          )}
-          {whatsappUrl && (
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
-              <WhatsAppIcon />WhatsApp
-            </a>
-          )}
-        </div>
+        {/* Social links — dark editorial style */}
+        {(igHandle || whatsappUrl) && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            {igHandle && (
+              <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#0D0B08', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#F5EFE4', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+                <InstagramIcon /> Instagram
+              </a>
+            )}
+            {whatsappUrl && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#0D0B08', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#F5EFE4', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+                <WhatsAppIcon /> WhatsApp
+              </a>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {/* More info toggle */}
           {hasDetails && (
-            <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: '1px solid var(--border)', borderRadius: 20, cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, padding: '6px 0', fontFamily: manrope, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-              <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1 }}>{expanded ? '-' : '+'}</span>
-              {expanded ? 'Less info' : 'More info'}
+            <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', padding: '8px 0', background: '#F5F0E6', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 9, color: '#78716c', fontWeight: 700, fontFamily: manrope, letterSpacing: '0.12em', textTransform: 'uppercase' as const, transition: 'background 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#EDE5D8' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#F5F0E6' }}>
+              {expanded ? '− Less info' : '+ More info'}
             </button>
           )}
 
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 4 }}>
-              {v.services && <p style={{ fontSize: 11, color: 'var(--text-pill)', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
-              {v.phone    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope }}>&#128222; {v.phone}</p>}
-              {v.email    && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontFamily: manrope }}>&#9993; {v.email}</p>}
+              {v.services && <p style={{ fontSize: 11, color: '#5C4A2A', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
+              {v.phone    && <p style={{ fontSize: 11, color: '#78716c', margin: 0, fontFamily: manrope }}>📞 {v.phone}</p>}
+              {v.email    && <p style={{ fontSize: 11, color: '#78716c', margin: 0, fontFamily: manrope }}>✉ {v.email}</p>}
               {safeVendorUrl(v.website) && (
-                <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontFamily: manrope }}>&#127760; {v.website}</a>
+                <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: CATEGORY_ACCENT, textDecoration: 'none', fontFamily: manrope }}>🌐 {v.website}</a>
               )}
-              {v.notes && <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
+              {v.notes && <p style={{ fontSize: 10, color: '#78716c', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
 
               {followSavers.length > 0 && (
-                <div style={{ marginTop: 4, padding: '8px 10px', background: 'var(--bg-pill)', borderRadius: 10 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginBottom: 6, fontFamily: manrope }}>Saved by people you follow</div>
+                <div style={{ marginTop: 4, padding: '8px 10px', background: '#F5F0E6', borderRadius: 8 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, marginBottom: 6, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>Saved by people you follow</div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {followSavers.map(p => (
-                      <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: 'var(--accent)', textDecoration: 'none', background: '#fff', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
+                      <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: CATEGORY_ACCENT, textDecoration: 'none', background: '#fff', border: '1px solid #DDD5C8', borderRadius: 4, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div style={{ marginTop: 4 }}>
-                <button onClick={toggleUsed} disabled={usedSubmitting} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : '#fff', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)', opacity: usedSubmitting ? 0.6 : 1 }}>
-                  &#128075; {hasUsed ? 'Used this' : 'I used this vendor'}{usedCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> {'\u00b7'} {usedCount}</span>}
+              {/* Used / Recommend */}
+              <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                <button onClick={toggleUsed} disabled={usedSubmitting} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '15' : 'transparent', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : '#78716c', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: usedSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
+                  👋 {hasUsed ? 'Used ✓' : 'I used this'}{usedCount > 0 && <span style={{ marginLeft: 4, fontWeight: 700 }}>· {usedCount}</span>}
                 </button>
-              </div>
-              <div>
-                <button onClick={toggleRecommend} disabled={recSubmitting} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : '#fff', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)', opacity: recSubmitting ? 0.6 : 1 }}>
-                  &#11088; {hasRec ? 'Recommended' : 'I recommend this'}{recCount > 0 && <span style={{ fontWeight: 700, color: 'var(--accent)' }}> {'\u00b7'} {recCount}</span>}
+                <button onClick={toggleRecommend} disabled={recSubmitting} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '15' : 'transparent', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : '#78716c', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: recSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
+                  ⭐ {hasRec ? 'Rec\u2019d \u2713' : 'Recommend'}{recCount > 0 && <span style={{ marginLeft: 4, fontWeight: 700 }}>· {recCount}</span>}
                 </button>
               </div>
             </div>

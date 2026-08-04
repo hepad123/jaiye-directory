@@ -1183,23 +1183,26 @@ export default function DirectoryPage() {
   const emptyStats: VendorStats = { avgRating: null, usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 
   return (
-    <main style={{ fontFamily: manrope, background: '#fff8f5', minHeight: '100vh' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.15} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
+    <main style={{ fontFamily: manrope, background: '#F5F0E6', minHeight: '100vh' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.15} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
 
-      <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
-        <img src="/pexels-directory-hero.jpg" alt="Directory" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(15,10,5,0.7) 0%, transparent 100%)', padding: '24px 24px 16px' }}>
-          <div style={{ fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontFamily: manrope, fontWeight: 600, marginBottom: 4 }}>Events Directory</div>
-          <div style={{ fontFamily: newsreader, fontSize: 28, fontWeight: 700, color: '#fff' }}>{currentTab?.label || 'Weddings'}</div>
+      {/* ── Editorial page header ── */}
+      <div style={{ background: '#0D0B08', padding: 'clamp(32px,6vw,64px) clamp(20px,6vw,80px) clamp(28px,5vw,52px)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 20, right: 32, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.25)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
+        <div style={{ fontSize: 'clamp(12px,1.6vw,15px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 10 }}>Events Directory</div>
+        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#F5EFE4', letterSpacing: '0.03em', marginBottom: 18 }}>
+          {currentTab?.label?.toUpperCase() || 'WEDDINGS'}<br /><span style={{ color: CATEGORY_ACCENT }}>VENDORS.</span>
         </div>
+        <div style={{ height: 1, background: 'linear-gradient(to right, ' + CATEGORY_ACCENT + ' 0%, rgba(180,105,14,0.2) 60%, transparent 100%)', maxWidth: 520 }} />
       </div>
 
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#fff8f5', borderBottom: '1px solid var(--border)' }}>
+      {/* ── Sticky occasion tabs — dark ── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#0D0B08', borderBottom: '1px solid rgba(180,105,14,0.14)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {OCCASION_TABS.map(tab => {
             const isActive = occasion === tab.key
             return (
-              <button key={tab.key} onClick={() => setOccasion(tab.key)} style={{ padding: '18px 20px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+              <button key={tab.key} onClick={() => setOccasion(tab.key)} style={{ padding: '15px 18px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'rgba(245,239,228,0.42)', fontFamily: "'Bebas Neue', serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                 {tab.label}
               </button>
             )
@@ -1207,12 +1210,12 @@ export default function DirectoryPage() {
         </div>
       </div>
 
-      <div style={{ background: '#fff8f5', borderBottom: '1px solid var(--border)', padding: '10px 16px' }}>
+      <div style={{ background: '#F5F0E6', borderBottom: '1px solid #DDD5C8', padding: '10px 16px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
-            {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #DDD5C8', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="#78716c" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="#78716c" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: '#1C1917', fontFamily: manrope }} />
+            {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#78716c', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
@@ -1231,7 +1234,7 @@ export default function DirectoryPage() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 16px 2px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
+          <p style={{ color: '#78716c', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
             {sorted.length} vendors{search ? ' for "' + search + '"' : ''}{showPromos ? ' \u00b7 Active promos' : ''}
           </p>
           <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>

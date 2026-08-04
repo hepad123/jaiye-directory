@@ -591,14 +591,14 @@ export default function SavedPage() {
 
   const tabStyle = (tab: Tab): React.CSSProperties => ({
     flex: 1,
-    padding: '12px 0',
+    padding: '14px 0',
     background: 'none',
     border: 'none',
     borderBottom: '2px solid ' + (activeTab === tab ? ACCENT : 'transparent'),
-    color: activeTab === tab ? ACCENT : 'var(--text-muted)',
-    fontSize: 11,
+    color: activeTab === tab ? ACCENT : '#78716c',
+    fontSize: 10,
     fontWeight: activeTab === tab ? 700 : 500,
-    letterSpacing: '0.08em',
+    letterSpacing: '0.12em',
     textTransform: 'uppercase',
     cursor: 'pointer',
     fontFamily: manrope,
@@ -606,26 +606,28 @@ export default function SavedPage() {
   })
 
   return (
-    <main style={{ fontFamily: manrope, background: '#fff8f5', minHeight: '100vh' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap');`}</style>
+    <main style={{ fontFamily: manrope, background: '#F5F0E6', minHeight: '100vh' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap');`}</style>
 
-      <div style={{ background: 'var(--hero-grad)', textAlign: 'center', padding: 'clamp(32px, 5vw, 48px) 20px clamp(28px, 4vw, 36px)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 18 }}>
-          <div style={{ height: 1, width: 44, background: ACCENT, opacity: 0.4 }} />
-          <div style={{ width: 4, height: 4, borderRadius: '50%', background: ACCENT, opacity: 0.6 }} />
-          <div style={{ height: 1, width: 44, background: ACCENT, opacity: 0.4 }} />
+      {/* ── Editorial dark header ── */}
+      <div style={{ background: '#0D0B08', padding: 'clamp(32px,6vw,64px) clamp(20px,6vw,80px) clamp(28px,5vw,52px)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 20, right: 32, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.25)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
+        <div style={{ fontSize: 'clamp(12px,1.6vw,15px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 10 }}>Your Shortlist</div>
+        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#F5EFE4', letterSpacing: '0.03em', marginBottom: 8 }}>
+          {firstName ? firstName.toUpperCase() + "'S" : 'SAVED'}<br /><span style={{ color: ACCENT }}>PICKS.</span>
         </div>
-        <div style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, marginBottom: 10, fontFamily: manrope }}>Your Shortlist</div>
-        <h1 style={{ fontFamily: newsreader, fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: 700, color: 'var(--text)', lineHeight: 1, margin: '0 0 6px' }}>{firstName ? firstName + "'s" : 'Saved'}</h1>
-        <div style={{ fontSize: 12, fontWeight: 400, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-pill)', marginBottom: 16, fontFamily: manrope }}>Saved Vendors</div>
-        <div style={{ fontSize: 11, color: ACCENT, fontWeight: 600, marginBottom: 16, fontFamily: manrope }}>{isLoading ? 'Loading...' : totalSaved > 0 ? totalSaved + ' saved' : 'Your shortlist, all in one place'}</div>
-        {!isLoading && user && totalSaved > 0 && username && (<div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><ShareButton username={username} /></div>)}
-        <div style={{ marginTop: 16, height: 1, background: 'linear-gradient(to right, transparent, ' + ACCENT + ' 30%, ' + ACCENT + ' 70%, transparent)', opacity: 0.4 }} />
+        <div style={{ fontSize: 13, color: 'rgba(245,239,228,0.5)', fontFamily: manrope, marginTop: 16, marginBottom: 6 }}>
+          {isLoading ? 'Loading...' : totalSaved > 0 ? totalSaved + ' saved' : 'Your shortlist, all in one place'}
+        </div>
+        {!isLoading && user && totalSaved > 0 && username && (
+          <div style={{ marginTop: 12 }}><ShareButton username={username} /></div>
+        )}
+        <div style={{ marginTop: 20, height: 1, background: 'linear-gradient(to right, ' + ACCENT + ' 0%, rgba(180,105,14,0.2) 60%, transparent 100%)', maxWidth: 520 }} />
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px 60px' }}>
         {!isLoading && user && totalSaved > 0 && (
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 24, background: '#fff8f5', position: 'sticky', top: 54, zIndex: 10 }}>
+          <div style={{ display: 'flex', borderBottom: '2px solid #DDD5C8', marginBottom: 24, background: '#F5F0E6', position: 'sticky', top: 52, zIndex: 10 }}>
             <button style={tabStyle('vendors')} onClick={() => setActiveTab('vendors')}>
               Events {savedVendors.length > 0 && <span style={{ marginLeft: 6, fontSize: 10, background: activeTab === 'vendors' ? ACCENT : 'var(--bg-pill)', color: activeTab === 'vendors' ? 'white' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{savedVendors.length}</span>}
             </button>

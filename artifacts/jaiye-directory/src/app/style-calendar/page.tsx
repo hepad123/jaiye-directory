@@ -6,9 +6,10 @@ import { useSupabase } from '@/hooks/useSupabase';
 
 const newsreader = "'Newsreader', var(--font-playfair, serif)";
 const manrope = "'Manrope', var(--font-jost, sans-serif)";
+const bebas = "'Bebas Neue', serif";
 const ACCENT = '#B4690E';
-const BG = '#fff8f5';
-const BORDER = '#E8E3DC';
+const BG = '#F5F0E6';
+const BORDER = '#DDD5C8';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -195,15 +196,25 @@ export default function StyleCalendarPage() {
   if (!user) {
     return (
       <>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Manrope:wght@400;500;600;700&display=swap');`}</style>
-        <div style={{ background: BG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', padding: '60px 16px' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>&#9825;</div>
-            <h2 style={{ fontSize: 22, color: '#1C1917', fontWeight: 600, margin: '0 0 10px', fontFamily: newsreader }}>Sign in to view your Style Calendar</h2>
-            <p style={{ color: '#78716c', fontSize: 14, margin: '0 0 28px', fontFamily: manrope, lineHeight: 1.6 }}>Save your looks month by month and build your beauty diary.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
-              <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: manrope, width: 220 }}>Sign in</button>
-              <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: '#fff', color: ACCENT, borderRadius: 24, border: '1.5px solid ' + ACCENT, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: manrope, width: 220 }}>Create account</button>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Newsreader:ital,wght@0,400;0,600;1,400&family=Manrope:wght@400;500;600;700&display=swap');`}</style>
+        <div style={{ background: BG, minHeight: '100vh' }}>
+          {/* Dark editorial header — even for logged-out state */}
+          <div style={{ background: '#0D0B08', padding: 'clamp(28px,5vw,56px) clamp(20px,5vw,64px) clamp(24px,4vw,44px)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 20, right: 28, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.22)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
+            <div style={{ fontSize: 'clamp(11px,1.4vw,13px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 8 }}>Your Beauty Diary</div>
+            <div style={{ fontFamily: bebas, fontSize: 'clamp(52px,9vw,108px)', lineHeight: 0.92, color: '#F5EFE4', letterSpacing: '0.03em', marginBottom: 14 }}>
+              STYLE<br /><span style={{ color: ACCENT }}>CALENDAR.</span>
+            </div>
+            <div style={{ marginTop: 20, height: 1, background: 'linear-gradient(to right, ' + ACCENT + ' 0%, rgba(180,105,14,0.2) 60%, transparent 100%)', maxWidth: 440 }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+            <div style={{ textAlign: 'center', padding: '60px 16px' }}>
+              <h2 style={{ fontSize: 22, color: '#1C1917', fontWeight: 600, margin: '0 0 10px', fontFamily: newsreader }}>Sign in to view your Style Calendar</h2>
+              <p style={{ color: '#78716c', fontSize: 14, margin: '0 0 28px', fontFamily: manrope, lineHeight: 1.6 }}>Save your looks month by month and build your beauty diary.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+                <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: manrope, width: 220 }}>Sign in</button>
+                <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: '#fff', color: ACCENT, borderRadius: 24, border: '1.5px solid ' + ACCENT, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: manrope, width: 220 }}>Create account</button>
+              </div>
             </div>
           </div>
         </div>
@@ -215,18 +226,18 @@ export default function StyleCalendarPage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Manrope:wght@400;500;600;700&display=swap');
-        .month-card { border: 1px solid ${BORDER}; border-radius: 12px; overflow: hidden; background: #fff; }
+        .month-card { border: 1px solid ${BORDER}; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 1px 4px rgba(28,20,8,0.06); }
         .month-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; cursor: pointer; }
-        .month-header:hover { background: #fdf6f0; }
+        .month-header:hover { background: #FAF5EE; }
         .style-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 16px 16px; }
         @media(min-width: 640px) { .style-grid { grid-template-columns: repeat(3, 1fr); } }
         @media(min-width: 1024px) { .style-grid { grid-template-columns: repeat(4, 1fr); } }
-        .style-card { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 3/4; background: #f5ede6; cursor: pointer; user-select: none; -webkit-user-select: none; }
+        .style-card { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 3/4; background: #EDE5D8; cursor: pointer; user-select: none; -webkit-user-select: none; }
         .style-card img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
-        .note-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.55); padding: 8px 10px; }
+        .note-bar { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%); padding: 28px 10px 10px; }
         .entry-name { color: #fff; font-size: 13px; font-weight: 600; margin: 0; font-family: ${manrope}; line-height: 1.3; }
-        .cat-pill { position: absolute; top: 8px; left: 8px; background: ${ACCENT}; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; font-family: ${manrope}; letter-spacing: 0.05em; pointer-events: none; }
-        .no-image { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #f5ede6; }
+        .cat-pill { position: absolute; top: 8px; left: 8px; background: ${ACCENT}; color: #fff; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 20px; font-family: ${manrope}; letter-spacing: 0.07em; text-transform: uppercase; pointer-events: none; }
+        .no-image { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #EDE5D8; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
         @media(min-width: 640px) { .modal-overlay { align-items: center; } }
         .modal-box { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 28px 24px 40px; }
@@ -248,10 +259,15 @@ export default function StyleCalendarPage() {
       `}</style>
 
       <div style={{ background: BG, minHeight: '100vh', paddingBottom: 60 }}>
-        <div style={{ padding: '32px 20px 8px', maxWidth: 720, margin: '0 auto' }}>
-          <p style={{ fontFamily: manrope, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT, margin: '0 0 6px' }}>Your Beauty Diary</p>
-          <h1 style={{ fontFamily: newsreader, fontSize: 34, fontWeight: 600, color: '#1C1917', margin: '0 0 4px' }}>Style Calendar</h1>
-          <p style={{ fontFamily: manrope, fontSize: 14, color: '#78716c', margin: 0 }}>Save your looks, month by month. Hold a photo to delete.</p>
+        {/* ── Editorial dark header ── */}
+        <div style={{ background: '#0D0B08', padding: 'clamp(28px,5vw,56px) clamp(20px,5vw,64px) clamp(24px,4vw,44px)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 20, right: 28, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.22)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
+          <div style={{ fontSize: 'clamp(11px,1.4vw,13px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 8 }}>Your Beauty Diary</div>
+          <div style={{ fontFamily: bebas, fontSize: 'clamp(52px,9vw,108px)', lineHeight: 0.92, color: '#F5EFE4', letterSpacing: '0.03em', marginBottom: 14 }}>
+            STYLE<br /><span style={{ color: ACCENT }}>CALENDAR.</span>
+          </div>
+          <p style={{ fontFamily: manrope, fontSize: 13, color: 'rgba(245,239,228,0.45)', margin: 0 }}>Save your looks, month by month. Hold a photo to delete.</p>
+          <div style={{ marginTop: 20, height: 1, background: 'linear-gradient(to right, ' + ACCENT + ' 0%, rgba(180,105,14,0.2) 60%, transparent 100%)', maxWidth: 440 }} />
         </div>
 
         <div style={{ maxWidth: 720, margin: '24px auto 0', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>

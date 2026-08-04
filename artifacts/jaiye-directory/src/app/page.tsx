@@ -414,7 +414,7 @@ export default function HomePage() {
   const heroImgY = useTransform(scrollY, [0, 700], [0, 110]);
 
   return (
-    <div style={{ fontFamily: C.ui, background: C.cream, overflowX: "hidden" }}>
+    <div style={{ fontFamily: C.ui, background: C.black, overflowX: "hidden" }}>
 
       {/* ══════════════════════════════════════════════════════════════════════
           §1  HERO — Dark, full-bleed, "Reclaim Your Glow."
@@ -509,13 +509,13 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           §3  WHERE TO START — two cinematic full-height cards
       ══════════════════════════════════════════════════════════════════════ */}
-      <section style={{ background: C.cream, padding: "clamp(64px,8vw,96px) clamp(20px,4vw,52px)" }}>
+      <section style={{ background: C.black2, padding: "clamp(64px,8vw,96px) clamp(20px,4vw,52px)", borderTop: "1px solid rgba(245,240,230,0.06)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           {/* Header */}
           <div style={{ marginBottom: "clamp(36px,5vw,52px)" }}>
-            <FadeUp><Eyebrow text="Curation" light /></FadeUp>
+            <FadeUp><Eyebrow text="Curation" /></FadeUp>
             <ClipText delay={0.12} style={{ marginTop: 10 }}>
-              <h2 style={{ fontFamily: C.disp, fontSize: "clamp(2.4rem,7vw,6rem)", lineHeight: 0.9, letterSpacing: "0.04em", color: C.black, margin: 0 }}>
+              <h2 style={{ fontFamily: C.disp, fontSize: "clamp(2.4rem,7vw,6rem)", lineHeight: 0.9, letterSpacing: "0.04em", color: C.white, margin: 0 }}>
                 WHERE WOULD YOU<br />LIKE TO START?
               </h2>
             </ClipText>
@@ -675,36 +675,36 @@ function TestimonialsSection() {
   const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
 
   return (
-    <section style={{ background: C.cream, padding: "clamp(72px,10vw,112px) clamp(20px,4vw,52px)", borderTop: `1px solid ${C.cream2}` }}>
+    <section style={{ background: C.black2, padding: "clamp(72px,10vw,112px) clamp(20px,4vw,52px)", borderTop: "1px solid rgba(245,240,230,0.06)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <div ref={ref}>
-          <FadeUp><Eyebrow text="Kind Words" light /></FadeUp>
+          <FadeUp><Eyebrow text="Kind Words" /></FadeUp>
           <div style={{ marginTop: 12, marginBottom: "clamp(40px,6vw,60px)" }}>
             <ClipText delay={0.1}>
-              <h2 style={{ fontFamily: C.disp, fontSize: "clamp(2.4rem,6.5vw,5.5rem)", letterSpacing: "0.04em", color: C.black, lineHeight: 0.92, margin: 0 }}>
+              <h2 style={{ fontFamily: C.disp, fontSize: "clamp(2.4rem,6.5vw,5.5rem)", letterSpacing: "0.04em", color: C.white, lineHeight: 0.92, margin: 0 }}>
                 WHAT THE<br />COMMUNITY SAYS
               </h2>
             </ClipText>
           </div>
 
-          <div style={{ borderTop: `1px solid ${C.cream2}` }}>
+          <div style={{ borderTop: "1px solid rgba(245,240,230,0.08)" }}>
             {quotes.map((q, i) => (
               <motion.div
                 key={q.name}
                 initial={{ opacity: 0, y: 28 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.75, ease: C.ease, delay: 0.12 * i + 0.15 }}
-                style={{ display: "flex", alignItems: "flex-start", gap: "clamp(20px,4vw,52px)", padding: "clamp(28px,4vw,44px) 0", borderBottom: `1px solid ${C.cream2}` }}
+                style={{ display: "flex", alignItems: "flex-start", gap: "clamp(20px,4vw,52px)", padding: "clamp(28px,4vw,44px) 0", borderBottom: "1px solid rgba(245,240,230,0.08)" }}
               >
-                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(180,105,14,0.10)", border: `1.5px solid rgba(180,105,14,0.22)`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: C.disp, fontSize: "1.5rem", letterSpacing: "0.06em", color: C.gold, flexShrink: 0 }}>
+                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(180,105,14,0.12)", border: "1.5px solid rgba(180,105,14,0.28)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: C.disp, fontSize: "1.5rem", letterSpacing: "0.06em", color: C.gold, flexShrink: 0 }}>
                   {q.letter}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <blockquote style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(1rem,2vw,1.2rem)", color: C.black, lineHeight: 1.72, margin: "0 0 16px" }}>
+                  <blockquote style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(1rem,2vw,1.2rem)", color: "rgba(245,240,230,0.80)", lineHeight: 1.72, margin: "0 0 16px" }}>
                     "{q.quote}"
                   </blockquote>
-                  <div style={{ fontFamily: C.ui, fontSize: 12, fontWeight: 800, color: C.black, letterSpacing: "0.04em" }}>{q.name}</div>
-                  <div style={{ fontFamily: C.ui, fontSize: 10, color: C.muted, marginTop: 3, letterSpacing: "0.04em" }}>{q.role}</div>
+                  <div style={{ fontFamily: C.ui, fontSize: 12, fontWeight: 800, color: C.white, letterSpacing: "0.04em" }}>{q.name}</div>
+                  <div style={{ fontFamily: C.ui, fontSize: 10, color: "rgba(245,240,230,0.38)", marginTop: 3, letterSpacing: "0.04em" }}>{q.role}</div>
                 </div>
               </motion.div>
             ))}

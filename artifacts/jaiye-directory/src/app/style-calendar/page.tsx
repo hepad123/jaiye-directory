@@ -8,8 +8,8 @@ const newsreader = "'Newsreader', var(--font-playfair, serif)";
 const manrope = "'Manrope', var(--font-jost, sans-serif)";
 const bebas = "'Bebas Neue', serif";
 const ACCENT = '#B4690E';
-const BG = '#F5F0E6';
-const BORDER = '#DDD5C8';
+const BG = '#0D0B08';
+const BORDER = 'rgba(245,240,230,0.10)';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -181,7 +181,7 @@ export default function StyleCalendarPage() {
   }
 
   if (!isLoaded) return (
-  <div style={{ background: '#fff8f5', minHeight: '100vh', padding: '32px 20px' }}>
+  <div style={{ background: '#0D0B08', minHeight: '100vh', padding: '32px 20px' }}>
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
       <div style={{ height: 12, width: 120, background: '#f0e6dc', borderRadius: 6, marginBottom: 16 }} />
       <div style={{ height: 36, width: 260, background: '#f0e6dc', borderRadius: 8, marginBottom: 8 }} />
@@ -209,11 +209,11 @@ export default function StyleCalendarPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
             <div style={{ textAlign: 'center', padding: '60px 16px' }}>
-              <h2 style={{ fontSize: 22, color: '#1C1917', fontWeight: 600, margin: '0 0 10px', fontFamily: newsreader }}>Sign in to view your Style Calendar</h2>
-              <p style={{ color: '#78716c', fontSize: 14, margin: '0 0 28px', fontFamily: manrope, lineHeight: 1.6 }}>Save your looks month by month and build your beauty diary.</p>
+              <h2 style={{ fontSize: 22, color: '#F5EFE4', fontWeight: 600, margin: '0 0 10px', fontFamily: newsreader }}>Sign in to view your Style Calendar</h2>
+              <p style={{ color: 'rgba(245,240,230,0.50)', fontSize: 14, margin: '0 0 28px', fontFamily: manrope, lineHeight: 1.6 }}>Save your looks month by month and build your beauty diary.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
                 <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: manrope, width: 220 }}>Sign in</button>
-                <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: '#fff', color: ACCENT, borderRadius: 24, border: '1.5px solid ' + ACCENT, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: manrope, width: 220 }}>Create account</button>
+                <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: 'rgba(255,255,255,0.06)', color: ACCENT, borderRadius: 24, border: '1.5px solid ' + ACCENT, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: manrope, width: 220 }}>Create account</button>
               </div>
             </div>
           </div>
@@ -226,34 +226,34 @@ export default function StyleCalendarPage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Manrope:wght@400;500;600;700&display=swap');
-        .month-card { border: 1px solid ${BORDER}; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 1px 4px rgba(28,20,8,0.06); }
+        .month-card { border: 1px solid rgba(245,240,230,0.09); border-radius: 14px; overflow: hidden; background: #161410; box-shadow: 0 4px 20px rgba(0,0,0,0.35); }
         .month-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; cursor: pointer; }
-        .month-header:hover { background: #FAF5EE; }
+        .month-header:hover { background: rgba(255,255,255,0.04); }
         .style-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 16px 16px; }
         @media(min-width: 640px) { .style-grid { grid-template-columns: repeat(3, 1fr); } }
         @media(min-width: 1024px) { .style-grid { grid-template-columns: repeat(4, 1fr); } }
-        .style-card { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 3/4; background: #EDE5D8; cursor: pointer; user-select: none; -webkit-user-select: none; }
+        .style-card { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 3/4; background: #1E1A15; cursor: pointer; user-select: none; -webkit-user-select: none; }
         .style-card img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
         .note-bar { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%); padding: 28px 10px 10px; }
         .entry-name { color: #fff; font-size: 13px; font-weight: 600; margin: 0; font-family: ${manrope}; line-height: 1.3; }
         .cat-pill { position: absolute; top: 8px; left: 8px; background: ${ACCENT}; color: #fff; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 20px; font-family: ${manrope}; letter-spacing: 0.07em; text-transform: uppercase; pointer-events: none; }
-        .no-image { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #EDE5D8; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
+        .no-image { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #1E1A15; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
         @media(min-width: 640px) { .modal-overlay { align-items: center; } }
-        .modal-box { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 28px 24px 40px; }
+        .modal-box { background: #1C1814; border: 1px solid rgba(245,240,230,0.09); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 28px 24px 40px; }
         @media(min-width: 640px) { .modal-box { border-radius: 16px; padding: 28px 24px; } }
-        .modal-title { font-family: ${newsreader}; font-size: 22px; color: #1C1917; margin: 0 0 20px; }
-        .field-label { font-family: ${manrope}; font-size: 12px; font-weight: 700; color: #1C1917; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; display: block; }
-        .field-input { width: 100%; border: 1px solid ${BORDER}; border-radius: 8px; padding: 10px 12px; font-family: ${manrope}; font-size: 14px; color: #1C1917; background: #fff; box-sizing: border-box; outline: none; }
+        .modal-title { font-family: ${newsreader}; font-size: 22px; color: #F5EFE4; margin: 0 0 20px; }
+        .field-label { font-family: ${manrope}; font-size: 12px; font-weight: 700; color: #F5EFE4; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .field-input { width: 100%; border: 1px solid rgba(245,240,230,0.12); border-radius: 8px; padding: 10px 12px; font-family: ${manrope}; font-size: 14px; color: #F5EFE4; background: rgba(255,255,255,0.05); box-sizing: border-box; outline: none; }
         .field-input:focus { border-color: ${ACCENT}; }
         .img-btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
-        .img-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid ${BORDER}; font-family: ${manrope}; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: #78716c; text-align: center; }
+        .img-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(245,240,230,0.12); font-family: ${manrope}; font-size: 13px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.05); color: rgba(245,240,230,0.50); text-align: center; }
         .img-btn.uploaded { background: #f0fdf4; border-color: #16a34a; color: #16a34a; }
         .img-btn.uploading { opacity: 0.6; cursor: not-allowed; }
         .img-btn.url-active { background: ${ACCENT}; color: #fff; border-color: ${ACCENT}; }
         .save-btn { width: 100%; padding: 13px; background: ${ACCENT}; color: #fff; border: none; border-radius: 10px; font-family: ${manrope}; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
         .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .cancel-link { display: block; text-align: center; margin-top: 12px; font-family: ${manrope}; font-size: 13px; color: #78716c; cursor: pointer; }
+        .cancel-link { display: block; text-align: center; margin-top: 12px; font-family: ${manrope}; font-size: 13px; color: rgba(245,240,230,0.40); cursor: pointer; }
         .upload-preview { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; margin-top: 8px; }
         .long-press-hint { text-align: center; font-family: ${manrope}; font-size: 11px; color: #a8a29e; padding: 0 16px 12px; }
       `}</style>
@@ -272,7 +272,7 @@ export default function StyleCalendarPage() {
 
         <div style={{ maxWidth: 720, margin: '24px auto 0', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {loading ? (
-            <p style={{ fontFamily: manrope, color: '#78716c', textAlign: 'center', padding: 40 }}>Loading...</p>
+            <p style={{ fontFamily: manrope, color: 'rgba(245,240,230,0.40)', textAlign: 'center', padding: 40 }}>Loading...</p>
           ) : MONTHS.map((name, i) => {
             const monthNum = i + 1;
             const monthEntries = entries.filter(e => e.month === monthNum);
@@ -282,7 +282,7 @@ export default function StyleCalendarPage() {
               <div key={monthNum} className="month-card">
                 <div className="month-header" onClick={() => toggleMonth(monthNum)}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontFamily: newsreader, fontSize: 20, fontWeight: 600, color: '#1C1917' }}>{name}</span>
+                    <span style={{ fontFamily: newsreader, fontSize: 20, fontWeight: 600, color: '#F5EFE4' }}>{name}</span>
                     {monthEntries.length > 0 && (
                       <span style={{ fontFamily: manrope, fontSize: 11, fontWeight: 700, color: ACCENT, background: '#fdf0e0', padding: '2px 8px', borderRadius: 20 }}>{monthEntries.length}</span>
                     )}
@@ -292,7 +292,7 @@ export default function StyleCalendarPage() {
                       onClick={e => { e.stopPropagation(); openAddModal(monthNum); }}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope, fontSize: 20, color: ACCENT, lineHeight: 1, padding: '0 4px' }}
                     >+</button>
-                    <span style={{ color: '#78716c', fontSize: 14, transform: isOpen ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 0.2s' }}>&#9660;</span>
+                    <span style={{ color: 'rgba(245,240,230,0.40)', fontSize: 14, transform: isOpen ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 0.2s' }}>&#9660;</span>
                   </div>
                 </div>
 

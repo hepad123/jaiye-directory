@@ -1,0 +1,87 @@
+Jaiye Directory — PRD: Bug Fixes
+1. Overview
+Feature name: Bug fixes — Saved page resizing, Home search navigation, Review form
+data loss
+Requested by: Helloa (founder)
+Date: 30 July 2026
+One-line summary: Fix three UX-breaking bugs on the live platform: a layout resizing
+issue, a broken vendor search redirect, and a review form that loses in-progress input.
+2. Problem / Goal
+These three bugs are actively degrading the core user experience: users can’t rely on the
+Saved page displaying correctly, can’t find vendors via the home search, and lose their work
+when writing reviews. Fixing them protects trust in the platform for the existing user base
+(including the 900+ member WhatsApp bridal community it grew out of).
+3. Scope
+In scope:
+Saved page layout/resizing bug
+Home Screen vendor search → vendor profile navigation
+Review form data loss on auto-reload
+Out of scope (this version):
+Any new features or redesigns unrelated to these three issues
+Broader audit of other pages for similar resizing bugs (can be a fast-follow if this fix
+pattern generalizes)
+4. User Stories
+As a user, I can open the Saved page and have it render/resize correctly, so that I can
+see my saved vendors without a broken layout.
+As a user, I can type a vendor’s name into the Home Screen search and be taken to their
+profile/tile page, so that I can find vendors quickly.
+As a user, I can write a review without the page reloading and wiping my input, so that I
+don’t lose my work.
+5. Requirements
+Functional
+1. Saved page resizing:
+Diagnose whether the container/viewport on the Saved page fails to recalculate
+height/width on route entry (vs. full page load).
+Fix so the page renders at correct size immediately on navigation, without requiring
+a manual refresh or resize.
+2. Home search navigation:
+Confirm whether the search dropdown/autocomplete returns vendor results
+correctly.
+Fix the selection handler so choosing a vendor from search results routes to
+/vendor/[id] (or equivalent) instead of failing to navigate.
+3. Review form data loss:
+Identify what’s triggering the auto-reload while the review form is open (e.g. a
+realtime Supabase subscription, a stale data refetch, or a router refresh).
+Either suppress the reload while the form has unsaved input, or persist form state
+(e.g. local state/draft) so a reload doesn’t clear it.
+Non-functional
+Fixes should not introduce regressions on other pages using the same shared
+components (search bar, page layout wrapper, review form).
+Should work across mobile and desktop, since the platform is used heavily via
+WhatsApp-shared links.
+6. Technical Notes (Jaiye-specific)
+No local terminal — all code must be delivered as complete, ready-to-paste files for the
+GitHub web editor.
+GitHub web editor corrupts template literals, backticks, and multi-line JSX — use precomputed variables and string concatenation instead.
+Stack: Next.js (App Router), TypeScript, Tailwind CSS, Supabase, Clerk (auth), Vercel
+(deploy).
+Auth: Clerk JWT sub claim is the primary user identifier; RLS policies use auth.jwt()
+->> 'sub' = clerk_user_id .
+Supabase project pauses when inactive — must be resumed via dashboard before any
+DB work.
+Schema changes: use execute_sql (reliable) over apply_migration (has timed out).
+Repo: hepad123/jaiye-directory ; live at jaiye-directory.vercel.app .
+7. Design / UX Notes
+Saved page, Home Screen (with search bar/dropdown), and the review submission
+form/modal are the affected surfaces.
+Existing visual system: Newsreader + Manrope fonts, warm cream (#fff8f5) background,
+ochre (#B4690E) accent — fixes should preserve this styling, not just functionality.
+8. Success Criteria
+Saved page displays at correct size on first navigation, every time, no refresh needed.
+Selecting a vendor from Home Screen search reliably lands on that vendor’s profile
+page.
+Writing a review start-to-finish (including pauses) never results in lost input from an
+auto-reload.
+9. Edge Cases & Risks
+Saved page bug may only reproduce on certain screen sizes/devices — needs testing
+across breakpoints.
+Home search bug may behave differently for vendors with special characters in their
+names, or when there are zero/multiple matches.
+Review form fix should be tested with slow typing, long pauses, and switching browser
+tabs mid-review to ensure the reload trigger (whatever it is) is fully addressed, not just
+delayed.
+10. Open Questions
+Does the Saved page bug happen on mobile, desktop, or both?
+Is the review form auto-reload consistent (every time) or intermittent?
+Are there other pages sharing the same search or layout components that might have
+the same underlying bug?

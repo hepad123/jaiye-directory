@@ -303,7 +303,7 @@ function ReviewsDivider({ manrope, cats }: { manrope: string; cats: ReviewCat[] 
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
       {showInfo && (
-        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 24px rgba(28,25,23,0.12)', minWidth: 220, maxWidth: 260 }}>
+        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1E1A15', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 32px rgba(0,0,0,0.55)', minWidth: 220, maxWidth: 260 }}>
           <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 8 }}>How reviews work</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {cats.map(c => (
@@ -442,7 +442,7 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
 
   const selectStyle: React.CSSProperties = {
     padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
-    fontSize: 12, color: 'var(--text)', background: '#fff',
+    fontSize: 12, color: 'var(--text)', background: '#161410',
     fontFamily: manrope, outline: 'none', cursor: 'pointer',
   }
 
@@ -527,8 +527,8 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>Have you used this vendor before?</span>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setIsRepeatUser(true)} style={{ padding: '6px 16px', borderRadius: 20, border: '1.5px solid ' + (isRepeatUser === true ? CATEGORY_ACCENT : 'var(--border)'), background: isRepeatUser === true ? CATEGORY_ACCENT : '#fff', color: isRepeatUser === true ? '#fff' : 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s' }}>Yes</button>
-              <button onClick={() => { setIsRepeatUser(false); setLastUsedMonth(''); setLastUsedYear('') }} style={{ padding: '6px 16px', borderRadius: 20, border: '1.5px solid ' + (isRepeatUser === false ? 'var(--text-muted)' : 'var(--border)'), background: isRepeatUser === false ? 'var(--bg-pill)' : '#fff', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s' }}>No</button>
+              <button onClick={() => setIsRepeatUser(true)} style={{ padding: '6px 16px', borderRadius: 20, border: '1.5px solid ' + (isRepeatUser === true ? CATEGORY_ACCENT : 'var(--border)'), background: isRepeatUser === true ? CATEGORY_ACCENT : 'transparent', color: isRepeatUser === true ? '#fff' : 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s' }}>Yes</button>
+              <button onClick={() => { setIsRepeatUser(false); setLastUsedMonth(''); setLastUsedYear('') }} style={{ padding: '6px 16px', borderRadius: 20, border: '1.5px solid ' + (isRepeatUser === false ? 'var(--text-muted)' : 'var(--border)'), background: isRepeatUser === false ? 'var(--bg-pill)' : 'transparent', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.15s' }}>No</button>
             </div>
 
             {isRepeatUser === true && (
@@ -552,7 +552,7 @@ function ReviewSection({ vendorId, vendorCategory, currentUser, manrope, newsrea
             )}
           </div>
 
-          <textarea placeholder="Any additional comments? (optional)" value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 16, background: '#fff', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
+          <textarea placeholder="Any additional comments? (optional)" value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 16, background: 'rgba(255,255,255,0.05)', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
               {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
@@ -833,22 +833,22 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
 
   return (
-    <div id={'vendor-' + v.id} style={{ background: '#fff', borderRadius: 16, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid #E0D9CF', overflow: 'hidden', position: 'relative', boxShadow: '0 2px 16px rgba(28,20,8,0.08)', display: 'flex', flexDirection: 'column' }}>
+    <div id={'vendor-' + v.id} style={{ background: '#161410', borderRadius: 16, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid rgba(245,240,230,0.08)', overflow: 'hidden', position: 'relative', boxShadow: '0 4px 24px rgba(0,0,0,0.35)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Category accent bar */}
       <div style={{ height: 3, background: colour, flexShrink: 0 }} />
 
       {/* "Saved by friends" banner */}
       {saverLabel && (
-        <div style={{ background: '#F5F0E6', borderBottom: '1px solid #E0D9CF', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ background: 'rgba(180,105,14,0.08)', borderBottom: '1px solid rgba(245,240,230,0.07)', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ display: 'flex' }}>
             {followSavers.slice(0, 3).map((p, i) => (
-              <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: colour + '25', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: manrope }}>
+              <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: colour + '30', border: '1.5px solid rgba(245,240,230,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: manrope }}>
                 {p.display_name[0].toUpperCase()}
               </div>
             ))}
           </div>
-          <span style={{ fontSize: 10, color: '#5C4A2A', fontWeight: 600, fontFamily: manrope }}>{saverLabel}</span>
+          <span style={{ fontSize: 10, color: 'rgba(245,240,230,0.60)', fontWeight: 600, fontFamily: manrope }}>{saverLabel}</span>
         </div>
       )}
 
@@ -859,7 +859,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
       </div>
 
       {/* Save button */}
-      <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }} style={{ position: 'absolute', top: saverLabel ? 41 : 15, right: 12, background: isSaved ? CATEGORY_ACCENT + '20' : 'rgba(255,255,255,0.95)', border: '1px solid ' + (isSaved ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease', zIndex: 2 }}>
+      <button onClick={() => { if (!currentUser) { onOpenAuth(); return }; onToggleSave(v.id) }} style={{ position: 'absolute', top: saverLabel ? 41 : 15, right: 12, background: isSaved ? CATEGORY_ACCENT + '20' : 'rgba(255,255,255,0.08)', border: '1px solid ' + (isSaved ? CATEGORY_ACCENT : 'rgba(245,240,230,0.15)'), borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease', zIndex: 2 }}>
         <HeartIcon filled={isSaved} />
       </button>
 
@@ -869,28 +869,28 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 12, letterSpacing: '0.18em', color: colour, marginBottom: 3 }}>{v.category}</div>
 
         {/* Vendor name */}
-        <div style={{ fontSize: 18, fontWeight: 600, color: '#1C1917', lineHeight: 1.2, marginBottom: 8, paddingRight: 36, fontFamily: newsreader }}>{v.name}</div>
+        <div style={{ fontSize: 18, fontWeight: 600, color: '#F5EFE4', lineHeight: 1.2, marginBottom: 8, paddingRight: 36, fontFamily: newsreader }}>{v.name}</div>
 
         {/* Rating + stats row */}
         {(avgRating !== null || usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
             {avgRating !== null && <span style={{ fontSize: 11, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 600 }}>★ {avgRating}</span>}
-            {usedCount > 0 && <span style={{ fontSize: 11, color: '#78716c', fontFamily: manrope }}>👋 {usedCount} used</span>}
-            {recCount  > 0 && <span style={{ fontSize: 11, color: '#78716c', fontFamily: manrope }}>⭐ {recCount} rec</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', fontFamily: manrope }}>👋 {usedCount} used</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', fontFamily: manrope }}>⭐ {recCount} rec</span>}
           </div>
         )}
 
-        {v.location   && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>📍 {v.location}</div>}
-        {v.price_from && <div style={{ fontSize: 11, color: '#0D7A6E', fontWeight: 600, marginBottom: 6, fontFamily: manrope }}>From ₦{v.price_from}</div>}
+        {v.location   && <div style={{ fontSize: 11, color: CATEGORY_ACCENT, fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>📍 {v.location}</div>}
+        {v.price_from && <div style={{ fontSize: 11, color: '#34D399', fontWeight: 600, marginBottom: 6, fontFamily: manrope }}>From ₦{v.price_from}</div>}
 
         {/* Promo banner */}
         {promoActive && (
           <div style={{ background: PROMO_COLOR + '10', border: '1px solid ' + PROMO_COLOR + '35', borderRadius: 10, padding: '8px 12px', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
               <span style={{ fontSize: 9, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>🏷 Active promo</span>
-              {v.discount_expiry && <span style={{ fontSize: 9, color: '#78716c', fontFamily: manrope }}>Expires {new Date(v.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
+              {v.discount_expiry && <span style={{ fontSize: 9, color: 'rgba(245,240,230,0.45)', fontFamily: manrope }}>Expires {new Date(v.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
             </div>
-            {v.discount_description && <p style={{ fontSize: 11, color: '#1C1917', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{v.discount_description}</p>}
+            {v.discount_description && <p style={{ fontSize: 11, color: '#F5EFE4', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{v.discount_description}</p>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
               <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '15', padding: '3px 10px', borderRadius: 5, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{v.discount_code}</code>
               <button onClick={handleCopy} style={{ padding: '3px 10px', borderRadius: 5, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, letterSpacing: '0.06em' }}>
@@ -919,27 +919,27 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {/* More info toggle */}
           {hasDetails && (
-            <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', padding: '8px 0', background: '#F5F0E6', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 9, color: '#78716c', fontWeight: 700, fontFamily: manrope, letterSpacing: '0.12em', textTransform: 'uppercase' as const, transition: 'background 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#EDE5D8' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#F5F0E6' }}>
+            <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', padding: '8px 0', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 9, color: 'rgba(245,240,230,0.45)', fontWeight: 700, fontFamily: manrope, letterSpacing: '0.12em', textTransform: 'uppercase' as const, transition: 'background 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}>
               {expanded ? '− Less info' : '+ More info'}
             </button>
           )}
 
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 4 }}>
-              {v.services && <p style={{ fontSize: 11, color: '#5C4A2A', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
-              {v.phone    && <p style={{ fontSize: 11, color: '#78716c', margin: 0, fontFamily: manrope }}>📞 {v.phone}</p>}
-              {v.email    && <p style={{ fontSize: 11, color: '#78716c', margin: 0, fontFamily: manrope }}>✉ {v.email}</p>}
+              {v.services && <p style={{ fontSize: 11, color: 'rgba(245,240,230,0.55)', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
+              {v.phone    && <p style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', margin: 0, fontFamily: manrope }}>📞 {v.phone}</p>}
+              {v.email    && <p style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', margin: 0, fontFamily: manrope }}>✉ {v.email}</p>}
               {safeVendorUrl(v.website) && (
                 <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: CATEGORY_ACCENT, textDecoration: 'none', fontFamily: manrope }}>🌐 {v.website}</a>
               )}
-              {v.notes && <p style={{ fontSize: 10, color: '#78716c', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
+              {v.notes && <p style={{ fontSize: 10, color: 'rgba(245,240,230,0.40)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
 
               {followSavers.length > 0 && (
-                <div style={{ marginTop: 4, padding: '8px 10px', background: '#F5F0E6', borderRadius: 8 }}>
+                <div style={{ marginTop: 4, padding: '8px 10px', background: 'rgba(180,105,14,0.08)', borderRadius: 8 }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, marginBottom: 6, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>Saved by people you follow</div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {followSavers.map(p => (
-                      <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: CATEGORY_ACCENT, textDecoration: 'none', background: '#fff', border: '1px solid #DDD5C8', borderRadius: 4, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
+                      <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: CATEGORY_ACCENT, textDecoration: 'none', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 4, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
                     ))}
                   </div>
                 </div>
@@ -947,10 +947,10 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
 
               {/* Used / Recommend */}
               <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                <button onClick={toggleUsed} disabled={usedSubmitting} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '15' : 'transparent', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : '#78716c', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: usedSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
+                <button onClick={toggleUsed} disabled={usedSubmitting} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '20' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : 'rgba(245,240,230,0.12)'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : 'rgba(245,240,230,0.45)', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: usedSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
                   👋 {hasUsed ? 'Used ✓' : 'I used this'}{usedCount > 0 && <span style={{ marginLeft: 4, fontWeight: 700 }}>· {usedCount}</span>}
                 </button>
-                <button onClick={toggleRecommend} disabled={recSubmitting} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '15' : 'transparent', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : '#DDD5C8'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : '#78716c', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: recSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
+                <button onClick={toggleRecommend} disabled={recSubmitting} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '20' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : 'rgba(245,240,230,0.12)'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : 'rgba(245,240,230,0.45)', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: recSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
                   ⭐ {hasRec ? 'Rec\u2019d \u2713' : 'Recommend'}{recCount > 0 && <span style={{ marginLeft: 4, fontWeight: 700 }}>· {recCount}</span>}
                 </button>
               </div>
@@ -1192,7 +1192,7 @@ export default function DirectoryPage() {
   const emptyStats: VendorStats = { avgRating: null, usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
 
   return (
-    <main style={{ fontFamily: manrope, background: '#F5F0E6', minHeight: '100vh' }}>
+    <main style={{ fontFamily: manrope, background: '#0D0B08', minHeight: '100vh' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.15} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
 
       {/* ── Editorial page header ── */}
@@ -1219,12 +1219,12 @@ export default function DirectoryPage() {
         </div>
       </div>
 
-      <div style={{ background: '#F5F0E6', borderBottom: '1px solid #DDD5C8', padding: '10px 16px' }}>
+      <div style={{ background: '#0D0B08', borderBottom: '1px solid rgba(245,240,230,0.08)', padding: '10px 16px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #DDD5C8', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="#78716c" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="#78716c" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: '#1C1917', fontFamily: manrope }} />
-            {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#78716c', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="rgba(245,240,230,0.35)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="rgba(245,240,230,0.35)" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: '#F5EFE4', fontFamily: manrope }} />
+            {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,240,230,0.4)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
@@ -1243,10 +1243,10 @@ export default function DirectoryPage() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 16px 2px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p style={{ color: '#78716c', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
+          <p style={{ color: 'rgba(245,240,230,0.42)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
             {sorted.length} vendors{search ? ' for "' + search + '"' : ''}{showPromos ? ' \u00b7 Active promos' : ''}
           </p>
-          <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: '#fff', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: 'transparent', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             + Suggest
           </button>
         </div>
@@ -1255,7 +1255,7 @@ export default function DirectoryPage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 14 }}>
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ background: '#fff', borderRadius: 14, height: 100, opacity: 0.3, border: '1px solid var(--border)' }} />
+              <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, height: 100, opacity: 0.5, border: '1px solid rgba(245,240,230,0.06)' }} />
             ))
           : sorted.length === 0
             ? (

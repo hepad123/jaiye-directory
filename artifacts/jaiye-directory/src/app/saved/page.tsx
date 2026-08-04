@@ -142,7 +142,7 @@ function ShareButton({ username }: { username: string }) {
     setTimeout(() => setCopied(false), 2500)
   }
   return (
-    <button onClick={handleShare} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 24, background: copied ? 'var(--accent-light)' : '#fff', border: '1.5px solid ' + (copied ? 'var(--gold)' : 'var(--border)'), color: copied ? 'var(--gold)' : 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.2s' }}>
+    <button onClick={handleShare} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 24, background: copied ? 'var(--accent-light)' : 'rgba(255,255,255,0.06)', border: '1.5px solid ' + (copied ? 'var(--gold)' : 'var(--border)'), color: copied ? 'var(--gold)' : 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: manrope, transition: 'all 0.2s' }}>
       {copied ? 'Link copied!' : (
         <>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -158,7 +158,7 @@ function BudgetBar({ quotes }: { quotes: Record<string, number> }) {
   const total = entries.reduce((s, [, v]) => s + v, 0)
   if (entries.length === 0) return null
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px', marginBottom: 24, boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
+    <div style={{ background: '#161410', border: '1px solid rgba(245,240,230,0.08)', borderRadius: 16, padding: '16px 20px', marginBottom: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.35)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 16 }}>&#128176;</span>
@@ -228,7 +228,7 @@ function MyNotes({ vendorId, initialNote, initialQuotedPrice, onQuoteChange }: {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, flexShrink: 0 }}>Quoted price N</span>
-        <input type="text" inputMode="numeric" placeholder="e.g. 250000" value={price} onChange={e => handlePriceChange(e.target.value)} style={{ flex: 1, minWidth: 0, border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 11, background: '#fff', color: 'var(--text)', outline: 'none', fontFamily: manrope }} />
+        <input type="text" inputMode="numeric" placeholder="e.g. 250000" value={price} onChange={e => handlePriceChange(e.target.value)} style={{ flex: 1, minWidth: 0, border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 11, background: 'rgba(255,255,255,0.05)', color: 'var(--text)', outline: 'none', fontFamily: manrope }} />
       </div>
       {!isEditing && !note && (<button onClick={() => setIsEditing(true)} style={{ width: '100%', padding: '4px 0', background: 'none', border: 'none', cursor: 'text', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic', fontFamily: manrope }}>+ Add a private note...</button>)}
       {(isEditing || !!note) && (<textarea autoFocus={isEditing && !note} placeholder="e.g. Quoted N250k, follow up in March..." value={note} onChange={e => handleNoteChange(e.target.value)} onFocus={() => setIsEditing(true)} rows={3} maxLength={LIMITS.note} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: 'var(--text)', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box' as const, fontFamily: manrope, padding: 0 }} />)}
@@ -278,7 +278,7 @@ function ServiceNotes({ serviceId, initialNote, initialQuotedPrice, onQuoteChang
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: manrope, flexShrink: 0 }}>Quoted price N</span>
-        <input type="text" inputMode="numeric" placeholder="e.g. 80000" value={price} onChange={e => handlePriceChange(e.target.value)} style={{ flex: 1, minWidth: 0, border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 11, background: '#fff', color: 'var(--text)', outline: 'none', fontFamily: manrope }} />
+        <input type="text" inputMode="numeric" placeholder="e.g. 80000" value={price} onChange={e => handlePriceChange(e.target.value)} style={{ flex: 1, minWidth: 0, border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 11, background: 'rgba(255,255,255,0.05)', color: 'var(--text)', outline: 'none', fontFamily: manrope }} />
       </div>
       {!isEditing && !note && (<button onClick={() => setIsEditing(true)} style={{ width: '100%', padding: '4px 0', background: 'none', border: 'none', cursor: 'text', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic', fontFamily: manrope }}>+ Add a private note...</button>)}
       {(isEditing || !!note) && (<textarea autoFocus={isEditing && !note} placeholder="e.g. Booked for June, deposit paid..." value={note} onChange={e => handleNoteChange(e.target.value)} onFocus={() => setIsEditing(true)} rows={3} maxLength={LIMITS.note} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 11, color: 'var(--text)', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box' as const, fontFamily: manrope, padding: 0 }} />)}
@@ -355,12 +355,12 @@ function VendorCard({ v, savedIds, onToggleSave, savedNote, savedQuotedPrice, on
         {v.price_from && <div style={{ fontSize: 11, color: '#0D9488', fontWeight: 600, marginBottom: 6, fontFamily: manrope }}>From &#8358;{v.price_from}</div>}
         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
           {igHandle && (
-            <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+            <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#0D0B08', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,240,230,0.10)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <InstagramIcon />Instagram
             </a>
           )}
           {whatsappUrl && (
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#0D0B08', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,240,230,0.10)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <WhatsAppIcon />WhatsApp
             </a>
           )}
@@ -368,7 +368,7 @@ function VendorCard({ v, savedIds, onToggleSave, savedNote, savedQuotedPrice, on
         {v.discount_code && (
           <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 11px', borderRadius: 20, background: 'var(--text)', color: 'var(--accent-light)', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, fontFamily: manrope }}>&#127991; {v.discount_code}</span>
-            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)', background: copied ? 'var(--accent-light)' : '#fff', fontSize: 10, color: copied ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: manrope }}>{copied ? 'Copied!' : 'Copy'}</button>
+            <button onClick={copyCode} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)', background: copied ? 'var(--accent-light)' : 'rgba(255,255,255,0.06)', fontSize: 10, color: copied ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', fontFamily: manrope }}>{copied ? 'Copied!' : 'Copy'}</button>
           </div>
         )}
         <MyNotes vendorId={v.id} initialNote={savedNote} initialQuotedPrice={savedQuotedPrice} onQuoteChange={(vid, _name, amount) => onQuoteChange(vid, v.name, amount)} />
@@ -402,8 +402,8 @@ function ServiceCard({ service, savedIds, onToggleSave, savedNote, savedQuotedPr
   const loc = [service.location, service.city].filter(Boolean).join(', ')
 
   return (
-    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 4px rgba(28,25,23,0.06)' }}>
-      <button onClick={() => onToggleSave(service.id)} style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? 'var(--accent-light)' : '#fff', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'var(--border)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease', zIndex: 1 }}>
+    <div style={{ background: '#161410', borderRadius: 14, border: '1px solid rgba(245,240,230,0.08)', overflow: 'hidden', position: 'relative', boxShadow: '0 4px 20px rgba(0,0,0,0.35)' }}>
+      <button onClick={() => onToggleSave(service.id)} style={{ position: 'absolute', top: 12, right: 12, background: isSaved ? 'var(--accent-light)' : 'rgba(255,255,255,0.08)', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'rgba(245,240,230,0.15)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s ease', zIndex: 1 }}>
         <HeartIcon filled={isSaved} />
       </button>
       <div style={{ padding: '14px 14px 12px' }}>
@@ -412,16 +412,16 @@ function ServiceCard({ service, savedIds, onToggleSave, savedNote, savedQuotedPr
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
           {subs.map((s: string) => (<span key={s} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: (SUB_COLOR[s] || catMeta.colour) + '18', color: SUB_COLOR[s] || catMeta.colour, fontSize: 10, fontWeight: 600, fontFamily: manrope }}>{s}</span>))}
         </div>
-        {loc && <div style={{ fontSize: 11, color: '#92400E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
+        {loc && <div style={{ fontSize: 11, color: '#B4690E', fontWeight: 500, marginBottom: 4, fontFamily: manrope }}>&#128205; {loc}</div>}
         {service.bio && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontFamily: manrope }}>{service.bio}</p>}
         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
           {igUrl && (
-            <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+            <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#0D0B08', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,240,230,0.10)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <InstagramIcon />Instagram
             </a>
           )}
           {waUrl && (
-            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#fff8f5', border: '1px solid var(--border)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#0D0B08', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,240,230,0.10)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <WhatsAppIcon />WhatsApp
             </a>
           )}
@@ -595,7 +595,7 @@ export default function SavedPage() {
     background: 'none',
     border: 'none',
     borderBottom: '2px solid ' + (activeTab === tab ? ACCENT : 'transparent'),
-    color: activeTab === tab ? ACCENT : '#78716c',
+    color: activeTab === tab ? ACCENT : 'rgba(245,240,230,0.42)',
     fontSize: 10,
     fontWeight: activeTab === tab ? 700 : 500,
     letterSpacing: '0.12em',
@@ -606,7 +606,7 @@ export default function SavedPage() {
   })
 
   return (
-    <main style={{ fontFamily: manrope, background: '#F5F0E6', minHeight: '100vh' }}>
+    <main style={{ fontFamily: manrope, background: '#0D0B08', minHeight: '100vh' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap');`}</style>
 
       {/* ── Editorial dark header ── */}
@@ -627,7 +627,7 @@ export default function SavedPage() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px 60px' }}>
         {!isLoading && user && totalSaved > 0 && (
-          <div style={{ display: 'flex', borderBottom: '2px solid #DDD5C8', marginBottom: 24, background: '#F5F0E6', position: 'sticky', top: 52, zIndex: 10 }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(245,240,230,0.10)', marginBottom: 24, background: '#0D0B08', position: 'sticky', top: 52, zIndex: 10 }}>
             <button style={tabStyle('vendors')} onClick={() => setActiveTab('vendors')}>
               Events {savedVendors.length > 0 && <span style={{ marginLeft: 6, fontSize: 10, background: activeTab === 'vendors' ? ACCENT : 'var(--bg-pill)', color: activeTab === 'vendors' ? 'white' : 'var(--text-muted)', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>{savedVendors.length}</span>}
             </button>
@@ -637,7 +637,7 @@ export default function SavedPage() {
           </div>
         )}
 
-        {isLoading && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 12, marginTop: 24 }}>{Array.from({ length: 6 }).map((_, i) => (<div key={i} style={{ background: '#fff', borderRadius: 14, height: 120, opacity: 0.3, border: '1px solid var(--border)' }} />))}</div>)}
+        {isLoading && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(255px, 1fr))', gap: 12, marginTop: 24 }}>{Array.from({ length: 6 }).map((_, i) => (<div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, height: 120, opacity: 0.5, border: '1px solid rgba(245,240,230,0.06)' }} />))}</div>)}
 
         {!isLoading && !user && (
           <div style={{ textAlign: 'center', padding: '60px 16px' }}>
@@ -646,7 +646,7 @@ export default function SavedPage() {
             <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 28px', fontFamily: manrope, lineHeight: 1.6 }}>Create a free account to save vendors, track your budget, and share your shortlist.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
               <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: ACCENT, color: 'white', borderRadius: 24, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: manrope, width: 220 }}>Sign in</button>
-              <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: '#fff', color: ACCENT, borderRadius: 24, border: '1.5px solid ' + ACCENT, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: manrope, width: 220 }}>Create account</button>
+              <button onClick={() => openSignIn()} style={{ padding: '13px 36px', background: 'rgba(255,255,255,0.06)', color: ACCENT, borderRadius: 24, border: '1.5px solid ' + ACCENT, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: manrope, width: 220 }}>Create account</button>
             </div>
           </div>
         )}
@@ -686,7 +686,7 @@ export default function SavedPage() {
                       </div>
                     ))}
                     <div style={{ textAlign: 'center', marginTop: 8 }}>
-                      <Link href="/directory" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: '#fff', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: manrope }}>Browse more vendors</Link>
+                      <Link href="/directory" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid rgba(245,240,230,0.12)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: manrope }}>Browse more vendors</Link>
                     </div>
                   </div>
                 )}
@@ -718,7 +718,7 @@ export default function SavedPage() {
                       )
                     })}
                     <div style={{ textAlign: 'center', marginTop: 8 }}>
-                      <a href="/beautyservices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid var(--border)', background: '#fff', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: manrope }}>Browse more services</a>
+                      <a href="/beautyservices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 22px', borderRadius: 24, border: '1px solid rgba(245,240,230,0.12)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none', fontWeight: 500, fontFamily: manrope }}>Browse more services</a>
                     </div>
                   </div>
                 )}

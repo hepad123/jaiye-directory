@@ -632,6 +632,10 @@ function EventServicesPage() {
   const [stats, setStats] = useState<Record<string, VendorStats>>({})
   const [suggestOpen, setSuggestOpen] = useState(false)
   const [displayName, setDisplayName] = useState('')
+  // Bug fix: store raw community rows so we can re-derive hasUsed/hasRec
+  // when the Clerk user object changes, without re-fetching the vendors list.
+  const rawUsedRowsRef = useRef<{vendor_id: string; clerk_user_id: string}[]>([])
+  const rawRecRowsRef  = useRef<{vendor_id: string; clerk_user_id: string}[]>([])
 
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
@@ -661,6 +665,10 @@ function EventServicesPage() {
       .then(({ data }) => { setDisplayName(data?.display_name || user.fullName || '') })
   }, [user, supabase])
 
+  // Bug fix: user is intentionally excluded from fetchVendors deps.
+  // Including user causes Clerk session refreshes to replace the entire vendors
+  // list, unmounting any open review-form and wiping in-progress input.
+  // hasUsed / hasRec are instead kept fresh by the separate effect below.
   const fetchVendors = useCallback(async () => {
     setLoading(true)
     const dbCat = cat === 'Outfits' ? 'Fashion' : cat
@@ -675,21 +683,44 @@ function EventServicesPage() {
         supabase.from('vendor_recommendations').select('vendor_id, clerk_user_id').in('vendor_id', ids),
         supabase.from('vendor_used').select('vendor_id, clerk_user_id').in('vendor_id', ids),
       ])
-      const recRows = recsRes.data || []
+      const recRows  = recsRes.data || []
       const usedRows = usedRes.data || []
+      // Store raw rows so the user-change effect can re-derive hasUsed/hasRec
+      rawUsedRowsRef.current = usedRows
+      rawRecRowsRef.current  = recRows
+      const uid = user?.id
       const newStats: Record<string, VendorStats> = {}
       rows.forEach((v: Vendor) => {
         newStats[v.id] = {
           usedCount: usedRows.filter((r: {vendor_id: string}) => r.vendor_id === v.id).length,
-          recCount: recRows.filter((r: {vendor_id: string}) => r.vendor_id === v.id).length,
-          hasUsed: user?.id ? usedRows.some((r: {vendor_id: string; clerk_user_id: string}) => r.vendor_id === v.id && r.clerk_user_id === user.id) : false,
-          hasRec: user?.id ? recRows.some((r: {vendor_id: string; clerk_user_id: string}) => r.vendor_id === v.id && r.clerk_user_id === user.id) : false,
+          recCount:  recRows.filter((r: {vendor_id: string}) => r.vendor_id === v.id).length,
+          hasUsed: uid ? usedRows.some((r: {vendor_id: string; clerk_user_id: string}) => r.vendor_id === v.id && r.clerk_user_id === uid) : false,
+          hasRec:  uid ? recRows.some((r: {vendor_id: string; clerk_user_id: string})  => r.vendor_id === v.id && r.clerk_user_id === uid)  : false,
         }
       })
       setStats(newStats)
     }
     setLoading(false)
-  }, [supabase, cat, location, user])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, cat, location])
+
+  // When the Clerk user identity changes (sign-in/out, session refresh) update
+  // only hasUsed/hasRec in existing stats — never replace the vendors list.
+  useEffect(() => {
+    const uid = user?.id
+    setStats(prev => {
+      if (!Object.keys(prev).length) return prev
+      const next: Record<string, VendorStats> = {}
+      Object.keys(prev).forEach(id => {
+        next[id] = {
+          ...prev[id],
+          hasUsed: uid ? rawUsedRowsRef.current.some(r => r.vendor_id === id && r.clerk_user_id === uid) : false,
+          hasRec:  uid ? rawRecRowsRef.current.some(r  => r.vendor_id === id && r.clerk_user_id === uid)  : false,
+        }
+      })
+      return next
+    })
+  }, [user])
 
   const fetchSaved = useCallback(async () => {
     if (!user?.id) { setSavedIds(new Set()); return }

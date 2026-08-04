@@ -972,8 +972,13 @@ export default function DirectoryPage() {
   const openAuthModal = () => openSignIn()
 
   const [vendors, setVendors] = useState<Vendor[]>([])
-  const [search, setSearch] = useState('')
-  const [occasion, setOccasion] = useState('weddings')
+  // Bug fix: initialise search from URL params eagerly (before any effects run)
+  // so the occasion effect's setSearch('') on mount cannot clear it.
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get('search') ?? '')
+  const [occasion, setOccasion] = useState(() => {
+    const occ = new URLSearchParams(window.location.search).get('occasion')
+    return (occ && OCCASION_TABS.find(t => t.key === occ)) ? occ : 'weddings'
+  })
   const [selectedCats, setSelectedCats] = useState<string[]>([])
   const [weddingType, setWeddingType] = useState('All')
   const [location, setLocation] = useState('All')
@@ -991,12 +996,14 @@ export default function DirectoryPage() {
   const manrope = "'Manrope', var(--font-jost, sans-serif)"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
 
+  // Bug fix: skip-first-render guard so the occasion effect doesn't clear
+  // a search value that was already initialised from URL params above.
+  const isFirstOccasionRender = useRef(true)
+
   useEffect(() => {
+    // scroll-to-vendor is the only work remaining from the URL params effect
+    // (search + occasion are now initialised via lazy useState above)
     const params = new URLSearchParams(window.location.search)
-    const q = params.get('search')
-    if (q) setSearch(q)
-    const occ = params.get('occasion')
-    if (occ && OCCASION_TABS.find(t => t.key === occ)) setOccasion(occ)
     const id = params.get('id')
     if (id) {
       // Retry until the vendor element exists in the DOM (data may still be loading)
@@ -1019,6 +1026,8 @@ export default function DirectoryPage() {
   }, [])
 
   useEffect(() => {
+    // Bug fix: skip the very first render so we don't wipe a URL-param search
+    if (isFirstOccasionRender.current) { isFirstOccasionRender.current = false; return }
     setSelectedCats([])
     setWeddingType('All')
     setSearch('')

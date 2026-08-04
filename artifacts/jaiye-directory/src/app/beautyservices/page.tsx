@@ -660,6 +660,10 @@ function ServicesPage() {
   const [stats, setStats] = useState<Record<string, ServiceStats>>({})
   const [suggestOpen, setSuggestOpen] = useState(false)
   const [displayName, setDisplayName] = useState('')
+  // Bug fix: store raw community rows so we can re-derive hasUsed/hasRec
+  // when the Clerk user object changes, without re-fetching the services list.
+  const rawUsedRowsRef = useRef<{service_id: string; clerk_user_id: string}[]>([])
+  const rawRecRowsRef  = useRef<{service_id: string; clerk_user_id: string}[]>([])
 
   useEffect(() => { setSubs([]); setSearch(''); setShowPromos(false) }, [cat])
   useEffect(() => { if (city !== 'London') setSubCity('') }, [city])
@@ -692,6 +696,10 @@ useEffect(() => {
       .then(({ data }) => { setDisplayName(data?.display_name || user.fullName || '') })
   }, [user, supabase])
 
+  // Bug fix: user is intentionally excluded from fetchServices deps.
+  // Including user causes Clerk session refreshes to replace the entire services
+  // list, unmounting any open review-form and wiping in-progress input.
+  // hasUsed / hasRec are instead kept fresh by the separate effect below.
   const fetchServices = useCallback(async () => {
     setLoading(true)
     let q = supabase.from('services').select('id, name, category, subcategories, city, location, instagram, phone, price_from, bio, website, discount_code, discount_description, discount_expiry').eq('category', cat).order('verified', { ascending: false }).order('name')
@@ -712,20 +720,43 @@ useEffect(() => {
         supabase.from('service_recommendations').select('service_id, clerk_user_id').in('service_id', ids),
       ])
       const usedRows = usedRes.data || []
-      const recRows = recRes.data || []
+      const recRows  = recRes.data  || []
+      // Store raw rows so the user-change effect can re-derive hasUsed/hasRec
+      rawUsedRowsRef.current = usedRows
+      rawRecRowsRef.current  = recRows
+      const uid = user?.id
       const newStats: Record<string, ServiceStats> = {}
       rows.forEach((s: Service) => {
         newStats[s.id] = {
           usedCount: usedRows.filter((r: {service_id: string}) => r.service_id === s.id).length,
-          recCount: recRows.filter((r: {service_id: string}) => r.service_id === s.id).length,
-          hasUsed: user?.id ? usedRows.some((r: {service_id: string; clerk_user_id: string}) => r.service_id === s.id && r.clerk_user_id === user.id) : false,
-          hasRec: user?.id ? recRows.some((r: {service_id: string; clerk_user_id: string}) => r.service_id === s.id && r.clerk_user_id === user.id) : false,
+          recCount:  recRows.filter((r: {service_id: string}) => r.service_id === s.id).length,
+          hasUsed: uid ? usedRows.some((r: {service_id: string; clerk_user_id: string}) => r.service_id === s.id && r.clerk_user_id === uid) : false,
+          hasRec:  uid ? recRows.some((r: {service_id: string; clerk_user_id: string})  => r.service_id === s.id && r.clerk_user_id === uid) : false,
         }
       })
       setStats(newStats)
     }
     setLoading(false)
-  }, [supabase, cat, subs, city, subCity, user])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, cat, subs, city, subCity])
+
+  // When the Clerk user identity changes (sign-in/out, session refresh) update
+  // only hasUsed/hasRec in existing stats — never replace the services list.
+  useEffect(() => {
+    const uid = user?.id
+    setStats(prev => {
+      if (!Object.keys(prev).length) return prev
+      const next: Record<string, ServiceStats> = {}
+      Object.keys(prev).forEach(id => {
+        next[id] = {
+          ...prev[id],
+          hasUsed: uid ? rawUsedRowsRef.current.some(r => r.service_id === id && r.clerk_user_id === uid) : false,
+          hasRec:  uid ? rawRecRowsRef.current.some(r  => r.service_id === id && r.clerk_user_id === uid)  : false,
+        }
+      })
+      return next
+    })
+  }, [user])
 
   const fetchSaved = useCallback(async () => {
     if (!user?.id) { setSavedIds(new Set()); return }

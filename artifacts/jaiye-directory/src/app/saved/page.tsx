@@ -453,6 +453,9 @@ export default function SavedPage() {
   const [serviceNames, setServiceNames] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
 
+  // Bug fix: reset scroll position on every SPA navigation to this page
+  useEffect(() => { window.scrollTo(0, 0) }, [])
+
   useEffect(() => {
     if (!user?.id) return
     supabase.from('profiles').select('display_name, username').eq('clerk_user_id', user.id).maybeSingle()

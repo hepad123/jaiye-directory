@@ -41,12 +41,12 @@ function UserSearch() {
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(o => !o)} title="Find people"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: open ? 'rgba(201,168,76,0.15)' : 'transparent', border: 'none', cursor: 'pointer', color: open ? '#C9A84C' : 'rgba(245,239,228,0.5)', fontFamily: "'Manrope',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: open ? 'rgba(180,105,14,0.14)' : 'transparent', border: 'none', cursor: 'pointer', color: open ? '#B4690E' : 'rgba(245,239,228,0.5)', fontFamily: "'Manrope',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <span>Find</span>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 42, right: 0, zIndex: 300, background: '#1A1410', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,0.7)', border: '1px solid rgba(201,168,76,0.15)', width: 280, overflow: 'hidden', fontFamily: "'Manrope',sans-serif" }}>
+        <div style={{ position: 'absolute', top: 42, right: 0, zIndex: 300, background: '#1A1410', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,0.7)', border: '1px solid rgba(180,105,14,0.14)', width: 280, overflow: 'hidden', fontFamily: "'Manrope',sans-serif" }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(245,239,228,0.35)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input ref={inputRef} type="text" value={q} onChange={e => setQ(e.target.value)} placeholder="Search by name or @handle"
@@ -61,7 +61,7 @@ function UserSearch() {
                 onClick={() => { setOpen(false); setQ(''); setResults([]) }}>
                 {p.avatar_url
                   ? <img src={p.avatar_url} alt={p.display_name} width={30} height={30} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                  : <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(201,168,76,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#C9A84C', flexShrink: 0 }}>{p.display_name[0]?.toUpperCase()}</div>
+                  : <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(180,105,14,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#B4690E', flexShrink: 0 }}>{p.display_name[0]?.toUpperCase()}</div>
                 }
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#F5EFE4' }}>{p.display_name}</div>
@@ -90,13 +90,13 @@ function ProfileMenu({ user, username, displayName, signOut }: { user: ReturnTyp
   const initials = ((user?.fullName || displayName || 'U').split(' ').map(p => p[0]).slice(0, 2).join('')).toUpperCase()
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: 30, height: 30, borderRadius: '50%', border: '2px solid rgba(201,168,76,0.4)', background: 'none', padding: 0, cursor: 'pointer', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ width: 30, height: 30, borderRadius: '50%', border: '2px solid rgba(180,105,14,0.40)', background: 'none', padding: 0, cursor: 'pointer', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {user?.imageUrl
           ? <img src={user.imageUrl} alt={displayName} width={30} height={30} style={{ borderRadius: '50%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: 11, fontWeight: 700, color: '#C9A84C', fontFamily: "'Manrope',sans-serif" }}>{initials}</span>}
+          : <span style={{ fontSize: 11, fontWeight: 700, color: '#B4690E', fontFamily: "'Manrope',sans-serif" }}>{initials}</span>}
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 38, right: 0, zIndex: 300, background: '#1A1410', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,0.7)', border: '1px solid rgba(201,168,76,0.15)', minWidth: 190, overflow: 'hidden', fontFamily: "'Manrope',sans-serif" }}>
+        <div style={{ position: 'absolute', top: 38, right: 0, zIndex: 300, background: '#1A1410', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,0.7)', border: '1px solid rgba(180,105,14,0.14)', minWidth: 190, overflow: 'hidden', fontFamily: "'Manrope',sans-serif" }}>
           <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#F5EFE4' }}>{displayName || user?.fullName}</div>
             {username && <div style={{ fontSize: 11, color: 'rgba(245,239,228,0.35)', marginTop: 2 }}>@{username}</div>}
@@ -139,9 +139,9 @@ function NavbarAuth() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       {isSignedIn ? (
-        <Link href="/saved" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: isActive('/saved') ? 'rgba(201,168,76,0.15)' : 'transparent', textDecoration: 'none', color: isActive('/saved') ? '#C9A84C' : 'rgba(245,239,228,0.5)', fontFamily: "'Manrope',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+        <Link href="/saved" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: isActive('/saved') ? 'rgba(180,105,14,0.14)' : 'transparent', textDecoration: 'none', color: isActive('/saved') ? '#B4690E' : 'rgba(245,239,228,0.5)', fontFamily: "'Manrope',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
           <span style={{ fontSize: 15 }}>♡</span>
-          {savedCount > 0 && <span style={{ width: 15, height: 15, borderRadius: '50%', background: '#C9A84C', color: '#0D0A08', fontSize: 8, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{savedCount}</span>}
+          {savedCount > 0 && <span style={{ width: 15, height: 15, borderRadius: '50%', background: '#B4690E', color: '#0D0A08', fontSize: 8, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{savedCount}</span>}
         </Link>
       ) : (
         <SignInButton mode="modal">
@@ -155,7 +155,7 @@ function NavbarAuth() {
         <ProfileMenu user={user} username={username} displayName={displayName} signOut={signOut} />
       ) : (
         <SignInButton mode="modal">
-          <button style={{ padding: '7px 16px', borderRadius: 8, background: '#C9A84C', border: 'none', color: '#0D0A08', fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: "'Manrope',sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase' }}>Sign In</button>
+          <button style={{ padding: '7px 16px', borderRadius: 8, background: '#B4690E', border: 'none', color: '#0D0A08', fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: "'Manrope',sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase' }}>Sign In</button>
         </SignInButton>
       )}
     </div>
@@ -183,21 +183,21 @@ export default function Navbar() {
   const isActive = (p: string) => pathname === p
 
   const navLink = (href: string, label: string) => (
-    <Link href={href} style={{ fontSize: 12, fontWeight: isActive(href) ? 700 : 500, color: isActive(href) ? '#C9A84C' : 'rgba(245,239,228,0.6)', textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif", transition: 'color 0.15s', padding: '4px 0' }}>{label}</Link>
+    <Link href={href} style={{ fontSize: 12, fontWeight: isActive(href) ? 700 : 500, color: isActive(href) ? '#B4690E' : 'rgba(245,239,228,0.6)', textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif", transition: 'color 0.15s', padding: '4px 0' }}>{label}</Link>
   )
 
   return (
     <>
-      <nav style={{ position: 'sticky', top: 0, zIndex: 200, background: 'rgba(13,10,8,0.94)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(201,168,76,0.1)', padding: '0 clamp(16px,4vw,40px)', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 200, background: 'rgba(13,10,8,0.94)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(180,105,14,0.12)', padding: '0 clamp(16px,4vw,40px)', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
         {/* Left: hamburger + logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <button onClick={() => setDrawerOpen(o => !o)} style={{ width: 32, height: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, flexShrink: 0 }}>
-            <div style={{ width: 18, height: 1.5, background: '#C9A84C', borderRadius: 2, transition: 'all 0.2s', transform: drawerOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }} />
+            <div style={{ width: 18, height: 1.5, background: '#B4690E', borderRadius: 2, transition: 'all 0.2s', transform: drawerOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }} />
             <div style={{ width: 14, height: 1.5, background: 'rgba(245,239,228,0.5)', borderRadius: 2, transition: 'all 0.2s', opacity: drawerOpen ? 0 : 1 }} />
-            <div style={{ width: 18, height: 1.5, background: '#C9A84C', borderRadius: 2, transition: 'all 0.2s', transform: drawerOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }} />
+            <div style={{ width: 18, height: 1.5, background: '#B4690E', borderRadius: 2, transition: 'all 0.2s', transform: drawerOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }} />
           </button>
-          <Link href="/" style={{ fontFamily: "'Bebas Neue',serif", fontSize: 22, letterSpacing: '0.12em', color: '#C9A84C', textDecoration: 'none', lineHeight: 1 }}>JAIYÉ</Link>
+          <Link href="/" style={{ fontFamily: "'Bebas Neue',serif", fontSize: 22, letterSpacing: '0.12em', color: '#B4690E', textDecoration: 'none', lineHeight: 1 }}>JAIYÉ</Link>
         </div>
 
         {/* Center links (desktop) */}
@@ -215,9 +215,9 @@ export default function Navbar() {
       {drawerOpen && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 190, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setDrawerOpen(false)} />
-          <div style={{ position: 'fixed', top: 52, left: 0, bottom: 0, width: 280, zIndex: 195, background: '#1A1410', borderRight: '1px solid rgba(201,168,76,0.1)', overflowY: 'auto', display: 'flex', flexDirection: 'column', fontFamily: "'Manrope',sans-serif" }}>
+          <div style={{ position: 'fixed', top: 52, left: 0, bottom: 0, width: 280, zIndex: 195, background: '#1A1410', borderRight: '1px solid rgba(180,105,14,0.12)', overflowY: 'auto', display: 'flex', flexDirection: 'column', fontFamily: "'Manrope',sans-serif" }}>
             <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#C9A84C', fontWeight: 700, marginBottom: 6 }}>Directory</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#B4690E', fontWeight: 700, marginBottom: 6 }}>Directory</div>
               <div style={{ fontFamily: "'Bebas Neue',serif", fontSize: 24, color: '#F5EFE4', letterSpacing: '0.08em' }}>JAIYÉ DIRECTORY</div>
             </div>
             <div style={{ flex: 1, padding: '12px 0' }}>
@@ -230,7 +230,7 @@ export default function Navbar() {
                 { href: '/saved', label: 'Saved' },
               ].map(item => (
                 <Link key={item.href} href={item.href}
-                  style={{ display: 'block', padding: '12px 20px', fontSize: 13, color: isActive(item.href) ? '#C9A84C' : 'rgba(245,239,228,0.65)', textDecoration: 'none', fontWeight: isActive(item.href) ? 700 : 500, borderLeft: isActive(item.href) ? '3px solid #C9A84C' : '3px solid transparent', letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s' }}
+                  style={{ display: 'block', padding: '12px 20px', fontSize: 13, color: isActive(item.href) ? '#B4690E' : 'rgba(245,239,228,0.65)', textDecoration: 'none', fontWeight: isActive(item.href) ? 700 : 500, borderLeft: isActive(item.href) ? '3px solid #B4690E' : '3px solid transparent', letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s' }}
                   onClick={() => setDrawerOpen(false)}>
                   {item.label}
                 </Link>

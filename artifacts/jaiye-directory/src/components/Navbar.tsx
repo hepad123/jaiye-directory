@@ -223,6 +223,90 @@ function DrawerExpandable({
 }
 
 /* ─────────────────────────────────────────────────────────
+   DrawerServicesGroup — "Search by Services" with nested
+   Beauty Services + Event Services sub-expandables
+───────────────────────────────────────────────────────── */
+function DrawerServicesGroup({
+  beautyItems, eventItems, onNavigate,
+}: {
+  beautyItems: { label: string; href: string }[];
+  eventItems: { label: string; href: string }[];
+  onNavigate: (href: string) => void;
+}) {
+  const [open, setOpen] = useState(false)
+  const [beautyOpen, setBeautyOpen] = useState(false)
+  const [eventOpen, setEventOpen] = useState(false)
+
+  const subHeaderStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    width: '100%', padding: '11px 20px 11px 28px',
+    fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
+    color: '#1A1612', background: 'none', border: 'none', cursor: 'pointer',
+    fontFamily: "'Outfit',sans-serif", borderBottom: '1px solid #F0EAE0',
+    textAlign: 'left',
+  }
+
+  return (
+    <div>
+      {/* Top-level toggle */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '14px 20px', fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1A1612', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Outfit',sans-serif", textAlign: 'left' }}>
+        Search by Services
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9C8C7E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{ borderTop: '1px solid #F0EAE0', borderBottom: '1px solid #F0EAE0', background: '#FAF7F2' }}>
+
+          {/* ── Beauty Services sub-group ── */}
+          <button onClick={() => setBeautyOpen(o => !o)} style={subHeaderStyle}>
+            Beauty Services
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#9C8C7E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transition: 'transform 0.2s', transform: beautyOpen ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+          {beautyOpen && (
+            <div style={{ background: '#F5F0E6' }}>
+              {beautyItems.map(item => (
+                <button key={item.href} onClick={() => onNavigate(item.href)}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 20px 10px 44px', fontSize: 12, color: '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Outfit',sans-serif", fontWeight: 500, letterSpacing: '0.04em', borderBottom: '1px solid #EDE8DF' }}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── Event Services sub-group ── */}
+          <button onClick={() => setEventOpen(o => !o)} style={subHeaderStyle}>
+            Event Services
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#9C8C7E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transition: 'transform 0.2s', transform: eventOpen ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+          {eventOpen && (
+            <div style={{ background: '#F5F0E6' }}>
+              {eventItems.map(item => (
+                <button key={item.href} onClick={() => onNavigate(item.href)}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 20px 10px 44px', fontSize: 12, color: '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Outfit',sans-serif", fontWeight: 500, letterSpacing: '0.04em', borderBottom: '1px solid #EDE8DF' }}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────
    Navbar — main shell, no Clerk hooks here
 ───────────────────────────────────────────────────────── */
 export default function Navbar() {
@@ -328,8 +412,8 @@ export default function Navbar() {
               Home
             </button>
 
-            {/* Search by Services — expandable */}
-            <DrawerExpandable label="Search by Services" onNavigate={go} items={beautyItems} />
+            {/* Search by Services — nested: Beauty + Event sub-groups */}
+            <DrawerServicesGroup beautyItems={beautyItems} eventItems={eventItems} onNavigate={go} />
 
             {/* Search by Events — expandable */}
             <DrawerExpandable label="Search by Events" onNavigate={go} items={eventItems} />

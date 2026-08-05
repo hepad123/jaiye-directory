@@ -26,9 +26,9 @@ const C = {
   gold:  "#B4690E",
   goldT: "rgba(180,105,14,0.10)",
   goldB: "rgba(180,105,14,0.22)",
-  disp:  "'Bebas Neue', 'Arial Narrow', Arial, sans-serif",
+  disp:  "'Outfit', sans-serif",
   serif: "'Newsreader', Georgia, serif",
-  ui:    "'Manrope', system-ui, sans-serif",
+  ui:    "'Outfit', sans-serif",
   ease:  [0.16, 1, 0.3, 1] as [number, number, number, number],
 };
 
@@ -684,13 +684,13 @@ export default function HomePage() {
           {/* Headline */}
           <div style={{ marginBottom: "clamp(20px,3vw,28px)" }}>
             <ClipText delay={0.15}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.white, margin: 0 }}>RECLAIM</h1>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(4.5rem,13vw,12rem)", lineHeight: 0.9, letterSpacing: "-0.01em", fontWeight: 300, color: C.white, margin: 0 }}>RECLAIM</h1>
             </ClipText>
             <ClipText delay={0.28}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.white, margin: 0 }}>YOUR</h1>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(4.5rem,13vw,12rem)", lineHeight: 0.9, letterSpacing: "-0.01em", fontWeight: 300, color: C.white, margin: 0 }}>YOUR</h1>
             </ClipText>
             <ClipText delay={0.41}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.gold, margin: 0 }}>GLOW.</h1>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(4.5rem,13vw,12rem)", lineHeight: 0.9, letterSpacing: "-0.01em", fontWeight: 300, color: C.gold, margin: 0 }}>GLOW.</h1>
             </ClipText>
           </div>
 

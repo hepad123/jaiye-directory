@@ -772,7 +772,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const [copied, setCopied] = useState(false)
   const [usedSubmitting, setUsedSubmitting] = useState(false)
   const [recSubmitting, setRecSubmitting] = useState(false)
-  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const manrope = "'Outfit', sans-serif"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
 
   useEffect(() => { setExpanded(false) }, [resetKey])
@@ -866,7 +866,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
       <div style={{ padding: '14px 14px 16px', paddingTop: (v.verified || isNew) ? (saverLabel ? 54 : 38) : (saverLabel ? 18 : 14), flex: 1, display: 'flex', flexDirection: 'column' }}>
 
         {/* Category eyebrow */}
-        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 12, letterSpacing: '0.18em', color: colour, marginBottom: 3 }}>{v.category}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, letterSpacing: '0.18em', color: colour, marginBottom: 3 }}>{v.category}</div>
 
         {/* Vendor name */}
         <div style={{ fontSize: 18, fontWeight: 600, color: '#1A1612', lineHeight: 1.2, marginBottom: 8, paddingRight: 36, fontFamily: newsreader }}>{v.name}</div>
@@ -993,7 +993,7 @@ export default function DirectoryPage() {
   const [vendorStats, setVendorStats] = useState<Record<string, VendorStats>>({})
   const [suggestOpen, setSuggestOpen] = useState(false)
 
-  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const manrope = "'Outfit', sans-serif"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
 
   // Bug fix: skip-first-render guard so the occasion effect doesn't clear
@@ -1202,13 +1202,13 @@ export default function DirectoryPage() {
 
   return (
     <main style={{ fontFamily: manrope, background: '#FAF7F2', minHeight: '100vh' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.15} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600'); @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.15} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
 
       {/* ── Editorial page header ── */}
       <div style={{ background: '#FAF7F2', padding: 'clamp(32px,6vw,64px) clamp(20px,6vw,80px) clamp(28px,5vw,52px)', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 20, right: 32, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.25)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
         <div style={{ fontSize: 'clamp(12px,1.6vw,15px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 10 }}>Events Directory</div>
-        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#1A1612', letterSpacing: '0.03em', marginBottom: 18 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#1A1612', letterSpacing: '0.03em', marginBottom: 18 }}>
           {currentTab?.label?.toUpperCase() || 'WEDDINGS'}<br /><span style={{ color: CATEGORY_ACCENT }}>VENDORS.</span>
         </div>
         <div style={{ height: 1, background: 'linear-gradient(to right, ' + CATEGORY_ACCENT + ' 0%, rgba(180,105,14,0.2) 60%, transparent 100%)', maxWidth: 520 }} />
@@ -1220,7 +1220,7 @@ export default function DirectoryPage() {
           {OCCASION_TABS.map(tab => {
             const isActive = occasion === tab.key
             return (
-              <button key={tab.key} onClick={() => setOccasion(tab.key)} style={{ padding: '15px 18px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'rgba(245,239,228,0.42)', fontFamily: "'Bebas Neue', serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+              <button key={tab.key} onClick={() => setOccasion(tab.key)} style={{ padding: '15px 18px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'rgba(245,239,228,0.42)', fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                 {tab.label}
               </button>
             )

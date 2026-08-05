@@ -802,7 +802,7 @@ useEffect(() => {
     }
   }, [supabase, user, stats, openSignIn])
 
-  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const manrope = "'Outfit', sans-serif"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
 
   const filteredServices = services.filter(sv => {
@@ -820,13 +820,13 @@ useEffect(() => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAF7F2', color: '#1A1612', fontFamily: manrope, overflowX: 'hidden' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
 
       {/* ── Editorial page header ── */}
       <div style={{ background: '#FAF7F2', padding: 'clamp(32px,6vw,64px) clamp(20px,6vw,80px) clamp(28px,5vw,52px)', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 20, right: 32, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.25)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
         <div style={{ fontSize: 'clamp(13px,1.8vw,16px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 10 }}>Beauty Services</div>
-        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#1A1612', letterSpacing: '0.03em', marginBottom: 18 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#1A1612', letterSpacing: '0.03em', marginBottom: 18 }}>
           FIND YOUR<br /><span style={{ color: CATEGORY_ACCENT }}>STYLIST.</span>
         </div>
         <div style={{ height: 1, background: 'linear-gradient(to right, ' + CATEGORY_ACCENT + ' 0%, rgba(180,105,14,0.2) 60%, transparent 100%)', maxWidth: 520 }} />
@@ -836,7 +836,7 @@ useEffect(() => {
       <div style={{ background: '#FAF7F2', borderBottom: '1px solid rgba(180,105,14,0.14)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {Object.keys(CATEGORIES).map(c => (
-            <button key={c} onClick={() => setCat(c)} style={{ padding: '16px 22px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : '#6B6359', fontFamily: "'Bebas Neue', serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+            <button key={c} onClick={() => setCat(c)} style={{ padding: '16px 22px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : '#6B6359', fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
               {c}
             </button>
           ))}
@@ -933,7 +933,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   const bookUrl = service.website || null
   const loc = [service.location, service.city].filter(Boolean).join(', ')
   const { usedCount, recCount, hasUsed, hasRec } = stats
-  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const manrope = "'Outfit', sans-serif"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
   const promoActive = isPromoActive(service)
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)', letterSpacing: '0.04em' }
@@ -967,7 +967,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
       <div style={{ padding: '14px 14px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Category eyebrow */}
-        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 12, letterSpacing: '0.18em', color: ac, marginBottom: 3 }}>{service.category}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, letterSpacing: '0.18em', color: ac, marginBottom: 3 }}>{service.category}</div>
 
         {/* Vendor name */}
         <div style={{ fontSize: 18, fontWeight: 600, color: '#1A1612', lineHeight: 1.2, marginBottom: 8, paddingRight: 50, fontFamily: newsreader }}>{service.name}</div>

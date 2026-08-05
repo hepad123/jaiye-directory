@@ -74,7 +74,7 @@ type VendorStats = {
   hasRec: boolean
 }
 
-type SortMode = 'most_used' | 'most_rec'
+type SortMode = 'most_used' | 'most_rec' | 'highest_rated'
 
 const CATEGORY_ACCENT = '#B4690E'
 const PROMO_COLOR = '#C0A060'
@@ -688,8 +688,9 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
   }, [])
 
   const options: { key: SortMode; label: string }[] = [
-    { key: 'most_rec',  label: 'Most Recommended' },
-    { key: 'most_used', label: 'Most Used' },
+    { key: 'most_rec',     label: 'Most Recommended' },
+    { key: 'most_used',    label: 'Most Used' },
+    { key: 'highest_rated', label: 'Highest Rated' },
   ]
   const currentLabel = interacted ? (options.find(o => o.key === sortMode)?.label || 'Sort') : 'Sort'
 
@@ -1112,13 +1113,37 @@ export default function DirectoryPage() {
       const allUsed    = usedRes.data    || []
       const mapped = allVendors.map((v: Vendor) => v.category === 'Fashion' ? { ...v, category: 'Outfits' } : v)
       setVendors(mapped)
+
+      // Fetch review ratings in chunks of 30 (RLS requires vendor_id filter)
+      const RATING_COLS = 'vendor_id,rating_professionalism,rating_quality_results,rating_value,rating_reliability,rating_experience,rating_flexibility,rating_cleanliness'
+      const vendorIds = mapped.map((v: Vendor) => v.id)
+      const CHUNK = 30
+      const reviewChunks = await Promise.all(
+        Array.from({ length: Math.ceil(vendorIds.length / CHUNK) }, (_, i) =>
+          supabase.from('vendor_reviews').select(RATING_COLS).in('vendor_id', vendorIds.slice(i * CHUNK, (i + 1) * CHUNK))
+        )
+      )
+      const allReviews = reviewChunks.flatMap(r => r.data || [])
+      const RCOLS = ['rating_professionalism','rating_quality_results','rating_value','rating_reliability','rating_experience','rating_flexibility','rating_cleanliness']
+      const avgRatingMap: Record<string, number | null> = {}
+      vendorIds.forEach((id: string) => {
+        const vr = allReviews.filter((r: Record<string,unknown>) => r.vendor_id === id)
+        if (vr.length === 0) { avgRatingMap[id] = null; return }
+        const scores = vr.map((r: Record<string,unknown>) => {
+          const vals = RCOLS.map(c => r[c]).filter((v): v is number => typeof v === 'number')
+          return vals.length >= 3 ? vals.reduce((a, b) => a + b, 0) / vals.length : null
+        }).filter((v): v is number => v !== null)
+        avgRatingMap[id] = scores.length > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) / 10
+          : null
+      })
+
       const stats: Record<string, VendorStats> = {}
       mapped.forEach((v: Vendor) => {
         const vendorRecs = allRecs.filter((r: { vendor_id: string }) => r.vendor_id === v.id)
         const vendorUsed = allUsed.filter((r: { vendor_id: string }) => r.vendor_id === v.id)
-        // hasUsed / hasRec default false here; the auth effect below patches them in
         stats[v.id] = {
-          avgRating: null,
+          avgRating: avgRatingMap[v.id] ?? null,
           usedCount: vendorUsed.length,
           recCount:  vendorRecs.length,
           hasUsed:   false,
@@ -1212,8 +1237,9 @@ export default function DirectoryPage() {
   const sorted = [...filtered].sort((a, b) => {
     const aStats = vendorStats[a.id] || { recCount: 0, usedCount: 0 }
     const bStats = vendorStats[b.id] || { recCount: 0, usedCount: 0 }
-    if (sortMode === 'most_rec')  return bStats.recCount  - aStats.recCount
-    if (sortMode === 'most_used') return bStats.usedCount - aStats.usedCount
+    if (sortMode === 'most_rec')      return bStats.recCount  - aStats.recCount
+    if (sortMode === 'most_used')     return bStats.usedCount - aStats.usedCount
+    if (sortMode === 'highest_rated') return (bStats.avgRating ?? 0) - (aStats.avgRating ?? 0)
     return 0
   })
 

@@ -734,7 +734,7 @@ export default function HomePage() {
         items={["Nigerian Wedding Vendors", "Verified Artisans", "Bridal Beauty", "Hair Braiding Specialists", "Event Planners", "Makeup Artists", "Community Shortlists", "Lagos · Abuja · Port Harcourt"]}
         speed={34}
         bg={C.black2}
-        textColor="rgba(245,240,230,0.55)"
+        textColor="rgba(245,240,230,0.85)"
       />
 
       {/* ══════════════════════════════════════════════════════════════════════

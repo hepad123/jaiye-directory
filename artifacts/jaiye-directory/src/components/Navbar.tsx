@@ -177,7 +177,7 @@ function NavbarNoAuth() {
    Navbar — main shell, no Clerk hooks here
 ───────────────────────────────────────────────────────── */
 export default function Navbar() {
-  const [pathname] = useLocation()
+  const [pathname, navigate] = useLocation()
   const clerkAvailable = useClerkAvailable()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const isActive = (p: string) => pathname === p
@@ -215,7 +215,8 @@ export default function Navbar() {
       {drawerOpen && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 190, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setDrawerOpen(false)} />
-          <div style={{ position: 'fixed', top: 52, left: 0, bottom: 0, width: 280, zIndex: 195, background: '#1A1410', borderRight: '1px solid rgba(180,105,14,0.12)', overflowY: 'auto', display: 'flex', flexDirection: 'column', fontFamily: "'Manrope',sans-serif" }}>
+          {/* stopPropagation prevents clicks inside the drawer from reaching the overlay */}
+          <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: 52, left: 0, bottom: 0, width: 280, zIndex: 195, background: '#1A1410', borderRight: '1px solid rgba(180,105,14,0.12)', overflowY: 'auto', display: 'flex', flexDirection: 'column', fontFamily: "'Manrope',sans-serif" }}>
             <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <div style={{ fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#B4690E', fontWeight: 700, marginBottom: 6 }}>Directory</div>
               <div style={{ fontFamily: "'Bebas Neue',serif", fontSize: 24, color: '#F5EFE4', letterSpacing: '0.08em' }}>JAIYÉ DIRECTORY</div>
@@ -229,11 +230,12 @@ export default function Navbar() {
                 { href: '/style-calendar', label: 'Style Calendar' },
                 { href: '/saved', label: 'Saved' },
               ].map(item => (
-                <Link key={item.href} href={item.href}
-                  style={{ display: 'block', padding: '12px 20px', fontSize: 13, color: isActive(item.href) ? '#B4690E' : 'rgba(245,239,228,0.65)', textDecoration: 'none', fontWeight: isActive(item.href) ? 700 : 500, borderLeft: isActive(item.href) ? '3px solid #B4690E' : '3px solid transparent', letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s' }}
-                  onClick={() => setDrawerOpen(false)}>
+                // Use navigate() directly — more reliable than <Link> inside a conditional overlay
+                <button key={item.href}
+                  onClick={() => { navigate(item.href); setDrawerOpen(false); }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 20px', fontSize: 13, color: isActive(item.href) ? '#B4690E' : 'rgba(245,239,228,0.65)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: isActive(item.href) ? 700 : 500, borderLeft: isActive(item.href) ? '3px solid #B4690E' : '3px solid transparent', letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s', fontFamily: "'Manrope',sans-serif" }}>
                   {item.label}
-                </Link>
+                </button>
               ))}
             </div>
           </div>

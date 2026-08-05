@@ -836,7 +836,7 @@ useEffect(() => {
       <div style={{ background: '#FAF7F2', borderBottom: '1px solid rgba(180,105,14,0.14)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {Object.keys(CATEGORIES).map(c => (
-            <button key={c} onClick={() => setCat(c)} style={{ padding: '16px 22px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : 'rgba(245,239,228,0.45)', fontFamily: "'Bebas Neue', serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+            <button key={c} onClick={() => setCat(c)} style={{ padding: '16px 22px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : '#6B6359', fontFamily: "'Bebas Neue', serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
               {c}
             </button>
           ))}

@@ -818,7 +818,12 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
     navigator.clipboard.writeText(v.discount_code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
   }
 
-  const whatsappNumber = v.phone?.replace(/\D/g, '')
+  const whatsappNumber = (() => {
+    const digits = v.phone?.replace(/\D/g, '') ?? ''
+    if (!digits) return ''
+    // Nigerian numbers starting with 0 → replace with country code 234
+    return digits.startsWith('0') ? '234' + digits.slice(1) : digits
+  })()
   const whatsappUrl = whatsappNumber ? 'https://wa.me/' + whatsappNumber : null
 
   const followSaverLabel = () => {
@@ -927,7 +932,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 4 }}>
               {v.services && <p style={{ fontSize: 11, color: 'rgba(245,240,230,0.55)', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
-              {v.phone    && <p style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', margin: 0, fontFamily: manrope }}>📞 {v.phone}</p>}
+              {v.phone    && <p style={{ fontSize: 11, color: '#9C8C7E', margin: 0, fontFamily: manrope }}>📞 {v.phone}</p>}
               {v.email    && <p style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', margin: 0, fontFamily: manrope }}>✉ {v.email}</p>}
               {safeVendorUrl(v.website) && (
                 <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: CATEGORY_ACCENT, textDecoration: 'none', fontFamily: manrope }}>🌐 {v.website}</a>

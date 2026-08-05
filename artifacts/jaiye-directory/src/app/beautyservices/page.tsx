@@ -929,7 +929,12 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   const subs = service.subcategories || []
   const ac = SUB_COLOR[subs[0]] || CATEGORY_ACCENT
   const igUrl = service.instagram ? 'https://instagram.com/' + service.instagram : null
-  const waUrl = service.phone ? 'https://wa.me/' + service.phone.replace(/\D/g, '') : null
+  const waUrl = (() => {
+    const digits = service.phone?.replace(/\D/g, '') ?? ''
+    if (!digits) return null
+    const num = digits.startsWith('0') ? '234' + digits.slice(1) : digits
+    return 'https://wa.me/' + num
+  })()
   const bookUrl = service.website || null
   const loc = [service.location, service.city].filter(Boolean).join(', ')
   const { usedCount, recCount, hasUsed, hasRec } = stats

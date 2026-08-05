@@ -107,8 +107,9 @@ function Eyebrow({ text }: { text: string }) {
 /* ─────────────────────────────────────────────────────────────────────────────
    Marquee
 ───────────────────────────────────────────────────────────────────────────── */
-function Marquee({ items, speed = 32, reverse = false, bg }: { items: string[]; speed?: number; reverse?: boolean; bg?: string }) {
+function Marquee({ items, speed = 32, reverse = false, bg, textColor }: { items: string[]; speed?: number; reverse?: boolean; bg?: string; textColor?: string }) {
   const doubled = [...items, ...items];
+  const resolvedText = textColor ?? C.textM;
   return (
     <div style={{ overflow: "hidden", background: bg ?? C.bg2, borderTop: `1px solid ${C.bdr}`, borderBottom: `1px solid ${C.bdr}` }}>
       <motion.div
@@ -117,7 +118,7 @@ function Marquee({ items, speed = 32, reverse = false, bg }: { items: string[]; 
         transition={{ duration: speed, repeat: Infinity, ease: "linear" }}
       >
         {doubled.map((t, i) => (
-          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 14, padding: "12px 22px", fontSize: 9, fontWeight: 700, letterSpacing: "0.26em", textTransform: "uppercase", fontFamily: C.ui, color: C.textM }}>
+          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 14, padding: "12px 22px", fontSize: 9, fontWeight: 700, letterSpacing: "0.26em", textTransform: "uppercase", fontFamily: C.ui, color: resolvedText }}>
             {t}
             <span style={{ color: C.gold, fontSize: 5, opacity: 0.6 }}>◆</span>
           </span>
@@ -733,6 +734,7 @@ export default function HomePage() {
         items={["Nigerian Wedding Vendors", "Verified Artisans", "Bridal Beauty", "Hair Braiding Specialists", "Event Planners", "Makeup Artists", "Community Shortlists", "Lagos · Abuja · Port Harcourt"]}
         speed={34}
         bg={C.black2}
+        textColor="rgba(245,240,230,0.55)"
       />
 
       {/* ══════════════════════════════════════════════════════════════════════

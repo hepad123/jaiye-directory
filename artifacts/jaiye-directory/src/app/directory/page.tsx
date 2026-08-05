@@ -764,10 +764,11 @@ function LocationDropdown({ location, subLocation, setLocation, setSubLocation, 
   )
 }
 
-function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth, followSavers, stats, onStatChange }: {
+function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, onOpenAuth, followSavers, followActivity, stats, onStatChange }: {
   v: Vendor; isNew: boolean; resetKey: number; currentUser: CurrentUser | null
   savedIds: Set<string>; onToggleSave: (vendorId: string) => void
   onOpenAuth: () => void; followSavers: FollowProfile[]
+  followActivity?: { used: FollowProfile[], rec: FollowProfile[] }
   stats: VendorStats; onStatChange: (vendorId: string, patch: Partial<VendorStats>) => void
 }) {
   const [expanded, setExpanded] = useState(false)
@@ -829,15 +830,23 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   })()
   const whatsappUrl = whatsappNumber ? 'https://wa.me/' + whatsappNumber : null
 
-  const followSaverLabel = () => {
-    if (followSavers.length === 0) return null
-    const names = followSavers.map(p => p.display_name.split(' ')[0])
-    if (names.length === 1) return names[0] + ' saved this'
-    if (names.length === 2) return names[0] + ' & ' + names[1] + ' saved this'
-    return names[0] + ', ' + names[1] + ' +' + (names.length - 2) + ' saved this'
-  }
+  const followContext = (() => {
+    const used  = followActivity?.used  ?? []
+    const rec   = followActivity?.rec   ?? []
+    const saved = followSavers
+    if (used.length  > 0) return { people: used,  verb: 'used this' }
+    if (rec.length   > 0) return { people: rec,   verb: 'recommended this' }
+    if (saved.length > 0) return { people: saved, verb: 'saved this' }
+    return null
+  })()
 
-  const saverLabel = followSaverLabel()
+  const saverLabel = followContext ? (() => {
+    const { people, verb } = followContext
+    const names = people.map(p => p.display_name.split(' ')[0])
+    if (names.length === 1) return names[0] + ' ' + verb
+    if (names.length === 2) return names[0] + ' & ' + names[1] + ' ' + verb
+    return names[0] + ', ' + names[1] + ' +' + (names.length - 2) + ' ' + verb
+  })() : null
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)' }
 
   return (
@@ -850,7 +859,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
       {saverLabel && (
         <div style={{ background: 'rgba(180,105,14,0.08)', borderBottom: '1px solid rgba(26,22,18,0.06)', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ display: 'flex' }}>
-            {followSavers.slice(0, 3).map((p, i) => (
+            {(followContext?.people ?? []).slice(0, 3).map((p, i) => (
               <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: colour + '30', border: '1.5px solid #E5DDD4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: manrope }}>
                 {p.display_name[0].toUpperCase()}
               </div>
@@ -942,14 +951,38 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
               )}
               {v.notes && <p style={{ fontSize: 10, color: '#9C8C7E', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
 
-              {followSavers.length > 0 && (
-                <div style={{ marginTop: 4, padding: '8px 10px', background: 'rgba(180,105,14,0.08)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, marginBottom: 6, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>Saved by people you follow</div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {followSavers.map(p => (
-                      <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: CATEGORY_ACCENT, textDecoration: 'none', background: 'rgba(26,22,18,0.04)', border: '1px solid #E5DDD4', borderRadius: 4, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
-                    ))}
-                  </div>
+              {(followActivity?.used?.length > 0 || followActivity?.rec?.length > 0 || followSavers.length > 0) && (
+                <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {followActivity?.used?.length > 0 && (
+                    <div style={{ padding: '8px 10px', background: 'rgba(5,150,105,0.06)', borderRadius: 8, border: '1px solid rgba(5,150,105,0.15)' }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: '#059669', marginBottom: 5, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>👋 Used by people you follow</div>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                        {followActivity.used.map(p => (
+                          <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: '#059669', textDecoration: 'none', background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: 4, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {followActivity?.rec?.length > 0 && (
+                    <div style={{ padding: '8px 10px', background: 'rgba(180,105,14,0.06)', borderRadius: 8, border: '1px solid rgba(180,105,14,0.15)' }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: CATEGORY_ACCENT, marginBottom: 5, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>⭐ Recommended by people you follow</div>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                        {followActivity.rec.map(p => (
+                          <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: CATEGORY_ACCENT, textDecoration: 'none', background: 'rgba(180,105,14,0.08)', border: '1px solid rgba(180,105,14,0.2)', borderRadius: 4, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {followSavers.length > 0 && (
+                    <div style={{ padding: '8px 10px', background: 'rgba(26,22,18,0.04)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: '#9C8C7E', marginBottom: 5, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>Saved by people you follow</div>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                        {followSavers.map(p => (
+                          <Link key={p.id} href={'/profile/' + p.username} style={{ fontSize: 10, color: '#9C8C7E', textDecoration: 'none', background: 'rgba(26,22,18,0.04)', border: '1px solid #E5DDD4', borderRadius: 4, padding: '3px 9px', fontFamily: manrope }}>@{p.username}</Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -999,6 +1032,7 @@ export default function DirectoryPage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [followSaverMap, setFollowSaverMap] = useState<Record<string, FollowProfile[]>>({})
+  const [followActivityMap, setFollowActivityMap] = useState<Record<string, { used: FollowProfile[], rec: FollowProfile[] }>>({})
   const [vendorStats, setVendorStats] = useState<Record<string, VendorStats>>({})
   const [suggestOpen, setSuggestOpen] = useState(false)
 
@@ -1074,25 +1108,42 @@ export default function DirectoryPage() {
   }, [authUser])
 
   useEffect(() => {
-    if (!authUser?.id) { setFollowSaverMap({}); return }
+    if (!authUser?.id) { setFollowSaverMap({}); setFollowActivityMap({}); return }
     async function loadFollowContext() {
       const { data: followRows } = await supabase.from('follows').select('clerk_following_id').eq('clerk_follower_id', authUser!.id)
-      if (!followRows || followRows.length === 0) { setFollowSaverMap({}); return }
+      if (!followRows || followRows.length === 0) { setFollowSaverMap({}); setFollowActivityMap({}); return }
       const followingIds = followRows.map((r: { clerk_following_id: string }) => r.clerk_following_id)
       const { data: profiles } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').in('clerk_user_id', followingIds)
-      if (!profiles || profiles.length === 0) { setFollowSaverMap({}); return }
+      if (!profiles || profiles.length === 0) { setFollowSaverMap({}); setFollowActivityMap({}); return }
       const profileMap: Record<string, FollowProfile> = {}
       profiles.forEach((p: { clerk_user_id: string; display_name: string; username: string; avatar_url?: string }) => { profileMap[p.clerk_user_id] = { ...p, id: p.clerk_user_id } })
-      const { data: savedRows } = await supabase.from('saved_vendors').select('vendor_id, clerk_user_id').in('clerk_user_id', followingIds)
-      if (!savedRows || savedRows.length === 0) { setFollowSaverMap({}); return }
-      const map: Record<string, FollowProfile[]> = {}
-      savedRows.forEach((row: { vendor_id: string; clerk_user_id: string }) => {
-        const profile = profileMap[row.clerk_user_id]
-        if (!profile) return
-        if (!map[row.vendor_id]) map[row.vendor_id] = []
-        if (!map[row.vendor_id].find(p => p.id === profile.id)) map[row.vendor_id].push(profile)
+
+      const [savedRes, usedRes, recRes] = await Promise.all([
+        supabase.from('saved_vendors').select('vendor_id, clerk_user_id').in('clerk_user_id', followingIds),
+        supabase.from('vendor_used').select('vendor_id, clerk_user_id').in('clerk_user_id', followingIds),
+        supabase.from('vendor_recommendations').select('vendor_id, clerk_user_id').in('clerk_user_id', followingIds),
+      ])
+
+      const buildMap = (rows: Array<{ vendor_id: string; clerk_user_id: string }>) => {
+        const map: Record<string, FollowProfile[]> = {}
+        rows.forEach(row => {
+          const profile = profileMap[row.clerk_user_id]
+          if (!profile) return
+          if (!map[row.vendor_id]) map[row.vendor_id] = []
+          if (!map[row.vendor_id].find(p => p.id === profile.id)) map[row.vendor_id].push(profile)
+        })
+        return map
+      }
+
+      setFollowSaverMap(buildMap(savedRes.data || []))
+
+      const usedMap = buildMap(usedRes.data || [])
+      const recMap  = buildMap(recRes.data  || [])
+      const activityMap: Record<string, { used: FollowProfile[], rec: FollowProfile[] }> = {}
+      new Set([...Object.keys(usedMap), ...Object.keys(recMap)]).forEach(id => {
+        activityMap[id] = { used: usedMap[id] || [], rec: recMap[id] || [] }
       })
-      setFollowSaverMap(map)
+      setFollowActivityMap(activityMap)
     }
     loadFollowContext()
   }, [authUser])
@@ -1323,7 +1374,7 @@ export default function DirectoryPage() {
               </div>
             )
             : sorted.map(v => (
-              <VendorCard key={v.id} v={v} isNew={isNewVendor(v)} resetKey={cardResetKey} currentUser={currentUser} savedIds={savedIds} onToggleSave={handleToggleSave} onOpenAuth={openAuthModal} followSavers={followSaverMap[v.id] || []} stats={vendorStats[v.id] || emptyStats} onStatChange={handleStatChange} />
+              <VendorCard key={v.id} v={v} isNew={isNewVendor(v)} resetKey={cardResetKey} currentUser={currentUser} savedIds={savedIds} onToggleSave={handleToggleSave} onOpenAuth={openAuthModal} followSavers={followSaverMap[v.id] || []} followActivity={followActivityMap[v.id]} stats={vendorStats[v.id] || emptyStats} onStatChange={handleStatChange} />
             ))
         }
       </div>

@@ -423,6 +423,11 @@ export default function Navbar() {
             {/* ── YOU ── */}
             <SectionLabel text="You" />
 
+            {/* Following Activity */}
+            <button onClick={() => go('/following')} style={drawerRow(isActive('/following'))}>
+              Following Activity
+            </button>
+
             {/* Saved with badge */}
             <button onClick={() => go('/saved')} style={drawerRow(isActive('/saved'))}>
               <span>Saved</span>

@@ -17,6 +17,7 @@ import ProfilePage from '@/app/profile/[username]/page';
 import ShortlistPage from '@/app/shortlist/[username]/page';
 import ClaimVendorPage from '@/app/vendor/claim/[id]/page';
 import VendorDashboardPage from '@/app/vendor/dashboard/[id]/page';
+import FollowingPage from '@/app/following/page';
 import Navbar from '@/components/Navbar'
 import { ExternalLinkProvider } from '@/components/ExternalLinkSheet';
 
@@ -62,6 +63,7 @@ function Router() {
         <Route path="/shortlist/:username" component={ShortlistPage} />
         <Route path="/vendor/claim/:id" component={ClaimVendorPage} />
         <Route path="/vendor/dashboard/:id" component={VendorDashboardPage} />
+        <Route path="/following" component={FollowingPage} />
         <Route component={NotFound} />
       </Switch>
     </>

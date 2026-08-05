@@ -13,33 +13,36 @@
   --gold-dim:    rgba(180,105,14,0.14); /* tinted backgrounds   */
   --gold-border: rgba(180,105,14,0.22); /* subtle borders       */
 
-  /* ── Dark surfaces ────────────────────────────────────── */
-  --bg:          #0D0A08;   /* page background                  */
-  --bg-card:     #1A1208;   /* cards on dark bg                 */
-  --bg-surface:  #221507;   /* elevated surfaces                */
-  --bg-pill:     #2A1A0B;   /* pills / tags on dark             */
-  --border:      rgba(255,255,255,0.07);
-  --border-warm: rgba(180,105,14,0.20);
+  /* ── Light surfaces (cream editorial theme) ───────────── */
+  --bg:          #FAF7F2;   /* page background — warm cream     */
+  --bg-card:     #FFFFFF;   /* cards                            */
+  --bg-surface:  #F2EDE4;   /* elevated surfaces                */
+  --bg-pill:     #EEE9E0;   /* pills / tags                     */
+  --border:      #E5DDD4;   /* warm taupe border                */
+  --border-warm: rgba(180,105,14,0.22);
 
   /* ── Cream / light surfaces ───────────────────────────── */
-  --cream:       #FDFAF6;   /* section backgrounds              */
-  --cream-mid:   #F5EFE8;   /* slightly darker cream            */
-  --cream-dark:  #EDE5D8;   /* borders on cream                 */
+  --cream:       #FAF7F2;   /* section backgrounds              */
+  --cream-mid:   #F2EDE4;   /* slightly darker cream            */
+  --cream-dark:  #E5DDD4;   /* borders on cream                 */
 
   /* ── Typography ───────────────────────────────────────── */
-  --text:        #F5EFE4;   /* primary text on dark             */
-  --text-muted:  rgba(245,239,228,0.42);
-  --text-dim:    rgba(245,239,228,0.62);
-  --text-dark:   #1C1917;   /* primary text on cream            */
-  --text-subdued:#57534E;   /* secondary text on cream          */
+  --text:        #1A1612;   /* primary text                     */
+  --text-muted:  #9C8C7E;   /* secondary / muted text           */
+  --text-dim:    #6B6359;   /* dimmed text                      */
+  --text-dark:   #1A1612;   /* primary text (alias)             */
+  --text-subdued:#57534E;   /* secondary text                   */
+  --text-pill:   #57534E;   /* text inside pills                */
 
   /* ── Semantic ─────────────────────────────────────────── */
   --success:     #16A34A;
   --error:       #DC2626;
+  --accent:      #B4690E;   /* gold accent (for var(--accent) refs) */
+  --accent-light:#FEF3C7;   /* light gold tint                  */
 
   /* ── Shadows ──────────────────────────────────────────── */
-  --shadow-card: 0 2px 12px rgba(0,0,0,0.55);
-  --shadow-glow: 0 0 48px rgba(180,105,14,0.10);
+  --shadow-card: 0 2px 12px rgba(26,22,18,0.08);
+  --shadow-glow: 0 0 48px rgba(180,105,14,0.08);
 
   /* ── Typography stacks ────────────────────────────────── */
   --font-display: 'Bebas Neue', serif;

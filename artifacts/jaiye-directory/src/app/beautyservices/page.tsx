@@ -180,7 +180,7 @@ function ReviewsDivider({ manrope }: { manrope: string }) {
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
       {showInfo && (
-        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1E1A15', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 32px rgba(0,0,0,0.55)', minWidth: 220, maxWidth: 260 }}>
+        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#FFFFFF', border: '1px solid #E5DDD4', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 32px rgba(26,22,18,0.12)', minWidth: 220, maxWidth: 260 }}>
           <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 8 }}>How reviews work</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {[
@@ -336,7 +336,7 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
 
   const selectStyle: React.CSSProperties = {
     padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
-    fontSize: 12, color: 'var(--text)', background: '#161410',
+    fontSize: 12, color: 'var(--text)', background: '#F5EEE6',
     fontFamily: manrope, outline: 'none', cursor: 'pointer',
   }
 
@@ -452,7 +452,7 @@ function ReviewsSection({ serviceId, currentUserId, displayName, manrope, newsre
             onChange={e => setComment(e.target.value)}
             rows={3}
             maxLength={500}
-            style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: 'rgba(255,255,255,0.05)', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }}
+            style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, background: 'rgba(26,22,18,0.03)', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }}
           />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
@@ -819,21 +819,21 @@ useEffect(() => {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0D0B08', color: '#F5EFE4', fontFamily: manrope, overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#FAF7F2', color: '#1A1612', fontFamily: manrope, overflowX: 'hidden' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
 
       {/* ── Editorial page header ── */}
-      <div style={{ background: '#0D0B08', padding: 'clamp(32px,6vw,64px) clamp(20px,6vw,80px) clamp(28px,5vw,52px)', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: '#FAF7F2', padding: 'clamp(32px,6vw,64px) clamp(20px,6vw,80px) clamp(28px,5vw,52px)', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 20, right: 32, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.25)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
         <div style={{ fontSize: 'clamp(13px,1.8vw,16px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 10 }}>Beauty Services</div>
-        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#F5EFE4', letterSpacing: '0.03em', marginBottom: 18 }}>
+        <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#1A1612', letterSpacing: '0.03em', marginBottom: 18 }}>
           FIND YOUR<br /><span style={{ color: CATEGORY_ACCENT }}>STYLIST.</span>
         </div>
         <div style={{ height: 1, background: 'linear-gradient(to right, ' + CATEGORY_ACCENT + ' 0%, rgba(180,105,14,0.2) 60%, transparent 100%)', maxWidth: 520 }} />
       </div>
 
       {/* ── Sticky category tabs — dark ── */}
-      <div style={{ background: '#0D0B08', borderBottom: '1px solid rgba(180,105,14,0.14)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: '#FAF7F2', borderBottom: '1px solid rgba(180,105,14,0.14)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {Object.keys(CATEGORIES).map(c => (
             <button key={c} onClick={() => setCat(c)} style={{ padding: '16px 22px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : 'rgba(245,239,228,0.45)', fontFamily: "'Bebas Neue', serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
@@ -843,11 +843,11 @@ useEffect(() => {
         </div>
       </div>
 
-      <div style={{ background: '#0D0B08', borderBottom: '1px solid rgba(245,240,230,0.08)', padding: '10px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ background: '#FAF7F2', borderBottom: '1px solid #E5DDD4', padding: '10px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(26,22,18,0.03)', border: '1px solid #E5DDD4', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="rgba(245,240,230,0.35)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="rgba(245,240,230,0.35)" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <input type="text" placeholder="Search stylists..." value={search} maxLength={80} onChange={e => setSearch(e.target.value)} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: '#F5EFE4', fontFamily: manrope }} />
+            <input type="text" placeholder="Search stylists..." value={search} maxLength={80} onChange={e => setSearch(e.target.value)} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: '#1A1612', fontFamily: manrope }} />
             {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
@@ -882,7 +882,7 @@ useEffect(() => {
         )}
         {loading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 20 }}>
-            {[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, height: 200, animation: 'pulse 1.5s ease infinite', opacity: 0.5 }} />))}
+            {[0,1,2,3,4,5].map(i => (<div key={i} style={{ background: 'rgba(26,22,18,0.03)', borderRadius: 16, height: 200, animation: 'pulse 1.5s ease infinite', opacity: 0.5 }} />))}
           </div>
         )}
         {!loading && sortedServices.length === 0 && (
@@ -947,7 +947,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   }
 
   return (
-    <div id={'service-' + service.id} style={{ background: '#161410', borderRadius: 16, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid rgba(245,240,230,0.08)', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.35)', display: 'flex', flexDirection: 'column' }}>
+    <div id={'service-' + service.id} style={{ background: '#F5EEE6', borderRadius: 16, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid #E5DDD4', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 24px rgba(26,22,18,0.08)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Category accent bar */}
       <div style={{ height: 3, background: ac, flexShrink: 0 }} />
@@ -958,7 +958,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           <HeartIcon filled={isSaved} />
         </button>
         {bookUrl && (
-          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 11px', borderRadius: 6, background: '#0D0B08', fontSize: 9, fontWeight: 700, color: '#F5EFE4', textDecoration: 'none', letterSpacing: '0.10em', textTransform: 'uppercase' as const, fontFamily: manrope, whiteSpace: 'nowrap' }}>
+          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 11px', borderRadius: 6, background: '#FAF7F2', fontSize: 9, fontWeight: 700, color: '#1A1612', textDecoration: 'none', letterSpacing: '0.10em', textTransform: 'uppercase' as const, fontFamily: manrope, whiteSpace: 'nowrap' }}>
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Book
           </a>
@@ -970,12 +970,12 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         <div style={{ fontFamily: "'Bebas Neue', serif", fontSize: 12, letterSpacing: '0.18em', color: ac, marginBottom: 3 }}>{service.category}</div>
 
         {/* Vendor name */}
-        <div style={{ fontSize: 18, fontWeight: 600, color: '#F5EFE4', lineHeight: 1.2, marginBottom: 8, paddingRight: 50, fontFamily: newsreader }}>{service.name}</div>
+        <div style={{ fontSize: 18, fontWeight: 600, color: '#1A1612', lineHeight: 1.2, marginBottom: 8, paddingRight: 50, fontFamily: newsreader }}>{service.name}</div>
 
         {/* Subcategory pills — uniform cream style */}
         {subs.length > 0 && (
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
-            {subs.map((s: string) => (<span key={s} style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(245,240,230,0.08)', color: 'rgba(245,240,230,0.62)', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, fontFamily: manrope }}>{s}</span>))}
+            {subs.map((s: string) => (<span key={s} style={{ padding: '2px 8px', borderRadius: 4, background: '#E5DDD4', color: 'rgba(245,240,230,0.62)', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, fontFamily: manrope }}>{s}</span>))}
           </div>
         )}
 
@@ -1000,7 +1000,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
               <span style={{ fontSize: 9, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>🏷 Active promo</span>
               {service.discount_expiry && <span style={{ fontSize: 9, color: 'rgba(245,240,230,0.45)', fontFamily: manrope }}>Expires {new Date(service.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
             </div>
-            {service.discount_description && <p style={{ fontSize: 11, color: '#F5EFE4', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{service.discount_description}</p>}
+            {service.discount_description && <p style={{ fontSize: 11, color: '#1A1612', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{service.discount_description}</p>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
               <code style={{ fontSize: 12, fontWeight: 700, color: PROMO_COLOR, background: PROMO_COLOR + '15', padding: '3px 10px', borderRadius: 5, letterSpacing: '0.08em', fontFamily: 'monospace' }}>{service.discount_code}</code>
               <button onClick={handleCopy} style={{ padding: '3px 10px', borderRadius: 5, border: '1px solid ' + PROMO_COLOR, background: copied ? PROMO_COLOR : 'transparent', color: copied ? '#fff' : PROMO_COLOR, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: manrope, letterSpacing: '0.06em' }}>
@@ -1014,12 +1014,12 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         {(igUrl || waUrl) && (
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
             {igUrl && (
-              <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#0D0B08', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#F5EFE4', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+              <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
                 <InstagramIcon /> Instagram
               </a>
             )}
             {waUrl && (
-              <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#0D0B08', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#F5EFE4', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+              <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
                 <WhatsAppIcon /> WhatsApp
               </a>
             )}
@@ -1028,10 +1028,10 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
         {/* Used / Recommend */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '20' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : 'rgba(245,240,230,0.12)'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : 'rgba(245,240,230,0.45)', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', transition: 'all 0.15s' }}>
+          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '20' : 'rgba(26,22,18,0.04)', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : '#E5DDD4'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : 'rgba(245,240,230,0.45)', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', transition: 'all 0.15s' }}>
             👋 {hasUsed ? 'Used ✓' : 'I used this'}
           </button>
-          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleRec() }} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '20' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : 'rgba(245,240,230,0.12)'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : 'rgba(245,240,230,0.45)', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', transition: 'all 0.15s' }}>
+          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleRec() }} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '20' : 'rgba(26,22,18,0.04)', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : '#E5DDD4'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : 'rgba(245,240,230,0.45)', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', transition: 'all 0.15s' }}>
             ⭐ {hasRec ? 'Rec\u2019d \u2713' : 'Recommend'}
           </button>
         </div>
@@ -1048,7 +1048,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
 
         {/* More info — cream background pill */}
         <div style={{ marginTop: 14 }}>
-          <button onClick={() => setMoreOpen(o => !o)} style={{ width: '100%', padding: '8px 0', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 9, color: 'rgba(245,240,230,0.45)', fontWeight: 700, fontFamily: manrope, letterSpacing: '0.12em', textTransform: 'uppercase' as const, transition: 'background 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}>
+          <button onClick={() => setMoreOpen(o => !o)} style={{ width: '100%', padding: '8px 0', background: 'rgba(26,22,18,0.03)', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 9, color: 'rgba(245,240,230,0.45)', fontWeight: 700, fontFamily: manrope, letterSpacing: '0.12em', textTransform: 'uppercase' as const, transition: 'background 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(26,22,18,0.03)' }}>
             {moreOpen ? '− Less info' : '+ More info'}
           </button>
           {moreOpen && (

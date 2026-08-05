@@ -248,7 +248,7 @@ function ReviewsDivider({ manrope, cats }: { manrope: string; cats: ReviewCat[] 
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
       {showInfo && (
-        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1C1814', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 32px rgba(0,0,0,0.55)', minWidth: 220, maxWidth: 260 }}>
+        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#FFFFFF', border: '1px solid #E5DDD4', borderRadius: 12, padding: '12px 14px', boxShadow: '0 8px 32px rgba(26,22,18,0.12)', minWidth: 220, maxWidth: 260 }}>
           <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)', fontFamily: manrope, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 8 }}>How reviews work</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {cats.map(c => (
@@ -380,7 +380,7 @@ function ReviewsSection({ vendorId, vendorCategory, currentUserId, displayName, 
 
   const selectStyle: React.CSSProperties = {
     padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
-    fontSize: 12, color: 'var(--text)', background: '#1C1814',
+    fontSize: 12, color: 'var(--text)', background: '#FFFFFF',
     fontFamily: manrope, outline: 'none', cursor: 'pointer',
   }
 
@@ -488,7 +488,7 @@ function ReviewsSection({ vendorId, vendorCategory, currentUserId, displayName, 
             )}
           </div>
 
-          <textarea placeholder="Any additional comments? (optional)" value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 16, background: 'rgba(255,255,255,0.05)', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
+          <textarea placeholder="Any additional comments? (optional)" value={comment} onChange={e => setComment(e.target.value)} rows={3} maxLength={500} style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 8, fontSize: 16, background: 'rgba(26,22,18,0.03)', color: 'var(--text)', padding: '8px 10px', resize: 'none' as const, outline: 'none', fontFamily: manrope, boxSizing: 'border-box' as const, lineHeight: 1.5 }} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button onClick={handleSubmit} disabled={submitting || !mandatoryMet} style={{ padding: '7px 18px', background: mandatoryMet ? CATEGORY_ACCENT : 'var(--bg-pill)', color: mandatoryMet ? '#fff' : 'var(--text-muted)', border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: mandatoryMet ? 'pointer' : 'default', fontFamily: manrope, transition: 'all 0.15s' }}>
               {submitting ? 'Saving...' : myReview ? 'Update' : 'Submit'}
@@ -783,7 +783,7 @@ function EventServicesPage() {
   const catColour = CATEGORY_COLOR[cat] || CATEGORY_ACCENT
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0D0B08', color: 'var(--text)', fontFamily: manrope, overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#FAF7F2', color: 'var(--text)', fontFamily: manrope, overflowX: 'hidden' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
 
       <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
@@ -795,7 +795,7 @@ function EventServicesPage() {
         </div>
       </div>
 
-      <div style={{ background: '#0D0B08', borderBottom: '1px solid rgba(245,240,230,0.08)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: '#FAF7F2', borderBottom: '1px solid #E5DDD4', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {EVENT_CATEGORIES.map(c => (
             <button key={c} onClick={() => setCat(c)} style={{ padding: '16px 18px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
@@ -805,9 +805,9 @@ function EventServicesPage() {
         </div>
       </div>
 
-      <div style={{ background: '#0D0B08', borderBottom: '1px solid rgba(245,240,230,0.08)', padding: '10px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ background: '#FAF7F2', borderBottom: '1px solid #E5DDD4', padding: '10px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(26,22,18,0.03)', border: '1px solid #E5DDD4', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/></svg>
             <input type="text" placeholder={'Search ' + cat.toLowerCase() + '...'} value={search} maxLength={80} onChange={e => setSearch(e.target.value)} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: 'var(--text)', fontFamily: manrope }} />
             {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
@@ -904,7 +904,7 @@ function VendorCard({ vendor, catColour, isSaved, onToggleSave, stats, onToggleU
   }
 
   return (
-    <div id={'vendor-' + vendor.id} style={{ background: '#161410', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid rgba(245,240,230,0.08)', position: 'relative', boxShadow: promoActive ? '0 4px 20px rgba(192,160,96,0.12)' : '0 4px 20px rgba(0,0,0,0.35)' }}>
+    <div id={'vendor-' + vendor.id} style={{ background: '#F5EEE6', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid #E5DDD4', position: 'relative', boxShadow: promoActive ? '0 4px 20px rgba(192,160,96,0.12)' : '0 4px 20px rgba(26,22,18,0.08)' }}>
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
         <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? 'var(--accent-light)' : 'rgba(255,255,255,0.08)', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'rgba(245,240,230,0.15)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
           <HeartIcon filled={isSaved} />
@@ -955,22 +955,22 @@ function VendorCard({ vendor, catColour, isSaved, onToggleSave, stats, onToggleU
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           {igHandle && (
-            <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#0D0B08', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,240,230,0.10)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+            <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#FAF7F2', border: '1px solid #E5DDD4', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E1306C'; (e.currentTarget as HTMLElement).style.color = '#E1306C' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E5DDD4'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <InstagramIcon />Instagram
             </a>
           )}
           {waUrl && (
-            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#0D0B08', border: '1px solid rgba(245,240,230,0.10)', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,240,230,0.10)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '6px 10px', background: '#FAF7F2', border: '1px solid #E5DDD4', borderRadius: 20, fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none', fontFamily: manrope, fontWeight: 500, transition: 'all 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#25D366'; (e.currentTarget as HTMLElement).style.color = '#25D366' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E5DDD4'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)' }}>
               <WhatsAppIcon />WhatsApp
             </a>
           )}
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : 'rgba(255,255,255,0.04)', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)' }}>
+          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ ...btnBase, background: hasUsed ? 'var(--accent-light)' : 'rgba(26,22,18,0.04)', borderColor: hasUsed ? 'var(--gold)' : 'var(--border)', color: hasUsed ? 'var(--gold)' : 'var(--text-muted)' }}>
             &#128075; {hasUsed ? 'Used this' : 'I used this'}
           </button>
-          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleRec() }} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : 'rgba(255,255,255,0.04)', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)' }}>
+          <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleRec() }} style={{ ...btnBase, background: hasRec ? 'var(--accent-light)' : 'rgba(26,22,18,0.04)', borderColor: hasRec ? 'var(--gold)' : 'var(--border)', color: hasRec ? 'var(--gold)' : 'var(--text-muted)' }}>
             &#11088; {hasRec ? 'Recommended' : 'I recommend'}
           </button>
         </div>

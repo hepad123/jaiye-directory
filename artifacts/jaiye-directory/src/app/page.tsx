@@ -684,13 +684,13 @@ export default function HomePage() {
           {/* Headline */}
           <div style={{ marginBottom: "clamp(20px,3vw,28px)" }}>
             <ClipText delay={0.15}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(4.5rem,13vw,12rem)", lineHeight: 0.9, letterSpacing: "-0.01em", fontWeight: 300, color: C.white, margin: 0 }}>RECLAIM</h1>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(3rem,8vw,7rem)", lineHeight: 0.92, letterSpacing: "-0.01em", fontWeight: 300, color: C.white, margin: 0 }}>RECLAIM</h1>
             </ClipText>
             <ClipText delay={0.28}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(4.5rem,13vw,12rem)", lineHeight: 0.9, letterSpacing: "-0.01em", fontWeight: 300, color: C.white, margin: 0 }}>YOUR</h1>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(3rem,8vw,7rem)", lineHeight: 0.92, letterSpacing: "-0.01em", fontWeight: 300, color: C.white, margin: 0 }}>YOUR</h1>
             </ClipText>
             <ClipText delay={0.41}>
-              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(4.5rem,13vw,12rem)", lineHeight: 0.9, letterSpacing: "-0.01em", fontWeight: 300, color: C.gold, margin: 0 }}>GLOW.</h1>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(3rem,8vw,7rem)", lineHeight: 0.92, letterSpacing: "-0.01em", fontWeight: 300, color: C.gold, margin: 0 }}>GLOW.</h1>
             </ClipText>
           </div>
 

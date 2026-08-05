@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import { useUser } from '@clerk/clerk-react'
-import { useSupabase } from '@/lib/supabase-context'
+import { useSupabase } from '@/hooks/useSupabase'
 import Navbar from '@/components/Navbar'
 
 const ACCENT = '#B4690E'

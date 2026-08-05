@@ -436,7 +436,7 @@ function TestimonialsSection() {
         const { data: vendors, error: vendorErr } = await supabase
           .from("vendors")
           .select("id,name")
-          .limit(8);
+          .limit(20);
 
 
         if (!vendors || vendors.length === 0) return;
@@ -449,7 +449,7 @@ function TestimonialsSection() {
               .from("vendor_reviews")
               .select("*")
               .eq("vendor_id", v.id)
-              .limit(2)
+              .limit(3)
               .then(res => ({
                 reviews: (res.data ?? []) as Array<{ comment: string | null; reviewer_name: string }>,
                 vendorName: v.name as string,
@@ -467,7 +467,7 @@ function TestimonialsSection() {
         );
 
         const sorted = combined.filter(r => r.comment && r.comment.length > 20);
-        if (sorted.length > 0) setReviews(sorted.slice(0, 3));
+        if (sorted.length > 0) setReviews(sorted.slice(0, 6));
       } catch {
         // Reviews are decorative — silently fall back to empty state
       }
@@ -494,8 +494,8 @@ function TestimonialsSection() {
 
         {display.length === 0 ? (
           // Skeleton while loading
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
-            {[0, 1, 2].map(i => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 8 }}>
+            {[0, 1, 2, 3, 4, 5].map(i => (
               <div key={i} style={{ background: C.white, border: `1px solid ${C.bdr}`, borderRadius: 2, padding: "clamp(24px,3vw,36px)", minHeight: 200 }}>
                 <div style={{ height: 12, background: C.bg2, borderRadius: 2, marginBottom: 10, width: "85%" }} />
                 <div style={{ height: 12, background: C.bg2, borderRadius: 2, marginBottom: 10, width: "70%" }} />

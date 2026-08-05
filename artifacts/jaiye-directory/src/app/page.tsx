@@ -328,7 +328,7 @@ function ArtisansSection() {
 
         {/* Featured card — wide editorial layout */}
         <FadeUp delay={0.15}>
-          <Link href={vendor ? `/directory?id=${vendor.id}` : "/directory"} style={{ textDecoration: "none", display: "block" }}
+          <Link href={vendor?.instagram ? `https://instagram.com/${vendor.instagram.replace('@','').trim()}` : "/directory"} style={{ textDecoration: "none", display: "block" }}
             onMouseEnter={() => setHov(true)}
             onMouseLeave={() => setHov(false)}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: `1px solid ${C.bdr}`, borderRadius: 2, overflow: "hidden", transition: "box-shadow 0.25s", boxShadow: hov ? "0 12px 48px rgba(26,22,18,0.10)" : "0 2px 12px rgba(26,22,18,0.05)" }}>
@@ -541,13 +541,13 @@ function TestimonialsSection() {
                         @{q.vendor_instagram}
                       </button>
                     )}
-                    {q.vendor_id && (
-                      <Link
-                        href={`/directory?id=${q.vendor_id}`}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: C.gold, textDecoration: "none", fontFamily: C.ui, letterSpacing: "0.04em" }}
+                    {q.vendor_instagram && (
+                      <button
+                        onClick={() => openLink(`https://instagram.com/${q.vendor_instagram}`, q.vendor_name ?? 'Profile', { icon: 'instagram', vendorName: q.vendor_name ?? undefined })}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: C.gold, background: "none", border: "none", cursor: "pointer", fontFamily: C.ui, letterSpacing: "0.04em", padding: 0 }}
                       >
                         View Profile →
-                      </Link>
+                      </button>
                     )}
                   </div>
                 </div>

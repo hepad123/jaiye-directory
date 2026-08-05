@@ -5,6 +5,7 @@ import { useUser, useClerk } from '@clerk/clerk-react'
 import { useSupabase } from '@/hooks/useSupabase'
 import { useSearch } from 'wouter'
 import SuggestVendorModal from '@/components/SuggestVendorModal'
+import { useExternalLink } from '@/components/ExternalLinkSheet'
 
 interface Service {
   id: string
@@ -941,6 +942,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
   const manrope = "'Outfit', sans-serif"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
   const promoActive = isPromoActive(service)
+  const { openLink } = useExternalLink()
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)', letterSpacing: '0.04em' }
 
   function handleCopy() {
@@ -963,10 +965,10 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           <HeartIcon filled={isSaved} />
         </button>
         {bookUrl && (
-          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 11px', borderRadius: 6, background: '#FAF7F2', fontSize: 9, fontWeight: 700, color: '#1A1612', textDecoration: 'none', letterSpacing: '0.10em', textTransform: 'uppercase' as const, fontFamily: manrope, whiteSpace: 'nowrap' }}>
+          <button onClick={() => openLink(bookUrl, bookUrl, { icon: 'web', vendorName: service.name })} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 11px', borderRadius: 6, background: '#FAF7F2', fontSize: 9, fontWeight: 700, color: '#1A1612', letterSpacing: '0.10em', textTransform: 'uppercase' as const, fontFamily: manrope, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}>
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Book
-          </a>
+          </button>
         )}
       </div>
 
@@ -1019,14 +1021,14 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         {(igUrl || waUrl) && (
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
             {igUrl && (
-              <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+              <button onClick={() => openLink(igUrl, '@' + service.instagram, { icon: 'instagram', vendorName: service.name })} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s', border: 'none', cursor: 'pointer' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
                 <InstagramIcon /> Instagram
-              </a>
+              </button>
             )}
             {waUrl && (
-              <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+              <button onClick={() => openLink(waUrl, service.phone ?? '', { icon: 'whatsapp', vendorName: service.name })} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s', border: 'none', cursor: 'pointer' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
                 <WhatsAppIcon /> WhatsApp
-              </a>
+              </button>
             )}
           </div>
         )}
@@ -1059,7 +1061,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
           {moreOpen && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 10 }}>
               {service.phone && <p style={{ fontSize: 11, color: '#9C8C7E', margin: 0, fontFamily: manrope }}>📞 {service.phone}</p>}
-              {service.website && <a href={service.website} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: CATEGORY_ACCENT, textDecoration: 'none', fontFamily: manrope }}>🌐 {service.website}</a>}
+              {service.website && <button onClick={() => openLink(service.website!, service.website!, { icon: 'web', vendorName: service.name })} style={{ fontSize: 11, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope, padding: 0, textAlign: 'left' }}>🌐 {service.website}</button>}
             </div>
           )}
         </div>

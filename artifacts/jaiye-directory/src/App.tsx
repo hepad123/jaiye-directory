@@ -17,7 +17,8 @@ import ProfilePage from '@/app/profile/[username]/page';
 import ShortlistPage from '@/app/shortlist/[username]/page';
 import ClaimVendorPage from '@/app/vendor/claim/[id]/page';
 import VendorDashboardPage from '@/app/vendor/dashboard/[id]/page';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/Navbar'
+import { ExternalLinkProvider } from '@/components/ExternalLinkSheet';
 
 const queryClient = new QueryClient();
 
@@ -70,9 +71,11 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-        <Router />
-      </WouterRouter>
+      <ExternalLinkProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+          <Router />
+        </WouterRouter>
+      </ExternalLinkProvider>
       <Toaster />
     </QueryClientProvider>
   );

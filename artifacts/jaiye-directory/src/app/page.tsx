@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useSupabase } from "@/hooks/useSupabase";
+import { useExternalLink } from "@/components/ExternalLinkSheet";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Design tokens — warm cream / editorial light
@@ -424,6 +425,7 @@ type Review = { comment: string; reviewer_name: string; vendor_name?: string; ve
 
 function TestimonialsSection() {
   const supabase = useSupabase();
+  const { openLink } = useExternalLink();
   const [reviews, setReviews] = useState<Review[]>([]);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
@@ -532,15 +534,13 @@ function TestimonialsSection() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
                     {q.vendor_instagram && (
-                      <a
-                        href={`https://instagram.com/${q.vendor_instagram}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textM, textDecoration: "none", fontFamily: C.ui, letterSpacing: "0.04em" }}
+                      <button
+                        onClick={() => openLink(`https://instagram.com/${q.vendor_instagram}`, `@${q.vendor_instagram}`, { icon: 'instagram', vendorName: q.vendor_name ?? undefined })}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textM, background: "none", border: "none", cursor: "pointer", fontFamily: C.ui, letterSpacing: "0.04em", padding: 0 }}
                       >
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                         @{q.vendor_instagram}
-                      </a>
+                      </button>
                     )}
                     {q.vendor_id && (
                       <Link

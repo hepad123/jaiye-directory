@@ -7,6 +7,7 @@ import { useSupabase } from '@/hooks/useSupabase'
 import { useAuthFetch } from '@/hooks/useAuthFetch'
 import { sanitizeSearch, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 import SuggestVendorModal from '@/components/SuggestVendorModal'
+import { useExternalLink } from '@/components/ExternalLinkSheet'
 
 type Vendor = {
   id: string
@@ -782,6 +783,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
   const isSaved = savedIds.has(v.id)
   const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
+  const { openLink } = useExternalLink()
   const reviewCats = REVIEW_CATS_BY_CATEGORY[v.category] || REVIEW_CATS_BY_CATEGORY['Event Planning']
   const promoActive = isPromoActive(v)
 
@@ -909,14 +911,14 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         {(igHandle || whatsappUrl) && (
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
             {igHandle && (
-              <a href={'https://instagram.com/' + igHandle} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+              <button onClick={() => openLink('https://instagram.com/' + igHandle, '@' + igHandle, { icon: 'instagram', vendorName: v.name })} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s', border: 'none', cursor: 'pointer' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
                 <InstagramIcon /> Instagram
-              </a>
+              </button>
             )}
             {whatsappUrl && (
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', textDecoration: 'none', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
+              <button onClick={() => openLink(whatsappUrl, v.phone ?? '', { icon: 'whatsapp', vendorName: v.name })} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 10px', background: '#FAF7F2', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#1A1612', fontFamily: manrope, letterSpacing: '0.05em', transition: 'opacity 0.15s', border: 'none', cursor: 'pointer' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.75' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}>
                 <WhatsAppIcon /> WhatsApp
-              </a>
+              </button>
             )}
           </div>
         )}
@@ -935,7 +937,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
               {v.phone    && <p style={{ fontSize: 11, color: '#9C8C7E', margin: 0, fontFamily: manrope }}>📞 {v.phone}</p>}
               {v.email    && <p style={{ fontSize: 11, color: '#9C8C7E', margin: 0, fontFamily: manrope }}>✉ {v.email}</p>}
               {safeVendorUrl(v.website) && (
-                <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: CATEGORY_ACCENT, textDecoration: 'none', fontFamily: manrope }}>🌐 {v.website}</a>
+                <button onClick={() => openLink(safeVendorUrl(v.website)!, v.website!, { icon: 'web', vendorName: v.name })} style={{ fontSize: 11, color: CATEGORY_ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontFamily: manrope, padding: 0, textAlign: 'left' }}>🌐 {v.website}</button>
               )}
               {v.notes && <p style={{ fontSize: 10, color: '#9C8C7E', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
 

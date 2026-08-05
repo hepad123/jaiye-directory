@@ -266,7 +266,6 @@ function WhereCard({ label, sub, img, href, cats }: { label: string; sub: string
               <span key={c} style={{ fontSize: 8, padding: "3px 10px", border: "1px solid rgba(245,240,230,0.30)", borderRadius: 20, color: "rgba(245,240,230,0.75)", fontFamily: C.ui, fontWeight: 600, letterSpacing: "0.08em" }}>{c}</span>
             ))}
           </div>
-          <div style={{ fontFamily: C.ui, fontSize: 8, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: C.gold, marginBottom: 6 }}>{sub}</div>
           <div style={{ fontFamily: C.disp, fontSize: "clamp(2.2rem,5vw,4rem)", letterSpacing: "0.06em", color: "#fff", lineHeight: 0.95 }}>{label}</div>
           <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10, opacity: hov ? 1 : 0, transform: hov ? "translateX(0)" : "translateX(-12px)", transition: "all 0.35s 0.05s" }}>
             <div style={{ width: 28, height: 1, background: C.gold }} />

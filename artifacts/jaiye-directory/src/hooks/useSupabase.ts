@@ -1,8 +1,13 @@
 import { useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+const url =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ||
+  'https://rchuhowqhfgsxagtxlba.supabase.co'
+
+const key =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjaHVob3dxaGZnc3hhZ3R4bGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjUzMzcsImV4cCI6MjA4OTE0MTMzN30.HwRE7yrmQc-Qs6zg_rTeWBXI6uTqR_lFFr7jg0rVpkk'
 
 // Gets the Clerk JWT without using a React hook, so this hook works even
 // when ClerkProvider is absent or not yet loaded.
@@ -21,14 +26,6 @@ async function getClerkToken(): Promise<string | null> {
 // Safe to call outside ClerkProvider — falls back to the anon client gracefully.
 export function useSupabase() {
   return useMemo(() => {
-    if (!url || !key) {
-      // No env vars yet — return a client that will fail gracefully on queries
-      return createClient(
-        'https://placeholder.supabase.co',
-        'placeholder-key',
-        { auth: { persistSession: false, autoRefreshToken: false } }
-      )
-    }
     return createClient(url, key, {
       accessToken: () => getClerkToken(),
     })

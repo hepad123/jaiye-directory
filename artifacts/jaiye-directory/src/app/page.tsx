@@ -420,7 +420,7 @@ function HowItWorksSection() {
 /* ─────────────────────────────────────────────────────────────────────────────
    What the Community Says — real reviews from Supabase
 ───────────────────────────────────────────────────────────────────────────── */
-type Review = { comment: string; reviewer_name: string; vendor_name?: string; service_name?: string; type: "vendor" | "service" };
+type Review = { comment: string; reviewer_name: string; vendor_name?: string; vendor_id?: string; vendor_instagram?: string; service_name?: string; type: "vendor" | "service" };
 
 function TestimonialsSection() {
   const supabase = useSupabase();
@@ -436,7 +436,7 @@ function TestimonialsSection() {
         // Step 1: fetch a handful of vendor IDs from the unlocked vendors table.
         const { data: vendors, error: vendorErr } = await supabase
           .from("vendors")
-          .select("id,name")
+          .select("id,name,instagram")
           .limit(20);
 
 
@@ -454,15 +454,19 @@ function TestimonialsSection() {
               .then(res => ({
                 reviews: (res.data ?? []) as Array<{ comment: string | null; reviewer_name: string }>,
                 vendorName: v.name as string,
+                vendorId: v.id as string,
+                vendorInstagram: (v as any).instagram as string | null,
               }))
           )
         );
 
-        const combined: Review[] = chunks.flatMap(({ reviews, vendorName }) =>
+        const combined: Review[] = chunks.flatMap(({ reviews, vendorName, vendorId, vendorInstagram }) =>
           reviews.map(r => ({
             comment: r.comment ?? "",
             reviewer_name: r.reviewer_name,
             vendor_name: vendorName,
+            vendor_id: vendorId,
+            vendor_instagram: vendorInstagram ?? undefined,
             type: "vendor" as const,
           }))
         );
@@ -523,9 +527,29 @@ function TestimonialsSection() {
                 </blockquote>
                 <div>
                   <div style={{ height: 1, background: C.goldB, marginBottom: 14 }} />
-                  <div style={{ fontFamily: C.ui, fontSize: 12, fontWeight: 800, color: C.text, letterSpacing: "0.05em" }}>{q.reviewer_name}</div>
-                  <div style={{ fontFamily: C.ui, fontSize: 10, color: C.textM, marginTop: 3, letterSpacing: "0.04em" }}>
+                  <div style={{ fontFamily: C.ui, fontSize: 12, fontWeight: 800, color: C.text, letterSpacing: "0.05em" }}>
                     {q.vendor_name ?? q.service_name ?? (q.type === "vendor" ? "Event Vendor" : "Beauty Service")}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
+                    {q.vendor_instagram && (
+                      <a
+                        href={`https://instagram.com/${q.vendor_instagram}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textM, textDecoration: "none", fontFamily: C.ui, letterSpacing: "0.04em" }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                        @{q.vendor_instagram}
+                      </a>
+                    )}
+                    {q.vendor_id && (
+                      <Link
+                        href={`/directory?id=${q.vendor_id}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: C.gold, textDecoration: "none", fontFamily: C.ui, letterSpacing: "0.04em" }}
+                      >
+                        View Profile →
+                      </Link>
+                    )}
                   </div>
                 </div>
               </motion.div>

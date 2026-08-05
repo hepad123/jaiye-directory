@@ -244,33 +244,6 @@ function usePlatformStats() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Mosaic panel (hero images)
-───────────────────────────────────────────────────────────────────────────── */
-function MosaicPanel({ img, label, sub, borderRight, delay, href }: { img: string; label: string; sub: string; borderRight: boolean; delay: number; href: string }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <Link href={href} style={{ textDecoration: "none", display: "block", height: "100%" }}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.1, ease: C.ease, delay }}
-        style={{ position: "relative", overflow: "hidden", borderRight: borderRight ? `1px solid rgba(255,255,255,0.12)` : undefined, height: "100%", cursor: "pointer" }}
-        onMouseEnter={() => setHov(true)}
-        onMouseLeave={() => setHov(false)}
-      >
-        <img src={img} alt={label}
-          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", transition: "transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94)", transform: hov ? "scale(1.05)" : "scale(1)", display: "block" }} />
-        <div style={{ position: "absolute", inset: 0, background: hov ? "linear-gradient(to top, rgba(13,11,8,0.85) 0%, rgba(13,11,8,0.25) 60%)" : "linear-gradient(to top, rgba(13,11,8,0.65) 0%, rgba(13,11,8,0.10) 55%)", transition: "background 0.5s" }} />
-        <div style={{ position: "absolute", bottom: "clamp(16px,2.5vw,28px)", left: "clamp(16px,2.5vw,28px)", right: 8 }}>
-          <div style={{ fontFamily: C.disp, fontSize: "clamp(1.1rem,2.8vw,2rem)", letterSpacing: "0.06em", color: "#fff", lineHeight: 0.95, marginBottom: 6 }}>{label}</div>
-          <div style={{ fontSize: 8, letterSpacing: "0.22em", color: "rgba(245,240,230,0.50)", fontFamily: C.ui, textTransform: "uppercase" }}>{sub}</div>
-        </div>
-      </motion.div>
-    </Link>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
    Where to start card
 ───────────────────────────────────────────────────────────────────────────── */
 function WhereCard({ label, sub, img, href, cats }: { label: string; sub: string; img: string; href: string; cats: string[] }) {
@@ -356,8 +329,8 @@ function ArtisansSection() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: `1px solid ${C.bdr}`, borderRadius: 2, overflow: "hidden", transition: "box-shadow 0.25s", boxShadow: hov ? "0 12px 48px rgba(26,22,18,0.10)" : "0 2px 12px rgba(26,22,18,0.05)" }}>
               {/* Image half */}
               <div style={{ position: "relative", aspectRatio: "4/3", overflow: "hidden" }}>
-                <img src="/pexels-heibbymarvel-4285539.jpg" alt="K Mari"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", transition: "transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)", transform: hov ? "scale(1.04)" : "scale(1)" }} />
+                <img src="/kmari.jpg" alt="K Mari"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", transition: "transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)", transform: hov ? "scale(1.04)" : "scale(1)" }} />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,8,5,0.4) 0%, transparent 60%)" }} />
                 <div style={{ position: "absolute", top: 16, left: 16, fontSize: 8, fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase", fontFamily: C.ui, color: C.gold }}>
                   {vendor?.category ?? "Entertainment"}
@@ -685,12 +658,6 @@ export default function HomePage() {
               <HeroSearch />
             </div>
           </motion.div>
-        </div>
-
-        {/* Image mosaic */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", height: "clamp(280px,42vw,520px)" }}>
-          <MosaicPanel img="/pexels-services.jpg"   label="BEAUTY SERVICES" sub="Hair · Makeup · Lashes · Nails" borderRight delay={0.35} href="/beautyservices" />
-          <MosaicPanel img="/pexels-bridal1.jpg"    label="EVENT VENDORS"   sub="Weddings · Celebrations · Corporate" borderRight={false} delay={0.48} href="/directory" />
         </div>
 
         {/* Stats strip */}

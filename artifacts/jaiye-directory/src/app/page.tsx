@@ -328,7 +328,7 @@ function ArtisansSection() {
 
         {/* Featured card — wide editorial layout */}
         <FadeUp delay={0.15}>
-          <Link href="/beautyservices" style={{ textDecoration: "none", display: "block" }}
+          <Link href={vendor ? `/directory?id=${vendor.id}` : "/directory"} style={{ textDecoration: "none", display: "block" }}
             onMouseEnter={() => setHov(true)}
             onMouseLeave={() => setHov(false)}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: `1px solid ${C.bdr}`, borderRadius: 2, overflow: "hidden", transition: "box-shadow 0.25s", boxShadow: hov ? "0 12px 48px rgba(26,22,18,0.10)" : "0 2px 12px rgba(26,22,18,0.05)" }}>
@@ -456,7 +456,7 @@ function TestimonialsSection() {
                 reviews: (res.data ?? []) as Array<{ comment: string | null; reviewer_name: string }>,
                 vendorName: v.name as string,
                 vendorId: v.id as string,
-                vendorInstagram: (v as any).instagram as string | null,
+                vendorInstagram: ((v as any).instagram as string | null)?.replace('@', '').trim() || null,
               }))
           )
         );

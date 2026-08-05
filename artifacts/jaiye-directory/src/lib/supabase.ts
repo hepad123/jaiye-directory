@@ -1,20 +1,13 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+// Env vars are baked in at Vite build time. Fall back to the real public
+// values so deployments (Vercel, etc.) work even without VITE_ vars set.
+const url =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ||
+  'https://rchuhowqhfgsxagtxlba.supabase.co'
 
-// Client-side — uses the publishable (anon) key. Read-only via RLS.
-// Returns a lazy no-op client when env vars aren't configured yet so the
-// app can still render during development before secrets are set.
-function makeClient(): SupabaseClient {
-  if (!url || !key) {
-    // Create with placeholder values — queries will fail gracefully
-    // until the real secrets are provided via Replit Secrets.
-    return createClient('https://placeholder.supabase.co', 'placeholder-key', {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-  }
-  return createClient(url, key)
-}
+const key =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjaHVob3dxaGZnc3hhZ3R4bGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjUzMzcsImV4cCI6MjA4OTE0MTMzN30.HwRE7yrmQc-Qs6zg_rTeWBXI6uTqR_lFFr7jg0rVpkk'
 
-export const supabase = makeClient()
+export const supabase = createClient(url, key)

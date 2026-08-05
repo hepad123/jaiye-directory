@@ -27,7 +27,7 @@ const C = {
   gold:  "#B4690E",
   goldT: "rgba(180,105,14,0.10)",
   goldB: "rgba(180,105,14,0.22)",
-  disp:  "'Outfit', sans-serif",
+  disp:  "'DM Serif Display', serif",
   serif: "'Newsreader', Georgia, serif",
   ui:    "'Outfit', sans-serif",
   ease:  [0.16, 1, 0.3, 1] as [number, number, number, number],
@@ -740,7 +740,7 @@ export default function HomePage() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
             style={{ display: "flex", gap: "clamp(24px,4vw,48px)", marginTop: "clamp(32px,5vw,52px)", paddingTop: 20, borderTop: `1px solid rgba(245,240,230,0.08)` }}>
-            {[[`${stats.vendors || 500}+`, "VENDORS"], [`${stats.cities || 6}`, "CITIES"], ["900+", "REVIEWS"]].map(([n, l]) => (
+            {[["250+", "VENDORS"], ["4+", "CITIES"]].map(([n, l]) => (
               <div key={l}>
                 <div style={{ fontFamily: C.disp, fontSize: "clamp(1.8rem,3.5vw,2.8rem)", color: C.white, lineHeight: 1, letterSpacing: "0.04em" }}>{n}</div>
                 <div style={{ fontSize: 8, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(245,240,230,0.3)", marginTop: 4, fontFamily: C.ui }}>{l}</div>

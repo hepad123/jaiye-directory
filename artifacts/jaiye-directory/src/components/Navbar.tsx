@@ -1,9 +1,9 @@
+import React, { useEffect, useState, useRef } from 'react'
 import { Link, useLocation } from 'wouter'
 import { useUser, useClerk, SignInButton } from '@clerk/clerk-react'
 import { useSupabase } from '@/hooks/useSupabase'
 import { supabase as anonSupabase } from '@/lib/supabase'
 import { useClerkAvailable } from '@/context/auth'
-import { useEffect, useState, useRef } from 'react'
 
 type SearchProfile = { clerk_user_id: string; username: string; display_name: string; avatar_url?: string }
 
@@ -114,7 +114,10 @@ function ProfileMenu({ user, username, displayName, signOut }: { user: ReturnTyp
    NavbarAuth — ALL Clerk hooks live here, mounted only when
    ClerkProvider is present in the tree.
 ───────────────────────────────────────────────────────── */
-function NavbarAuth() {
+function NavbarAuth({ onSavedCount, onProfile }: {
+  onSavedCount?: (n: number) => void
+  onProfile?: (username: string) => void
+}) {
   const { user, isSignedIn } = useUser()
   const { signOut } = useClerk()
   const supabase = useSupabase()
@@ -127,13 +130,19 @@ function NavbarAuth() {
   useEffect(() => {
     if (!user) return
     supabase.from('profiles').select('username, display_name').eq('clerk_user_id', user.id).maybeSingle()
-      .then(({ data }) => { if (data) { setUsername(data.username || ''); setDisplayName(data.display_name || '') } })
+      .then(({ data }) => {
+        if (data) {
+          setUsername(data.username || '')
+          setDisplayName(data.display_name || '')
+          onProfile?.(data.username || '')
+        }
+      })
   }, [user])
 
   useEffect(() => {
-    if (!user) { setSavedCount(0); return }
+    if (!user) { setSavedCount(0); onSavedCount?.(0); return }
     supabase.from('saved_vendors').select('vendor_id', { count: 'exact', head: true }).eq('clerk_user_id', user.id)
-      .then(({ count }) => setSavedCount(count ?? 0))
+      .then(({ count }) => { const n = count ?? 0; setSavedCount(n); onSavedCount?.(n) })
   }, [user])
 
   return (
@@ -174,44 +183,37 @@ function NavbarNoAuth() {
 }
 
 /* ─────────────────────────────────────────────────────────
-   DrawerAccordion — expandable section with category chips
+   DrawerExpandable — row with right-chevron + indented sub-items
 ───────────────────────────────────────────────────────── */
-function DrawerAccordion({
-  href, label, isActive, onNavigate,
-  categories,
+function DrawerExpandable({
+  label, onNavigate,
+  items,
 }: {
-  href: string; label: string; isActive: boolean;
+  label: string;
   onNavigate: (href: string) => void;
-  categories: { label: string; href: string }[];
+  items: { label: string; href: string }[];
 }) {
   const [open, setOpen] = useState(false)
   return (
     <div>
-      {/* Row: section link + chevron toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', borderLeft: isActive ? '3px solid #B4690E' : '3px solid transparent' }}>
-        <button
-          onClick={() => onNavigate(href)}
-          style={{ flex: 1, textAlign: 'left', padding: '12px 20px', fontSize: 13, color: isActive ? '#B4690E' : '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontWeight: isActive ? 700 : 500, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif" }}>
-          {label}
-        </button>
-        <button
-          onClick={() => setOpen(o => !o)}
-          aria-label={open ? 'Collapse' : 'Expand'}
-          style={{ padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', color: '#9C8C7E', display: 'flex', alignItems: 'center', transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-      </div>
-      {/* Category chips */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '14px 20px', fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1A1612', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Manrope',sans-serif" }}>
+        {label}
+        <svg
+          width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9C8C7E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
       {open && (
-        <div style={{ padding: '4px 20px 14px 20px', display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-          {categories.map(cat => (
+        <div style={{ borderTop: '1px solid #F0EAE0', borderBottom: '1px solid #F0EAE0', background: '#FAF7F2' }}>
+          {items.map(item => (
             <button
-              key={cat.href}
-              onClick={() => onNavigate(cat.href)}
-              style={{ padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, fontFamily: "'Manrope',sans-serif", letterSpacing: '0.06em', cursor: 'pointer', border: '1px solid rgba(180,105,14,0.30)', background: 'rgba(180,105,14,0.07)', color: '#B4690E', transition: 'all 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#B4690E'; (e.currentTarget as HTMLButtonElement).style.color = '#FFFFFF' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(180,105,14,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = '#B4690E' }}>
-              {cat.label}
+              key={item.href}
+              onClick={() => onNavigate(item.href)}
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '11px 20px 11px 32px', fontSize: 13, color: '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Manrope',sans-serif", fontWeight: 500, letterSpacing: '0.04em', borderBottom: '1px solid #F0EAE0' }}>
+              {item.label}
             </button>
           ))}
         </div>
@@ -227,6 +229,8 @@ export default function Navbar() {
   const [pathname, navigate] = useLocation()
   const clerkAvailable = useClerkAvailable()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
+  const [profileUsername, setProfileUsername] = useState('')
   const isActive = (p: string) => pathname === p
 
   const close = () => setDrawerOpen(false)
@@ -236,7 +240,19 @@ export default function Navbar() {
     <Link href={href} style={{ fontSize: 12, fontWeight: isActive(href) ? 700 : 500, color: isActive(href) ? '#B4690E' : '#6B6359', textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif", transition: 'color 0.15s', padding: '4px 0' }}>{label}</Link>
   )
 
-  const beautyCategories = [
+  // Shared row style helpers
+  const activeRowBg = 'rgba(180,105,14,0.08)'
+  const drawerRow = (active: boolean): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    width: '100%', padding: '14px 20px', fontSize: 13, fontWeight: 700,
+    letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+    color: active ? '#B4690E' : '#1A1612',
+    background: active ? activeRowBg : 'none',
+    border: 'none', cursor: 'pointer', fontFamily: "'Manrope',sans-serif",
+    textAlign: 'left' as const,
+  })
+
+  const beautyItems = [
     { label: 'Hair', href: '/beautyservices?category=hair' },
     { label: 'Makeup', href: '/beautyservices?category=makeup' },
     { label: 'Lashes', href: '/beautyservices?category=lashes' },
@@ -246,7 +262,7 @@ export default function Navbar() {
     { label: 'Braids', href: '/beautyservices?category=braids' },
   ]
 
-  const eventCategories = [
+  const eventItems = [
     { label: 'Weddings', href: '/eventservices?category=weddings' },
     { label: 'Birthdays', href: '/eventservices?category=birthdays' },
     { label: 'Corporate', href: '/eventservices?category=corporate' },
@@ -254,6 +270,14 @@ export default function Navbar() {
     { label: 'Photography', href: '/eventservices?category=photography' },
     { label: 'Catering', href: '/eventservices?category=catering' },
   ]
+
+  // Section label
+  const SectionLabel = ({ text }: { text: string }) => (
+    <div style={{ padding: '18px 20px 6px', fontSize: 9, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9C8C7E', fontFamily: "'Manrope',sans-serif" }}>{text}</div>
+  )
+
+  // Divider
+  const Divider = () => <div style={{ height: 1, background: '#E5DDD4', margin: '8px 0' }} />
 
   return (
     <>
@@ -277,59 +301,62 @@ export default function Navbar() {
         </div>
 
         {/* Right: auth section */}
-        {clerkAvailable ? <NavbarAuth /> : <NavbarNoAuth />}
+        {clerkAvailable
+          ? <NavbarAuth onSavedCount={setSavedCount} onProfile={setProfileUsername} />
+          : <NavbarNoAuth />}
       </nav>
 
       {/* Drawer overlay */}
       {drawerOpen && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 190, background: 'rgba(26,22,18,0.45)', backdropFilter: 'blur(4px)' }} onClick={close} />
-          <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: 52, left: 0, bottom: 0, width: 290, zIndex: 195, background: '#FFFFFF', borderRight: '1px solid rgba(180,105,14,0.14)', overflowY: 'auto', display: 'flex', flexDirection: 'column', fontFamily: "'Manrope',sans-serif" }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: 52, left: 0, bottom: 0, width: 280, zIndex: 195, background: '#FFFFFF', borderRight: '1px solid #E5DDD4', overflowY: 'auto', display: 'flex', flexDirection: 'column', fontFamily: "'Manrope',sans-serif" }}>
 
             {/* Header */}
-            <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid #E5DDD4' }}>
-              <div style={{ fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#B4690E', fontWeight: 700, marginBottom: 6 }}>Directory</div>
-              <div style={{ fontFamily: "'Bebas Neue',serif", fontSize: 24, color: '#1A1612', letterSpacing: '0.08em' }}>JAIYÉ DIRECTORY</div>
+            <div style={{ padding: '20px 20px 16px' }}>
+              <div style={{ fontFamily: "'Bebas Neue',serif", fontSize: 28, color: '#B4690E', letterSpacing: '0.10em', lineHeight: 1 }}>Jaiyé</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9C8C7E', fontWeight: 600, marginTop: 4 }}>Nigerian Beauty Services and Events Directory</div>
             </div>
 
-            <div style={{ flex: 1, padding: '12px 0' }}>
+            <Divider />
 
-              {/* Home — plain link */}
-              <button onClick={() => go('/')}
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 20px', fontSize: 13, color: isActive('/') ? '#B4690E' : '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontWeight: isActive('/') ? 700 : 500, borderLeft: isActive('/') ? '3px solid #B4690E' : '3px solid transparent', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif" }}>
-                Home
-              </button>
+            {/* ── EXPLORE ── */}
+            <SectionLabel text="Explore" />
 
-              {/* Beauty Services — expandable */}
-              <DrawerAccordion
-                href="/beautyservices"
-                label="Beauty Services"
-                isActive={isActive('/beautyservices')}
-                onNavigate={go}
-                categories={beautyCategories}
-              />
+            {/* Home */}
+            <button onClick={() => go('/')} style={drawerRow(isActive('/'))}>
+              Home
+            </button>
 
-              {/* Event Services — expandable */}
-              <DrawerAccordion
-                href="/eventservices"
-                label="Event Services"
-                isActive={isActive('/eventservices')}
-                onNavigate={go}
-                categories={eventCategories}
-              />
+            {/* Search by Services — expandable */}
+            <DrawerExpandable label="Search by Services" onNavigate={go} items={beautyItems} />
 
-              {/* Remaining flat links */}
-              {[
-                { href: '/directory', label: 'All Vendors' },
-                { href: '/style-calendar', label: 'Style Calendar' },
-                { href: '/saved', label: 'Saved' },
-              ].map(item => (
-                <button key={item.href} onClick={() => go(item.href)}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 20px', fontSize: 13, color: isActive(item.href) ? '#B4690E' : '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontWeight: isActive(item.href) ? 700 : 500, borderLeft: isActive(item.href) ? '3px solid #B4690E' : '3px solid transparent', letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s', fontFamily: "'Manrope',sans-serif" }}>
-                  {item.label}
-                </button>
-              ))}
-            </div>
+            {/* Search by Events — expandable */}
+            <DrawerExpandable label="Search by Events" onNavigate={go} items={eventItems} />
+
+            <Divider />
+
+            {/* ── YOU ── */}
+            <SectionLabel text="You" />
+
+            {/* Saved with badge */}
+            <button onClick={() => go('/saved')} style={drawerRow(isActive('/saved'))}>
+              <span>Saved</span>
+              {savedCount > 0 && (
+                <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#B4690E', color: '#FFFFFF', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{savedCount}</span>
+              )}
+            </button>
+
+            {/* My Profile */}
+            <button onClick={() => go(profileUsername ? `/profile/${profileUsername}` : '/profile/edit')} style={drawerRow(pathname.startsWith('/profile'))}>
+              My Profile
+            </button>
+
+            {/* Style Calendar */}
+            <button onClick={() => go('/style-calendar')} style={drawerRow(isActive('/style-calendar'))}>
+              Style Calendar
+            </button>
+
           </div>
         </>
       )}

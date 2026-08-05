@@ -287,6 +287,7 @@ function ArtisansSection() {
   const supabase = useSupabase();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [hov, setHov] = useState(false);
+  const { openLink } = useExternalLink();
 
   useEffect(() => {
     supabase.from("vendors")
@@ -328,9 +329,11 @@ function ArtisansSection() {
 
         {/* Featured card — wide editorial layout */}
         <FadeUp delay={0.15}>
-          <Link href={vendor?.instagram ? `https://instagram.com/${vendor.instagram.replace('@','').trim()}` : "/directory"} style={{ textDecoration: "none", display: "block" }}
+          <div
+            onClick={() => { if (vendor?.instagram) openLink(`https://instagram.com/${vendor.instagram.replace('@','').trim()}`, vendor.name, { icon: 'instagram', vendorName: vendor.name }); }}
             onMouseEnter={() => setHov(true)}
-            onMouseLeave={() => setHov(false)}>
+            onMouseLeave={() => setHov(false)}
+            style={{ cursor: "pointer" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: `1px solid ${C.bdr}`, borderRadius: 2, overflow: "hidden", transition: "box-shadow 0.25s", boxShadow: hov ? "0 12px 48px rgba(26,22,18,0.10)" : "0 2px 12px rgba(26,22,18,0.05)" }}>
               {/* Image half */}
               <div style={{ position: "relative", aspectRatio: "4/3", overflow: "hidden" }}>
@@ -364,7 +367,7 @@ function ArtisansSection() {
                 </div>
               </div>
             </div>
-          </Link>
+          </div>
         </FadeUp>
       </div>
     </section>

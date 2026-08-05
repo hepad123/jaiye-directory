@@ -950,7 +950,7 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
     <div id={'service-' + service.id} style={{ background: '#F5EEE6', borderRadius: 16, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid #E5DDD4', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 24px rgba(26,22,18,0.08)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Category accent bar */}
-      <div style={{ height: 3, background: ac, flexShrink: 0 }} />
+      <div style={{ height: 3, background: CATEGORY_ACCENT, flexShrink: 0 }} />
 
       {/* Save + Book — top-right */}
       <div style={{ position: 'absolute', top: 15, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 2 }}>
@@ -1029,10 +1029,10 @@ function Card({ service, isSaved, onToggleSave, stats, onToggleUsed, onToggleRec
         {/* Used / Recommend */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleUsed() }} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '20' : 'rgba(26,22,18,0.04)', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : '#E5DDD4'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : '#6B6359', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', transition: 'all 0.15s' }}>
-            👋 {hasUsed ? 'Used ✓' : 'I used this'}
+            👋 I used this
           </button>
           <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleRec() }} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '20' : 'rgba(26,22,18,0.04)', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : '#E5DDD4'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : '#6B6359', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', transition: 'all 0.15s' }}>
-            ⭐ {hasRec ? 'Rec\u2019d \u2713' : 'Recommend'}
+            ⭐ Recommend
           </button>
         </div>
 

@@ -1,7 +1,7 @@
 
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Link } from 'wouter'
+import { Link, useSearch } from 'wouter'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { useSupabase } from '@/hooks/useSupabase'
 import { useAuthFetch } from '@/hooks/useAuthFetch'
@@ -977,6 +977,7 @@ export default function DirectoryPage() {
   const { user: authUser } = useUser()
   const { openSignIn } = useClerk()
   const openAuthModal = () => openSignIn()
+  const rawSearch = useSearch()
 
   const [vendors, setVendors] = useState<Vendor[]>([])
   // Bug fix: initialise search from URL params eagerly (before any effects run)
@@ -1007,30 +1008,42 @@ export default function DirectoryPage() {
   // a search value that was already initialised from URL params above.
   const isFirstOccasionRender = useRef(true)
 
+  // Scroll-to-vendor: fires when URL search changes OR when vendors first load.
+  // Uses Wouter's useSearch() (more reliable than window.location.search).
+  // If the vendor's category belongs to a different occasion tab, switches to it first.
   useEffect(() => {
-    // scroll-to-vendor is the only work remaining from the URL params effect
-    // (search + occasion are now initialised via lazy useState above)
-    const params = new URLSearchParams(window.location.search)
-    const id = params.get('id')
-    if (id) {
-      // Retry until the vendor element exists in the DOM (data may still be loading)
-      let attempts = 0
-      const timer = setInterval(() => {
-        attempts++
-        const el = document.getElementById('vendor-' + id)
-        if (el) {
-          clearInterval(timer)
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          el.style.outline = '2px solid #B4690E'
-          el.style.outlineOffset = '3px'
-          setTimeout(() => { el.style.outline = 'none' }, 2500)
-        } else if (attempts >= 40) { // 8 seconds max
-          clearInterval(timer)
-        }
-      }, 200)
-      return () => clearInterval(timer)
+    const id = new URLSearchParams(rawSearch).get('id')
+    if (!id) return
+
+    // Correct the occasion tab so the vendor's card is actually rendered
+    if (vendors.length > 0) {
+      const target = vendors.find(v => v.id === id)
+      if (target) {
+        const correctOccasion = OCCASION_TABS.find(tab =>
+          (OCCASION_CATEGORIES[tab.key] || []).includes(target.category)
+        )?.key ?? 'weddings'
+        setOccasion(correctOccasion)
+      }
     }
-  }, [])
+
+    // Retry until the vendor card is in the DOM (wait for data + re-render)
+    let attempts = 0
+    const timer = setInterval(() => {
+      attempts++
+      const el = document.getElementById('vendor-' + id)
+      if (el) {
+        clearInterval(timer)
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.style.outline = '2px solid #B4690E'
+        el.style.outlineOffset = '3px'
+        setTimeout(() => { el.style.outline = 'none' }, 2500)
+      } else if (attempts >= 50) {
+        clearInterval(timer)
+      }
+    }, 200)
+    return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawSearch, vendors.length])
 
   useEffect(() => {
     // Bug fix: skip the very first render so we don't wipe a URL-param search

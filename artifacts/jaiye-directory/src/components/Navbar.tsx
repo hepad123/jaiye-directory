@@ -174,6 +174,53 @@ function NavbarNoAuth() {
 }
 
 /* ─────────────────────────────────────────────────────────
+   DrawerAccordion — expandable section with category chips
+───────────────────────────────────────────────────────── */
+function DrawerAccordion({
+  href, label, isActive, onNavigate,
+  categories,
+}: {
+  href: string; label: string; isActive: boolean;
+  onNavigate: (href: string) => void;
+  categories: { label: string; href: string }[];
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div>
+      {/* Row: section link + chevron toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', borderLeft: isActive ? '3px solid #B4690E' : '3px solid transparent' }}>
+        <button
+          onClick={() => onNavigate(href)}
+          style={{ flex: 1, textAlign: 'left', padding: '12px 20px', fontSize: 13, color: isActive ? '#B4690E' : '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontWeight: isActive ? 700 : 500, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif" }}>
+          {label}
+        </button>
+        <button
+          onClick={() => setOpen(o => !o)}
+          aria-label={open ? 'Collapse' : 'Expand'}
+          style={{ padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', color: '#9C8C7E', display: 'flex', alignItems: 'center', transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+      {/* Category chips */}
+      {open && (
+        <div style={{ padding: '4px 20px 14px 20px', display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {categories.map(cat => (
+            <button
+              key={cat.href}
+              onClick={() => onNavigate(cat.href)}
+              style={{ padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, fontFamily: "'Manrope',sans-serif", letterSpacing: '0.06em', cursor: 'pointer', border: '1px solid rgba(180,105,14,0.30)', background: 'rgba(180,105,14,0.07)', color: '#B4690E', transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#B4690E'; (e.currentTarget as HTMLButtonElement).style.color = '#FFFFFF' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(180,105,14,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = '#B4690E' }}>
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────
    Navbar — main shell, no Clerk hooks here
 ───────────────────────────────────────────────────────── */
 export default function Navbar() {
@@ -182,9 +229,31 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const isActive = (p: string) => pathname === p
 
+  const close = () => setDrawerOpen(false)
+  const go = (href: string) => { navigate(href); close() }
+
   const navLink = (href: string, label: string) => (
     <Link href={href} style={{ fontSize: 12, fontWeight: isActive(href) ? 700 : 500, color: isActive(href) ? '#B4690E' : '#6B6359', textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif", transition: 'color 0.15s', padding: '4px 0' }}>{label}</Link>
   )
+
+  const beautyCategories = [
+    { label: 'Hair', href: '/beautyservices?category=hair' },
+    { label: 'Makeup', href: '/beautyservices?category=makeup' },
+    { label: 'Lashes', href: '/beautyservices?category=lashes' },
+    { label: 'Nails', href: '/beautyservices?category=nails' },
+    { label: 'Brows', href: '/beautyservices?category=brows' },
+    { label: 'Skincare', href: '/beautyservices?category=skincare' },
+    { label: 'Braids', href: '/beautyservices?category=braids' },
+  ]
+
+  const eventCategories = [
+    { label: 'Weddings', href: '/eventservices?category=weddings' },
+    { label: 'Birthdays', href: '/eventservices?category=birthdays' },
+    { label: 'Corporate', href: '/eventservices?category=corporate' },
+    { label: 'Decor', href: '/eventservices?category=decor' },
+    { label: 'Photography', href: '/eventservices?category=photography' },
+    { label: 'Catering', href: '/eventservices?category=catering' },
+  ]
 
   return (
     <>
@@ -214,25 +283,48 @@ export default function Navbar() {
       {/* Drawer overlay */}
       {drawerOpen && (
         <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 190, background: 'rgba(26,22,18,0.45)', backdropFilter: 'blur(4px)' }} onClick={() => setDrawerOpen(false)} />
-          {/* stopPropagation prevents clicks inside the drawer from reaching the overlay */}
-          <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: 52, left: 0, bottom: 0, width: 280, zIndex: 195, background: '#FFFFFF', borderRight: '1px solid rgba(180,105,14,0.14)', overflowY: 'auto', display: 'flex', flexDirection: 'column', fontFamily: "'Manrope',sans-serif" }}>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 190, background: 'rgba(26,22,18,0.45)', backdropFilter: 'blur(4px)' }} onClick={close} />
+          <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: 52, left: 0, bottom: 0, width: 290, zIndex: 195, background: '#FFFFFF', borderRight: '1px solid rgba(180,105,14,0.14)', overflowY: 'auto', display: 'flex', flexDirection: 'column', fontFamily: "'Manrope',sans-serif" }}>
+
+            {/* Header */}
             <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid #E5DDD4' }}>
               <div style={{ fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#B4690E', fontWeight: 700, marginBottom: 6 }}>Directory</div>
               <div style={{ fontFamily: "'Bebas Neue',serif", fontSize: 24, color: '#1A1612', letterSpacing: '0.08em' }}>JAIYÉ DIRECTORY</div>
             </div>
+
             <div style={{ flex: 1, padding: '12px 0' }}>
+
+              {/* Home — plain link */}
+              <button onClick={() => go('/')}
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 20px', fontSize: 13, color: isActive('/') ? '#B4690E' : '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontWeight: isActive('/') ? 700 : 500, borderLeft: isActive('/') ? '3px solid #B4690E' : '3px solid transparent', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif" }}>
+                Home
+              </button>
+
+              {/* Beauty Services — expandable */}
+              <DrawerAccordion
+                href="/beautyservices"
+                label="Beauty Services"
+                isActive={isActive('/beautyservices')}
+                onNavigate={go}
+                categories={beautyCategories}
+              />
+
+              {/* Event Services — expandable */}
+              <DrawerAccordion
+                href="/eventservices"
+                label="Event Services"
+                isActive={isActive('/eventservices')}
+                onNavigate={go}
+                categories={eventCategories}
+              />
+
+              {/* Remaining flat links */}
               {[
-                { href: '/', label: 'Home' },
-                { href: '/beautyservices', label: 'Beauty Services' },
-                { href: '/eventservices', label: 'Event Services' },
                 { href: '/directory', label: 'All Vendors' },
                 { href: '/style-calendar', label: 'Style Calendar' },
                 { href: '/saved', label: 'Saved' },
               ].map(item => (
-                // Use navigate() directly — more reliable than <Link> inside a conditional overlay
-                <button key={item.href}
-                  onClick={() => { navigate(item.href); setDrawerOpen(false); }}
+                <button key={item.href} onClick={() => go(item.href)}
                   style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 20px', fontSize: 13, color: isActive(item.href) ? '#B4690E' : '#6B6359', background: 'none', border: 'none', cursor: 'pointer', fontWeight: isActive(item.href) ? 700 : 500, borderLeft: isActive(item.href) ? '3px solid #B4690E' : '3px solid transparent', letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s', fontFamily: "'Manrope',sans-serif" }}>
                   {item.label}
                 </button>

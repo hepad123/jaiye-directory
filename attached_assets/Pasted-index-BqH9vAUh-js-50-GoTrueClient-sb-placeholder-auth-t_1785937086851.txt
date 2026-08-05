@@ -1,0 +1,53 @@
+index-BqH9vAUh.js:50 GoTrueClient@sb-placeholder-auth-token:1 (2.111.0) 2026-08-05T13:37:48.432Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+
+index-BqH9vAUh.js:50 GoTrueClient@sb-placeholder-auth-token:2 (2.111.0) 2026-08-05T13:37:48.436Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+index-BqH9vAUh.js:50 GoTrueClient@sb-placeholder-auth-token:3 (2.111.0) 2026-08-05T13:37:48.441Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+index-BqH9vAUh.js:50 GoTrueClient@sb-placeholder-auth-token:4 (2.111.0) 2026-08-05T13:37:48.443Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+placeholder.supabase…vendors?select=id:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…ervices?select=id:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…s?select=location:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…K+Mari%25&limit=1:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…id%2Cname&limit=8:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+clerk.browser.js:19 Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+placeholder.supabase…ervices?select=id:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…s?select=location:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…id%2Cname&limit=8:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…K+Mari%25&limit=1:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…vendors?select=id:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…s?select=location:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…vendors?select=id:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…ervices?select=id:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…K+Mari%25&limit=1:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+placeholder.supabase…id%2Cname&limit=8:1 
+ Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+index-BqH9vAUh.js:51 
+ GET https://placeholder.supabase.co/rest/v1/vendors?select=id%2Cname&limit=8 net::ERR_NAME_NOT_RESOLVED
+index-BqH9vAUh.js:51 
+ GET https://placeholder.supabase.co/rest/v1/vendors?select=id%2Cname%2Ccategory%2Clocation%2Cinstagram%2Cnotes&name=ilike.%25K+Mari%25&limit=1 net::ERR_NAME_NOT_RESOLVED
+index-BqH9vAUh.js:51 
+ GET https://placeholder.supabase.co/rest/v1/vendors?select=id net::ERR_NAME_NOT_RESOLVED
+index-BqH9vAUh.js:51 
+ GET https://placeholder.supabase.co/rest/v1/services?select=id net::ERR_NAME_NOT_RESOLVED
+index-BqH9vAUh.js:51 
+ GET https://placeholder.supabase.co/rest/v1/vendors?select=location net::ERR_NAME_NOT_RESOLVED
+﻿
+
+Press ctrl i to turn on code suggestions. Press ctrl x to disable code suggestions.
+ctrl
+i
+ to turn on code suggestions. Don't show again NEW
+

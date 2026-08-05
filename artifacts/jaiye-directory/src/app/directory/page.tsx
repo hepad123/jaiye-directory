@@ -845,15 +845,15 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
 
       {/* "Saved by friends" banner */}
       {saverLabel && (
-        <div style={{ background: 'rgba(180,105,14,0.08)', borderBottom: '1px solid rgba(245,240,230,0.07)', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ background: 'rgba(180,105,14,0.08)', borderBottom: '1px solid rgba(26,22,18,0.06)', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ display: 'flex' }}>
             {followSavers.slice(0, 3).map((p, i) => (
-              <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: colour + '30', border: '1.5px solid rgba(245,240,230,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: manrope }}>
+              <div key={p.id} style={{ width: 18, height: 18, borderRadius: '50%', background: colour + '30', border: '1.5px solid #E5DDD4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: colour, marginLeft: i > 0 ? -5 : 0, fontFamily: manrope }}>
                 {p.display_name[0].toUpperCase()}
               </div>
             ))}
           </div>
-          <span style={{ fontSize: 10, color: 'rgba(245,240,230,0.60)', fontWeight: 600, fontFamily: manrope }}>{saverLabel}</span>
+          <span style={{ fontSize: 10, color: '#9C8C7E', fontWeight: 600, fontFamily: manrope }}>{saverLabel}</span>
         </div>
       )}
 
@@ -880,8 +880,8 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         {(avgRating !== null || usedCount > 0 || recCount > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
             {avgRating !== null && <span style={{ fontSize: 11, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 600 }}>★ {avgRating}</span>}
-            {usedCount > 0 && <span style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', fontFamily: manrope }}>👋 {usedCount} used</span>}
-            {recCount  > 0 && <span style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', fontFamily: manrope }}>⭐ {recCount} rec</span>}
+            {usedCount > 0 && <span style={{ fontSize: 11, color: '#9C8C7E', fontFamily: manrope }}>👋 {usedCount} used</span>}
+            {recCount  > 0 && <span style={{ fontSize: 11, color: '#9C8C7E', fontFamily: manrope }}>⭐ {recCount} rec</span>}
           </div>
         )}
 
@@ -893,7 +893,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
           <div style={{ background: PROMO_COLOR + '10', border: '1px solid ' + PROMO_COLOR + '35', borderRadius: 10, padding: '8px 12px', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
               <span style={{ fontSize: 9, fontWeight: 700, color: PROMO_COLOR, fontFamily: manrope, letterSpacing: '0.10em', textTransform: 'uppercase' as const }}>🏷 Active promo</span>
-              {v.discount_expiry && <span style={{ fontSize: 9, color: 'rgba(245,240,230,0.45)', fontFamily: manrope }}>Expires {new Date(v.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
+              {v.discount_expiry && <span style={{ fontSize: 9, color: '#9C8C7E', fontFamily: manrope }}>Expires {new Date(v.discount_expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
             </div>
             {v.discount_description && <p style={{ fontSize: 11, color: '#1A1612', margin: 0, fontFamily: manrope, lineHeight: 1.4 }}>{v.discount_description}</p>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
@@ -924,20 +924,20 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {/* More info toggle */}
           {hasDetails && (
-            <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', padding: '8px 0', background: 'rgba(26,22,18,0.03)', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 9, color: 'rgba(245,240,230,0.45)', fontWeight: 700, fontFamily: manrope, letterSpacing: '0.12em', textTransform: 'uppercase' as const, transition: 'background 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(26,22,18,0.03)' }}>
+            <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', padding: '8px 0', background: 'rgba(26,22,18,0.03)', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 9, color: '#9C8C7E', fontWeight: 700, fontFamily: manrope, letterSpacing: '0.12em', textTransform: 'uppercase' as const, transition: 'background 0.15s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(26,22,18,0.03)' }}>
               {expanded ? '− Less info' : '+ More info'}
             </button>
           )}
 
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 4 }}>
-              {v.services && <p style={{ fontSize: 11, color: 'rgba(245,240,230,0.55)', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
+              {v.services && <p style={{ fontSize: 11, color: '#6B6359', margin: 0, lineHeight: 1.55, fontFamily: manrope }}>{v.services}</p>}
               {v.phone    && <p style={{ fontSize: 11, color: '#9C8C7E', margin: 0, fontFamily: manrope }}>📞 {v.phone}</p>}
-              {v.email    && <p style={{ fontSize: 11, color: 'rgba(245,240,230,0.45)', margin: 0, fontFamily: manrope }}>✉ {v.email}</p>}
+              {v.email    && <p style={{ fontSize: 11, color: '#9C8C7E', margin: 0, fontFamily: manrope }}>✉ {v.email}</p>}
               {safeVendorUrl(v.website) && (
                 <a href={safeVendorUrl(v.website)!} target="_blank" rel="noopener noreferrer nofollow" style={{ fontSize: 11, color: CATEGORY_ACCENT, textDecoration: 'none', fontFamily: manrope }}>🌐 {v.website}</a>
               )}
-              {v.notes && <p style={{ fontSize: 10, color: 'rgba(245,240,230,0.40)', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
+              {v.notes && <p style={{ fontSize: 10, color: '#9C8C7E', margin: 0, fontStyle: 'italic', lineHeight: 1.5, fontFamily: manrope }}>{v.notes}</p>}
 
               {followSavers.length > 0 && (
                 <div style={{ marginTop: 4, padding: '8px 10px', background: 'rgba(180,105,14,0.08)', borderRadius: 8 }}>
@@ -952,10 +952,10 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
 
               {/* Used / Recommend */}
               <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                <button onClick={toggleUsed} disabled={usedSubmitting} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '20' : 'rgba(26,22,18,0.04)', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : '#E5DDD4'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : 'rgba(245,240,230,0.45)', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: usedSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
+                <button onClick={toggleUsed} disabled={usedSubmitting} style={{ flex: 1, padding: '7px 0', background: hasUsed ? CATEGORY_ACCENT + '20' : 'rgba(26,22,18,0.04)', border: '1px solid ' + (hasUsed ? CATEGORY_ACCENT : '#E5DDD4'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasUsed ? CATEGORY_ACCENT : '#6B6359', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: usedSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
                   👋 {hasUsed ? 'Used ✓' : 'I used this'}{usedCount > 0 && <span style={{ marginLeft: 4, fontWeight: 700 }}>· {usedCount}</span>}
                 </button>
-                <button onClick={toggleRecommend} disabled={recSubmitting} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '20' : 'rgba(26,22,18,0.04)', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : '#E5DDD4'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : 'rgba(245,240,230,0.45)', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: recSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
+                <button onClick={toggleRecommend} disabled={recSubmitting} style={{ flex: 1, padding: '7px 0', background: hasRec ? CATEGORY_ACCENT + '20' : 'rgba(26,22,18,0.04)', border: '1px solid ' + (hasRec ? CATEGORY_ACCENT : '#E5DDD4'), borderRadius: 8, fontSize: 10, fontWeight: 700, color: hasRec ? CATEGORY_ACCENT : '#6B6359', letterSpacing: '0.05em', fontFamily: manrope, cursor: 'pointer', opacity: recSubmitting ? 0.6 : 1, transition: 'all 0.15s' }}>
                   ⭐ {hasRec ? 'Rec\u2019d \u2713' : 'Recommend'}{recCount > 0 && <span style={{ marginLeft: 4, fontWeight: 700 }}>· {recCount}</span>}
                 </button>
               </div>
@@ -1211,7 +1211,7 @@ export default function DirectoryPage() {
 
       {/* ── Editorial page header ── */}
       <div style={{ background: '#FAF7F2', padding: 'clamp(32px,6vw,64px) clamp(20px,6vw,80px) clamp(28px,5vw,52px)', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 20, right: 32, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.25)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
+        <div style={{ position: 'absolute', top: 20, right: 32, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(26,22,18,0.18)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
         <div style={{ fontSize: 'clamp(12px,1.6vw,15px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 10 }}>Events Directory</div>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#1A1612', letterSpacing: '0.03em', marginBottom: 18 }}>
           {currentTab?.label?.toUpperCase() || 'WEDDINGS'}<br /><span style={{ color: CATEGORY_ACCENT }}>VENDORS.</span>
@@ -1225,7 +1225,7 @@ export default function DirectoryPage() {
           {OCCASION_TABS.map(tab => {
             const isActive = occasion === tab.key
             return (
-              <button key={tab.key} onClick={() => setOccasion(tab.key)} style={{ padding: '15px 18px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : 'rgba(245,239,228,0.42)', fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+              <button key={tab.key} onClick={() => setOccasion(tab.key)} style={{ padding: '15px 18px', background: 'none', border: 'none', borderBottom: isActive ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: isActive ? CATEGORY_ACCENT : '#6B6359', fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 400, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                 {tab.label}
               </button>
             )
@@ -1236,9 +1236,9 @@ export default function DirectoryPage() {
       <div style={{ background: '#FAF7F2', borderBottom: '1px solid #E5DDD4', padding: '10px 16px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(26,22,18,0.03)', border: '1px solid #E5DDD4', borderRadius: 999, padding: '7px 16px', marginBottom: 8 }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="rgba(245,240,230,0.35)" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="rgba(245,240,230,0.35)" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="#9C8C7E" strokeWidth="1.2"/><path d="M10 10l2 2" stroke="#9C8C7E" strokeWidth="1.2" strokeLinecap="round"/></svg>
             <input type="text" placeholder="Search vendors..." value={search} maxLength={LIMITS.search} onChange={e => setSearch(sanitizeSearch(e.target.value))} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 16, background: 'transparent', color: '#1A1612', fontFamily: manrope }} />
-            {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,240,230,0.4)', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
+            {search ? <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9C8C7E', fontSize: 16, padding: 0, lineHeight: 1 }}>x</button> : null}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
             <CategoryDropdown occasion={occasion} selectedCats={selectedCats} setSelectedCats={setSelectedCats} weddingType={weddingType} setWeddingType={setWeddingType} manrope={manrope} />
@@ -1257,7 +1257,7 @@ export default function DirectoryPage() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 16px 2px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p style={{ color: 'rgba(245,240,230,0.42)', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
+          <p style={{ color: '#9C8C7E', fontSize: 11, margin: 0, fontFamily: manrope, letterSpacing: '0.04em' }}>
             {sorted.length} vendors{search ? ' for "' + search + '"' : ''}{showPromos ? ' \u00b7 Active promos' : ''}
           </p>
           <button onClick={() => setSuggestOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 24, border: '1.5px solid ' + CATEGORY_ACCENT, background: 'transparent', color: CATEGORY_ACCENT, fontSize: 11, fontWeight: 700, fontFamily: manrope, cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -1269,7 +1269,7 @@ export default function DirectoryPage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 16px 52px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 255px), 1fr))', gap: 14 }}>
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ background: 'rgba(26,22,18,0.04)', borderRadius: 14, height: 100, opacity: 0.5, border: '1px solid rgba(245,240,230,0.06)' }} />
+              <div key={i} style={{ background: 'rgba(26,22,18,0.04)', borderRadius: 14, height: 100, opacity: 0.5, border: '1px solid #E5DDD4' }} />
             ))
           : sorted.length === 0
             ? (

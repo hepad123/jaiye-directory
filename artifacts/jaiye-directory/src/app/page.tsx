@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useSupabase } from "@/hooks/useSupabase";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -14,7 +14,11 @@ import { useSupabase } from "@/hooks/useSupabase";
 const C = {
   bg:    "#FAF7F2",           // main page bg — warm cream
   bg2:   "#F2EDE4",           // alternate section bg
-  white: "#FFFFFF",
+  cream: "#F5F0E6",           // hero-below bg (matches original)
+  cream2:"#EDE8DD",
+  black: "#0D0B08",           // hero dark bg
+  black2:"#161410",           // ticker bg
+  white: "#FDFAF6",
   text:  "#1A1612",           // warm near-black
   textM: "rgba(26,22,18,0.50)",
   textL: "rgba(26,22,18,0.30)",
@@ -533,6 +537,23 @@ function TestimonialsSection() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   Arrow text link (used in dark hero)
+───────────────────────────────────────────────────────────────────────────── */
+function ArrowLink({ href, label, faint = false }: { href: string; label: string; faint?: boolean }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <Link href={href} style={{ display: "inline-flex", alignItems: "center", gap: 12, textDecoration: "none" }}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      <motion.div animate={{ width: hov ? 44 : 22 }} transition={{ duration: 0.28 }}
+        style={{ height: 1, background: faint ? "rgba(245,240,230,0.22)" : C.gold }} />
+      <span style={{ fontFamily: C.ui, fontSize: 9, fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase", color: faint ? "rgba(245,240,230,0.38)" : C.gold }}>
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    CTA + Footer
 ───────────────────────────────────────────────────────────────────────────── */
 function CtaFooter() {
@@ -617,87 +638,101 @@ function CtaFooter() {
 ───────────────────────────────────────────────────────────────────────────── */
 export default function HomePage() {
   const stats = usePlatformStats();
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollY } = useScroll();
+  const heroImgY = useTransform(scrollY, [0, 700], [0, 110]);
 
   return (
     <div style={{ fontFamily: C.ui, background: C.bg, overflowX: "hidden" }}>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          §1  HERO — clean two-column, light editorial
+          §1  HERO — Dark, full-bleed, "Reclaim Your Glow."
       ══════════════════════════════════════════════════════════════════════ */}
-      <section style={{ background: C.bg, borderBottom: `1px solid ${C.bdr}` }}>
+      <section ref={heroRef} style={{ background: C.black, minHeight: "100svh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+        {/* Parallax hero image */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+          <motion.img
+            src="/pexels-heibbymarvel-4285539.jpg"
+            alt="Hero"
+            style={{ width: "100%", height: "115%", objectFit: "cover", objectPosition: "50% 20%", y: heroImgY, willChange: "transform" }}
+          />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(13,11,8,0.78) 0%, rgba(13,11,8,0.50) 40%, rgba(13,11,8,0.82) 100%)" }} />
+        </div>
 
-        {/* Top: headline left, tagline + search right */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: `1px solid ${C.bdr}` }}>
+        {/* Top meta bar */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
+          style={{ position: "relative", zIndex: 1, padding: "0 clamp(20px,4vw,52px)", height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid rgba(245,240,230,0.08)` }}>
+          <span style={{ fontSize: 8, letterSpacing: "0.36em", textTransform: "uppercase", color: "rgba(245,240,230,0.35)", fontFamily: C.ui }}>Est. 2023 · Lagos, Nigeria</span>
+          <span style={{ fontSize: 8, letterSpacing: "0.36em", textTransform: "uppercase", color: "rgba(245,240,230,0.35)", fontFamily: C.ui }}>The Nigerian Beauty &amp; Events Edit</span>
+        </motion.div>
 
-          {/* Left — brand headline */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: C.ease, delay: 0.1 }}
-            style={{ padding: "clamp(36px,5vw,64px)", borderRight: `1px solid ${C.bdr}`, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 32 }}
-          >
-            <div style={{ fontFamily: C.disp, fontSize: "clamp(3.5rem,9vw,8rem)", lineHeight: 0.86, letterSpacing: "0.02em", color: C.text }}>
-              JAIYÉ<br />
-              <span style={{ color: C.gold }}>DIRECTORY</span>
-            </div>
-            <div style={{ fontSize: 8, letterSpacing: "0.30em", color: C.textL, textTransform: "uppercase", fontFamily: C.ui }}>Est. 2023 · Lagos, Nigeria</div>
-          </motion.div>
+        {/* Main hero content */}
+        <div style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "clamp(32px,5vw,56px) clamp(20px,4vw,52px) clamp(40px,6vw,68px)" }}>
 
-          {/* Right — tagline + search */}
+          {/* No.1 editorial accent — top right */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.9, ease: C.ease, delay: 0.25 }}
-            style={{ padding: "clamp(36px,5vw,64px)", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 32 }}
-          >
-            <p style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(15px,1.6vw,20px)", color: C.textM, lineHeight: 1.75, margin: 0, maxWidth: 420 }}>
-              We believe the right stylist or vendor makes your moment unforgettable — and that finding them should take minutes, not months.
+            transition={{ duration: 1, delay: 0.6 }}
+            style={{ position: "absolute", top: "clamp(20px,4vw,40px)", right: "clamp(20px,4vw,52px)", textAlign: "right" }}>
+            <div style={{ fontFamily: C.disp, fontSize: "clamp(3rem,8vw,7rem)", color: "rgba(245,240,230,0.08)", letterSpacing: "0.06em", lineHeight: 1 }}>No.1</div>
+          </motion.div>
+
+          {/* Headline */}
+          <div style={{ marginBottom: "clamp(20px,3vw,28px)" }}>
+            <ClipText delay={0.15}>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.white, margin: 0 }}>RECLAIM</h1>
+            </ClipText>
+            <ClipText delay={0.28}>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.white, margin: 0 }}>YOUR</h1>
+            </ClipText>
+            <ClipText delay={0.41}>
+              <h1 style={{ fontFamily: C.disp, fontSize: "clamp(5rem,15vw,14rem)", lineHeight: 0.88, letterSpacing: "0.02em", color: C.gold, margin: 0 }}>GLOW.</h1>
+            </ClipText>
+          </div>
+
+          {/* Tagline + search + CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: C.ease, delay: 0.58 }}
+            style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 540 }}>
+            <p style={{ fontFamily: C.serif, fontStyle: "italic", fontSize: "clamp(14px,1.8vw,18px)", color: "rgba(245,240,230,0.62)", lineHeight: 1.7, margin: 0 }}>
+              Discover the finest beauty services and event vendors in the Nigerian community.
             </p>
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", fontFamily: C.ui, color: C.textL, marginBottom: 14 }}>Search the directory</div>
-              <HeroSearch />
+            <HeroSearch />
+            <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+              <ArrowLink href="/beautyservices" label="BROWSE BEAUTY" />
+              <ArrowLink href="/directory" label="ALL VENDORS" faint />
             </div>
           </motion.div>
-        </div>
 
-        {/* Stats strip */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, ease: C.ease, delay: 0.55 }}
-          style={{ padding: "clamp(20px,3vw,32px) clamp(20px,4vw,52px)", borderTop: `1px solid ${C.bdr}`, display: "flex", alignItems: "center", gap: "clamp(28px,5vw,60px)", flexWrap: "wrap" }}
-        >
-          {[
-            [stats.vendors > 0 ? `${stats.vendors}+` : "500+", "Vendors"],
-            [stats.cities > 0 ? `${stats.cities}` : "6", "Cities"],
-            [stats.reviews > 0 ? `${stats.reviews}+` : "900+", "Reviews"],
-          ].map(([n, l]) => (
-            <div key={l}>
-              <div style={{ fontFamily: C.disp, fontSize: "clamp(1.8rem,3vw,2.6rem)", color: C.text, lineHeight: 1, letterSpacing: "0.04em" }}>{n}</div>
-              <div style={{ fontSize: 8, letterSpacing: "0.24em", textTransform: "uppercase", color: C.textL, marginTop: 4, fontFamily: C.ui }}>{l}</div>
-            </div>
-          ))}
-          <div style={{ marginLeft: "auto", display: "flex", gap: 16 }}>
-            <Link href="/beautyservices" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none", padding: "10px 20px", border: `1.5px solid ${C.gold}`, borderRadius: 3 }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.gold; (e.currentTarget.querySelector("span") as HTMLElement).style.color = "#fff"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; (e.currentTarget.querySelector("span") as HTMLElement).style.color = C.gold; }}>
-              <span style={{ fontFamily: C.ui, fontSize: 10, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: C.gold, transition: "color 0.15s" }}>Browse Beauty</span>
-            </Link>
-            <Link href="/directory" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none", padding: "10px 20px", background: C.text, borderRadius: 3 }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.gold; }}
-              onMouseLeave={e => { e.currentTarget.style.background = C.text; }}>
-              <span style={{ fontFamily: C.ui, fontSize: 10, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#fff" }}>All Vendors</span>
-            </Link>
-          </div>
-        </motion.div>
+          {/* Stats row */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            style={{ display: "flex", gap: "clamp(24px,4vw,48px)", marginTop: "clamp(32px,5vw,52px)", paddingTop: 20, borderTop: `1px solid rgba(245,240,230,0.08)` }}>
+            {[[`${stats.vendors || 500}+`, "VENDORS"], [`${stats.cities || 6}`, "CITIES"], ["900+", "REVIEWS"]].map(([n, l]) => (
+              <div key={l}>
+                <div style={{ fontFamily: C.disp, fontSize: "clamp(1.8rem,3.5vw,2.8rem)", color: C.white, lineHeight: 1, letterSpacing: "0.04em" }}>{n}</div>
+                <div style={{ fontSize: 8, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(245,240,230,0.3)", marginTop: 4, fontFamily: C.ui }}>{l}</div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          §2  MARQUEE
+          §2  TICKER
       ══════════════════════════════════════════════════════════════════════ */}
       <Marquee
         items={["Nigerian Wedding Vendors", "Verified Artisans", "Bridal Beauty", "Hair Braiding Specialists", "Event Planners", "Makeup Artists", "Community Shortlists", "Lagos · Abuja · Port Harcourt"]}
         speed={34}
+        bg={C.black2}
       />
 
       {/* ══════════════════════════════════════════════════════════════════════

@@ -169,11 +169,15 @@ export default function FollowingPage() {
         ) : people.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>👥</div>
-            <p style={{ fontSize: 14, color: '#9C8C7E', fontFamily: manrope, lineHeight: 1.7, maxWidth: 340, margin: '0 auto' }}>
-              No activity yet from the people you follow.
-              <br />
-              <span style={{ fontSize: 12 }}>Follow people from their profiles, then come back here to see which vendors and stylists they recommend.</span>
+            <p style={{ fontSize: 14, color: '#6B5E52', fontFamily: manrope, lineHeight: 1.7, maxWidth: 380, margin: '0 auto' }}>
+              No activity from the people you follow yet.
             </p>
+            <p style={{ fontSize: 12, color: '#9C8C7E', fontFamily: manrope, lineHeight: 1.7, maxWidth: 380, margin: '10px auto 24px' }}>
+              Visit a person's profile and tap <strong>Follow</strong> — once they mark vendors or beauty services as used or recommended, their picks will appear here.
+            </p>
+            <Link href="/directory" style={{ display: 'inline-block', padding: '10px 24px', background: ACCENT, color: '#fff', borderRadius: 8, textDecoration: 'none', fontFamily: manrope, fontWeight: 700, fontSize: 12, letterSpacing: '0.06em' }}>
+              Browse vendors
+            </Link>
           </div>
 
         ) : (

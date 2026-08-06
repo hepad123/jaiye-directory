@@ -1,6 +1,7 @@
 
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useAuthFetch } from '@/hooks/useAuthFetch'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { useSupabase } from '@/hooks/useSupabase'
 import { useSearch } from 'wouter'
@@ -619,6 +620,7 @@ function EventServicesPage() {
   const { user } = useUser()
   const { openSignIn } = useClerk()
   const supabase = useSupabase()
+  const authFetch = useAuthFetch()
   const searchStr = useSearch()
   const searchParams = new URLSearchParams(searchStr)
   const [vendors, setVendors] = useState<Vendor[]>([])
@@ -735,13 +737,13 @@ function EventServicesPage() {
     if (!user?.id) { openSignIn(); return }
     const isSaved = savedIds.has(vid)
     setSavedIds(prev => { const n = new Set(prev); isSaved ? n.delete(vid) : n.add(vid); return n })
-    if (isSaved) {
-      await supabase.from('saved_vendors').delete().eq('clerk_user_id', user.id).eq('vendor_id', vid)
-    } else {
-      await supabase.from('saved_vendors').insert({ clerk_user_id: user.id, vendor_id: vid })
-    }
+    // saved_vendors has RLS blocking anon inserts — must go through API (service-role key)
+    await authFetch('/api/saved', {
+      method: isSaved ? 'DELETE' : 'POST',
+      body: JSON.stringify({ vendor_id: vid }),
+    })
     window.dispatchEvent(new Event('saved-change'))
-  }, [supabase, user, savedIds, openSignIn])
+  }, [authFetch, user, savedIds, openSignIn])
 
   const toggleUsed = useCallback(async (vid: string) => {
     if (!user?.id) { openSignIn(); return }

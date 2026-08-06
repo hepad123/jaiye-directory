@@ -1009,6 +1009,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
 
 export default function DirectoryPage() {
   const supabase = useSupabase()
+  const authFetch = useAuthFetch()
   const { user: authUser } = useUser()
   const { openSignIn } = useClerk()
   const openAuthModal = () => openSignIn()
@@ -1243,16 +1244,16 @@ export default function DirectoryPage() {
   }, [authUser])
 
   const handleToggleSave = useCallback(async (vendorId: string) => {
+    // saved_vendors has RLS blocking anon inserts — must go through API (service-role key)
     if (!authUser?.id) return
     const isSaved = savedIds.has(vendorId)
     setSavedIds(prev => { const n = new Set(prev); if (isSaved) n.delete(vendorId); else n.add(vendorId); return n })
-    if (isSaved) {
-      await supabase.from('saved_vendors').delete().eq('clerk_user_id', authUser!.id).eq('vendor_id', vendorId)
-    } else {
-      await supabase.from('saved_vendors').insert({ clerk_user_id: authUser!.id, vendor_id: vendorId })
-    }
+    await authFetch('/api/saved', {
+      method: isSaved ? 'DELETE' : 'POST',
+      body: JSON.stringify({ vendor_id: vendorId }),
+    })
     window.dispatchEvent(new Event('saved-change'))
-  }, [authUser, savedIds])
+  }, [authUser, savedIds, authFetch])
 
   const handleStatChange = useCallback((vendorId: string, patch: Partial<VendorStats>) => {
     setVendorStats(prev => ({ ...prev, [vendorId]: { ...prev[vendorId], ...patch } }))

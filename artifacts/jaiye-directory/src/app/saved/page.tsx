@@ -1,10 +1,8 @@
-
-
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useAuthFetch } from '@/hooks/useAuthFetch'
 import { Link } from 'wouter'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { useSupabase } from '@/hooks/useSupabase'
-import { useAuthFetch } from '@/hooks/useAuthFetch'
 import { sanitizeNote, safeVendorUrl, LIMITS } from '@/lib/sanitize'
 
 type Vendor = {
@@ -439,6 +437,7 @@ type Tab = 'vendors' | 'services'
 
 export default function SavedPage() {
   const supabase = useSupabase()
+  const authFetch = useAuthFetch()
   const { user, isLoaded } = useUser()
   const { openSignIn } = useClerk()
   const [activeTab, setActiveTab] = useState<Tab>('vendors')
@@ -534,12 +533,14 @@ export default function SavedPage() {
       setSavedVendors(prev => prev.filter(v => v.id !== vendorId))
       setSavedNotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
       setSavedQuotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
-      await supabase.from('saved_vendors').delete().eq('clerk_user_id', user!.id).eq('vendor_id', vendorId)
-    } else {
-      await supabase.from('saved_vendors').insert({ clerk_user_id: user!.id, vendor_id: vendorId })
     }
+    // saved_vendors has RLS blocking anon inserts — must go through API (service-role key)
+    await authFetch('/api/saved', {
+      method: isSaved ? 'DELETE' : 'POST',
+      body: JSON.stringify({ vendor_id: vendorId }),
+    })
     window.dispatchEvent(new Event('saved-change'))
-  }, [user, savedIds])
+  }, [user, savedIds, authFetch])
 
   const handleToggleServiceSave = useCallback(async (serviceId: string) => {
     if (!user?.id) return

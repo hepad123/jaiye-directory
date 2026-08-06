@@ -322,10 +322,10 @@ export default function ProfilePage() {
     const isFollowing = followingIds.has(targetId)
     setFollowingIds(prev => { const n = new Set(prev); isFollowing ? n.delete(targetId) : n.add(targetId); return n })
     if (isFollowing) {
-      await authFetch('/api/follows', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target_id: targetId }) })
+      await supabase.from('follows').delete().eq('clerk_follower_id', user.id).eq('clerk_following_id', targetId)
       if (targetId === profile?.clerk_user_id) setFollowers(prev => prev.filter(f => f.clerk_user_id !== user.id))
     } else {
-      await authFetch('/api/follows', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target_id: targetId }) })
+      await supabase.from('follows').insert({ clerk_follower_id: user.id, clerk_following_id: targetId })
       if (targetId === profile?.clerk_user_id) {
         const { data } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').eq('clerk_user_id', user.id).maybeSingle()
         if (data) setFollowers(prev => [...prev, data])

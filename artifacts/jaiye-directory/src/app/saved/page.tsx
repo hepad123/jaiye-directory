@@ -190,6 +190,8 @@ function BudgetBar({ quotes }: { quotes: Record<string, number> }) {
 }
 
 function MyNotes({ vendorId, initialNote, initialQuotedPrice, onQuoteChange }: { vendorId: string; initialNote: string; initialQuotedPrice: number | null; onQuoteChange: (vendorId: string, name: string, amount: number | null) => void }) {
+  const supabase = useSupabase()
+  const { user } = useUser()
   const [note, setNote] = useState(initialNote)
   const [price, setPrice] = useState(initialQuotedPrice?.toString() ?? '')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -200,10 +202,11 @@ function MyNotes({ vendorId, initialNote, initialQuotedPrice, onQuoteChange }: {
     setSaveStatus('saving')
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
+      if (!user?.id) { setSaveStatus('idle'); return }
       const parsedPrice = parseFloat(newPrice.replace(/[^0-9.]/g, ''))
       const priceVal = isNaN(parsedPrice) ? null : parsedPrice
-      const res = await authFetch('/api/saved', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId, notes: newNote, quoted_price: priceVal }) })
-      if (!res.ok) { setSaveStatus('idle'); return }
+      const { error } = await supabase.from('saved_vendors').update({ notes: newNote, quoted_price: priceVal }).eq('clerk_user_id', user.id).eq('vendor_id', vendorId)
+      if (error) { setSaveStatus('idle'); return }
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 1800)
     }, 800)
@@ -531,9 +534,9 @@ export default function SavedPage() {
       setSavedVendors(prev => prev.filter(v => v.id !== vendorId))
       setSavedNotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
       setSavedQuotes(prev => { const n = { ...prev }; delete n[vendorId]; return n })
-      await authFetch('/api/saved', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId }) })
+      await supabase.from('saved_vendors').delete().eq('clerk_user_id', user!.id).eq('vendor_id', vendorId)
     } else {
-      await authFetch('/api/saved', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId }) })
+      await supabase.from('saved_vendors').insert({ clerk_user_id: user!.id, vendor_id: vendorId })
     }
     window.dispatchEvent(new Event('saved-change'))
   }, [user, savedIds])

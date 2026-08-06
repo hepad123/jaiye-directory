@@ -785,6 +785,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const hasDetails = v.services || v.phone || v.email || v.notes || v.website
   const isSaved = savedIds.has(v.id)
   const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
+  const supabase = useSupabase()
   const { openLink } = useExternalLink()
   const reviewCats = REVIEW_CATS_BY_CATEGORY[v.category] || REVIEW_CATS_BY_CATEGORY['Event Planning']
   const promoActive = isPromoActive(v)
@@ -794,10 +795,10 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
     if (usedSubmitting) return
     setUsedSubmitting(true)
     if (hasUsed) {
-      await authFetch('/api/interactions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: v.id, type: 'used' }) })
+      await supabase.from('vendor_used').delete().eq('clerk_user_id', currentUser.id).eq('vendor_id', v.id)
       onStatChange(v.id, { usedCount: Math.max(0, usedCount - 1), hasUsed: false })
     } else {
-      await authFetch('/api/interactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: v.id, type: 'used' }) })
+      await supabase.from('vendor_used').insert({ clerk_user_id: currentUser.id, vendor_id: v.id })
       onStatChange(v.id, { usedCount: usedCount + 1, hasUsed: true })
     }
     setUsedSubmitting(false)
@@ -808,10 +809,10 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
     if (recSubmitting) return
     setRecSubmitting(true)
     if (hasRec) {
-      await authFetch('/api/interactions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: v.id, type: 'recommend' }) })
+      await supabase.from('vendor_recommendations').delete().eq('clerk_user_id', currentUser.id).eq('vendor_id', v.id)
       onStatChange(v.id, { recCount: Math.max(0, recCount - 1), hasRec: false })
     } else {
-      await authFetch('/api/interactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: v.id, type: 'recommend' }) })
+      await supabase.from('vendor_recommendations').insert({ clerk_user_id: currentUser.id, vendor_id: v.id })
       onStatChange(v.id, { recCount: recCount + 1, hasRec: true })
     }
     setRecSubmitting(false)
@@ -1246,9 +1247,9 @@ export default function DirectoryPage() {
     const isSaved = savedIds.has(vendorId)
     setSavedIds(prev => { const n = new Set(prev); if (isSaved) n.delete(vendorId); else n.add(vendorId); return n })
     if (isSaved) {
-      await authFetch('/api/saved', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId }) })
+      await supabase.from('saved_vendors').delete().eq('clerk_user_id', authUser!.id).eq('vendor_id', vendorId)
     } else {
-      await authFetch('/api/saved', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendor_id: vendorId }) })
+      await supabase.from('saved_vendors').insert({ clerk_user_id: authUser!.id, vendor_id: vendorId })
     }
     window.dispatchEvent(new Event('saved-change'))
   }, [authUser, savedIds])

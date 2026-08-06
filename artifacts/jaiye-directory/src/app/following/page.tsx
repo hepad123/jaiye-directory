@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'wouter'
 import { useUser } from '@clerk/clerk-react'
 import { useSupabase } from '@/hooks/useSupabase'
-import Navbar from '@/components/Navbar'
 
 const ACCENT = '#B4690E'
 const manrope = "'Manrope', sans-serif"
@@ -101,8 +100,7 @@ export default function FollowingPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAF7F2' }}>
-      <Navbar />
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(80px,10vw,120px) clamp(16px,4vw,32px) 64px' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px,4vw,40px) clamp(16px,4vw,32px) 64px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 40 }}>

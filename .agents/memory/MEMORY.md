@@ -2,3 +2,4 @@
 - [Clerk no-key dev mode](clerk-dev-mode.md) — how to render the app gracefully when VITE_CLERK_PUBLISHABLE_KEY is absent
 - [Vendors table schema](vendors-schema.md) — actual column names; no `city`/`bio`; vendor_reviews needs vendor_id filter or returns 400
 - [Light theme conversion](light-theme.md) — all pages use warm cream; CSS vars in index.css are the switch; hardcoded dark hex values also needed sed replacement per-file
+- [Supabase + Clerk JWT incompatibility](supabase-clerk-jwt.md) — never send Clerk JWT to Supabase; use anon singleton only; JWT fails verification silently breaking all logged-in reads/writes

@@ -784,18 +784,19 @@ function EventServicesPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAF7F2', color: 'var(--text)', fontFamily: manrope, overflowX: 'hidden' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap'); @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.2} } .hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
 
-      <div style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
-        <img src="/pexels-directory-hero.jpg" alt="Event Services" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,10,5,0.7) 0%, transparent 100%)' }} />
-        <div style={{ position: 'absolute', bottom: 16, left: 24 }}>
-          <div style={{ fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontFamily: manrope, fontWeight: 600, marginBottom: 4 }}>Event Services</div>
-          <div style={{ fontFamily: newsreader, fontSize: 28, fontWeight: 700, color: '#fff' }}>{cat}</div>
+      {/* ── Editorial page header ── */}
+      <div style={{ background: '#FAF7F2', padding: 'clamp(32px,6vw,64px) clamp(20px,6vw,80px) clamp(28px,5vw,52px)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 20, right: 32, fontSize: 9, letterSpacing: '0.30em', textTransform: 'uppercase' as const, color: 'rgba(245,239,228,0.25)', fontFamily: manrope, fontWeight: 600 }}>The Jaiyé Edit</div>
+        <div style={{ fontSize: 'clamp(13px,1.8vw,16px)', letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: CATEGORY_ACCENT, fontFamily: manrope, fontWeight: 700, marginBottom: 10 }}>Event Services</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 'clamp(56px,10vw,120px)', lineHeight: 0.92, color: '#1A1612', letterSpacing: '0.03em', marginBottom: 18 }}>
+          FIND YOUR<br /><span style={{ color: CATEGORY_ACCENT }}>VENDORS.</span>
         </div>
+        <div style={{ height: 1, background: 'linear-gradient(to right, ' + CATEGORY_ACCENT + ' 0%, rgba(180,105,14,0.2) 60%, transparent 100%)', maxWidth: 520 }} />
       </div>
 
-      <div style={{ background: '#FAF7F2', borderBottom: '1px solid #E5DDD4', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: '#FAF7F2', borderBottom: '1px solid rgba(180,105,14,0.14)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
           {EVENT_CATEGORIES.map(c => (
             <button key={c} onClick={() => setCat(c)} style={{ padding: '16px 18px', background: 'none', border: 'none', borderBottom: cat === c ? '2px solid ' + CATEGORY_ACCENT : '2px solid transparent', color: cat === c ? CATEGORY_ACCENT : 'var(--text-muted)', fontFamily: manrope, fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase' as const, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>

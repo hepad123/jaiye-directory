@@ -4,9 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 
 const secretKey = process.env.CLERK_SECRET_KEY!
 
+// Use fallback placeholder so module doesn't crash at load time if env vars
+// are missing — actual DB calls will fail gracefully instead of with
+// FUNCTION_INVOCATION_FAILED at the module level.
 export const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
+  process.env.SUPABASE_URL ?? 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SECRET_KEY ?? 'placeholder-key',
 )
 
 export async function getAuthUserId(req: any): Promise<string | null> {

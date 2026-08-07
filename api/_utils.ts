@@ -1,7 +1,7 @@
-import { createClerkClient } from '@clerk/backend'
+import { verifyToken } from '@clerk/backend'
 import { createClient } from '@supabase/supabase-js'
 
-const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! })
+const secretKey = process.env.CLERK_SECRET_KEY!
 
 export const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -13,7 +13,7 @@ export async function getAuthUserId(req: any): Promise<string | null> {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
   if (!token) return null
   try {
-    const payload = await clerk.verifyToken(token)
+    const payload = await verifyToken(token, { secretKey })
     return payload.sub
   } catch {
     return null

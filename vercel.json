@@ -3,6 +3,11 @@
   "installCommand": "pnpm install",
   "outputDirectory": "artifacts/jaiye-directory/dist/public",
   "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@5"
+    }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],

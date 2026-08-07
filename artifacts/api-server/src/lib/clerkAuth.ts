@@ -1,7 +1,7 @@
-import { createClerkClient } from '@clerk/backend'
+import { verifyToken } from '@clerk/backend'
 import type { Request, Response, NextFunction } from 'express'
 
-const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! })
+const secretKey = process.env.CLERK_SECRET_KEY!
 
 // Augment Express Request type
 declare global {
@@ -27,10 +27,11 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const payload = await clerk.verifyToken(token)
+    const payload = await verifyToken(token, { secretKey })
     req.userId = payload.sub
     next()
-  } catch {
+  } catch (err) {
+    console.error('[requireAuth] verifyToken failed:', err instanceof Error ? err.message : String(err))
     res.status(401).json({ error: 'Unauthorized' })
   }
 }

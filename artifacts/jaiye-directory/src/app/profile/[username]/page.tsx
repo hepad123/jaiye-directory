@@ -321,17 +321,18 @@ export default function ProfilePage() {
     if (!user?.id) { openSignIn(); return }
     const isFollowing = followingIds.has(targetId)
     setFollowingIds(prev => { const n = new Set(prev); isFollowing ? n.delete(targetId) : n.add(targetId); return n })
-    if (isFollowing) {
-      await supabase.from('follows').delete().eq('clerk_follower_id', user.id).eq('clerk_following_id', targetId)
-      if (targetId === profile?.clerk_user_id) setFollowers(prev => prev.filter(f => f.clerk_user_id !== user.id))
-    } else {
-      await supabase.from('follows').insert({ clerk_follower_id: user.id, clerk_following_id: targetId })
-      if (targetId === profile?.clerk_user_id) {
-        const { data } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').eq('clerk_user_id', user.id).maybeSingle()
-        if (data) setFollowers(prev => [...prev, data])
-      }
+    // follows table has RLS blocking anon inserts — must go through API
+    await authFetch('/api/follows', {
+      method: isFollowing ? 'DELETE' : 'POST',
+      body: JSON.stringify({ target_id: targetId }),
+    })
+    if (!isFollowing && targetId === profile?.clerk_user_id) {
+      const { data } = await supabase.from('profiles').select('clerk_user_id, display_name, username, avatar_url').eq('clerk_user_id', user.id).maybeSingle()
+      if (data) setFollowers(prev => [...prev, data])
+    } else if (isFollowing && targetId === profile?.clerk_user_id) {
+      setFollowers(prev => prev.filter(f => f.clerk_user_id !== user.id))
     }
-  }, [user, followingIds, profile, openSignIn])
+  }, [user, followingIds, profile, openSignIn, authFetch, supabase])
 
   if (loading) {
     return (

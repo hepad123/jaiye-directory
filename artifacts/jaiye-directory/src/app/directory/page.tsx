@@ -786,6 +786,7 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
   const isSaved = savedIds.has(v.id)
   const { avgRating, usedCount, recCount, hasUsed, hasRec } = stats
   const supabase = useSupabase()
+  const authFetch = useAuthFetch()
   const { openLink } = useExternalLink()
   const reviewCats = REVIEW_CATS_BY_CATEGORY[v.category] || REVIEW_CATS_BY_CATEGORY['Event Planning']
   const promoActive = isPromoActive(v)
@@ -795,11 +796,11 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
     if (usedSubmitting) return
     setUsedSubmitting(true)
     if (hasUsed) {
-      await supabase.from('vendor_used').delete().eq('clerk_user_id', currentUser.id).eq('vendor_id', v.id)
       onStatChange(v.id, { usedCount: Math.max(0, usedCount - 1), hasUsed: false })
+      await authFetch('/api/interactions', { method: 'DELETE', body: JSON.stringify({ vendor_id: v.id, type: 'used' }) })
     } else {
-      await supabase.from('vendor_used').insert({ clerk_user_id: currentUser.id, vendor_id: v.id })
       onStatChange(v.id, { usedCount: usedCount + 1, hasUsed: true })
+      await authFetch('/api/interactions', { method: 'POST', body: JSON.stringify({ vendor_id: v.id, type: 'used' }) })
     }
     setUsedSubmitting(false)
   }
@@ -809,11 +810,11 @@ function VendorCard({ v, isNew, resetKey, currentUser, savedIds, onToggleSave, o
     if (recSubmitting) return
     setRecSubmitting(true)
     if (hasRec) {
-      await supabase.from('vendor_recommendations').delete().eq('clerk_user_id', currentUser.id).eq('vendor_id', v.id)
       onStatChange(v.id, { recCount: Math.max(0, recCount - 1), hasRec: false })
+      await authFetch('/api/interactions', { method: 'DELETE', body: JSON.stringify({ vendor_id: v.id, type: 'recommend' }) })
     } else {
-      await supabase.from('vendor_recommendations').insert({ clerk_user_id: currentUser.id, vendor_id: v.id })
       onStatChange(v.id, { recCount: recCount + 1, hasRec: true })
+      await authFetch('/api/interactions', { method: 'POST', body: JSON.stringify({ vendor_id: v.id, type: 'recommend' }) })
     }
     setRecSubmitting(false)
   }

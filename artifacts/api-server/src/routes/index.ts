@@ -5,6 +5,7 @@ import interactionsRouter from "./interactions";
 import profileRouter from "./profile";
 import reviewsRouter from "./reviews";
 import savedRouter from "./saved";
+import serviceInteractionsRouter from "./serviceInteractions";
 import vendorRouter from "./vendor";
 
 const router: IRouter = Router();
@@ -15,6 +16,7 @@ router.use(interactionsRouter);
 router.use(profileRouter);
 router.use(reviewsRouter);
 router.use(savedRouter);
+router.use(serviceInteractionsRouter);
 router.use(vendorRouter);
 
 export default router;

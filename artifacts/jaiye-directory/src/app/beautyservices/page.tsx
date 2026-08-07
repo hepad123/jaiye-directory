@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { useSupabase } from '@/hooks/useSupabase'
+import { useAuthFetch } from '@/hooks/useAuthFetch'
 import { useSearch } from 'wouter'
 import SuggestVendorModal from '@/components/SuggestVendorModal'
 import { useExternalLink } from '@/components/ExternalLinkSheet'
@@ -643,6 +644,7 @@ function ServicesPage() {
   const { user } = useUser()
   const { openSignIn } = useClerk()
   const supabase = useSupabase()
+  const authFetch = useAuthFetch()
   const searchStr = useSearch()
   const searchParams = new URLSearchParams(searchStr)
   const [services, setServices] = useState<Service[]>([])
@@ -783,25 +785,25 @@ useEffect(() => {
     if (!user?.id) { openSignIn(); return }
     const cur = stats[sid] || emptyStats
     if (cur.hasUsed) {
-      await supabase.from('service_used').delete().eq('clerk_user_id', user.id).eq('service_id', sid)
       setStats(prev => ({ ...prev, [sid]: { ...prev[sid], hasUsed: false, usedCount: Math.max(0, prev[sid].usedCount - 1) } }))
+      await authFetch('/api/service-interactions', { method: 'DELETE', body: JSON.stringify({ service_id: sid, type: 'used' }) })
     } else {
-      await supabase.from('service_used').insert({ clerk_user_id: user.id, service_id: sid })
       setStats(prev => ({ ...prev, [sid]: { ...prev[sid], hasUsed: true, usedCount: (prev[sid]?.usedCount || 0) + 1 } }))
+      await authFetch('/api/service-interactions', { method: 'POST', body: JSON.stringify({ service_id: sid, type: 'used' }) })
     }
-  }, [supabase, user, stats, openSignIn])
+  }, [authFetch, user, stats, openSignIn])
 
   const toggleRec = useCallback(async (sid: string) => {
     if (!user?.id) { openSignIn(); return }
     const cur = stats[sid] || emptyStats
     if (cur.hasRec) {
-      await supabase.from('service_recommendations').delete().eq('clerk_user_id', user.id).eq('service_id', sid)
       setStats(prev => ({ ...prev, [sid]: { ...prev[sid], hasRec: false, recCount: Math.max(0, prev[sid].recCount - 1) } }))
+      await authFetch('/api/service-interactions', { method: 'DELETE', body: JSON.stringify({ service_id: sid, type: 'recommend' }) })
     } else {
-      await supabase.from('service_recommendations').insert({ clerk_user_id: user.id, service_id: sid })
       setStats(prev => ({ ...prev, [sid]: { ...prev[sid], hasRec: true, recCount: (prev[sid]?.recCount || 0) + 1 } }))
+      await authFetch('/api/service-interactions', { method: 'POST', body: JSON.stringify({ service_id: sid, type: 'recommend' }) })
     }
-  }, [supabase, user, stats, openSignIn])
+  }, [authFetch, user, stats, openSignIn])
 
   const manrope = "'Outfit', sans-serif"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"

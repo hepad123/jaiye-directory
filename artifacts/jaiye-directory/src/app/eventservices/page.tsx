@@ -749,25 +749,25 @@ function EventServicesPage() {
     if (!user?.id) { openSignIn(); return }
     const cur = stats[vid] || emptyStats
     if (cur.hasUsed) {
-      await supabase.from('vendor_used').delete().eq('clerk_user_id', user.id).eq('vendor_id', vid)
       setStats(prev => ({ ...prev, [vid]: { ...prev[vid], hasUsed: false, usedCount: Math.max(0, prev[vid].usedCount - 1) } }))
+      await authFetch('/api/interactions', { method: 'DELETE', body: JSON.stringify({ vendor_id: vid, type: 'used' }) })
     } else {
-      await supabase.from('vendor_used').insert({ clerk_user_id: user.id, vendor_id: vid })
       setStats(prev => ({ ...prev, [vid]: { ...prev[vid], hasUsed: true, usedCount: (prev[vid]?.usedCount || 0) + 1 } }))
+      await authFetch('/api/interactions', { method: 'POST', body: JSON.stringify({ vendor_id: vid, type: 'used' }) })
     }
-  }, [supabase, user, stats, openSignIn])
+  }, [authFetch, user, stats, openSignIn])
 
   const toggleRec = useCallback(async (vid: string) => {
     if (!user?.id) { openSignIn(); return }
     const cur = stats[vid] || emptyStats
     if (cur.hasRec) {
-      await supabase.from('vendor_recommendations').delete().eq('clerk_user_id', user.id).eq('vendor_id', vid)
       setStats(prev => ({ ...prev, [vid]: { ...prev[vid], hasRec: false, recCount: Math.max(0, prev[vid].recCount - 1) } }))
+      await authFetch('/api/interactions', { method: 'DELETE', body: JSON.stringify({ vendor_id: vid, type: 'recommend' }) })
     } else {
-      await supabase.from('vendor_recommendations').insert({ clerk_user_id: user.id, vendor_id: vid })
       setStats(prev => ({ ...prev, [vid]: { ...prev[vid], hasRec: true, recCount: (prev[vid]?.recCount || 0) + 1 } }))
+      await authFetch('/api/interactions', { method: 'POST', body: JSON.stringify({ vendor_id: vid, type: 'recommend' }) })
     }
-  }, [supabase, user, stats, openSignIn])
+  }, [authFetch, user, stats, openSignIn])
 
   const filteredVendors = vendors.filter(v => {
     if (showPromos && !isPromoActive(v)) return false

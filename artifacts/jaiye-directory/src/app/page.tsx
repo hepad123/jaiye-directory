@@ -679,9 +679,9 @@ export default function HomePage() {
         {/* Parallax hero image */}
         <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
           <motion.img
-            src="/pexels-heibbymarvel-4285539.jpg"
+            src="/hero-cover.jpg"
             alt="Hero"
-            style={{ width: "100%", height: "115%", objectFit: "cover", objectPosition: "50% 20%", y: heroImgY, willChange: "transform" }}
+            style={{ width: "100%", height: "115%", objectFit: "cover", objectPosition: "50% 15%", y: heroImgY, willChange: "transform" }}
           />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(13,11,8,0.78) 0%, rgba(13,11,8,0.50) 40%, rgba(13,11,8,0.82) 100%)" }} />
         </div>

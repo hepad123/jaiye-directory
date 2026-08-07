@@ -1,5 +1,6 @@
 {
   "buildCommand": "pnpm install && pnpm --filter @workspace/jaiye-directory run build",
+  "installCommand": "pnpm install",
   "outputDirectory": "artifacts/jaiye-directory/dist/public",
   "framework": null,
   "rewrites": [

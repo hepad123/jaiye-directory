@@ -29,6 +29,7 @@ type VendorStats = {
   recCount: number
   hasUsed: boolean
   hasRec: boolean
+  avgReview: number
 }
 
 type VendorReview = {
@@ -158,8 +159,8 @@ const EVENT_CATEGORIES = [
 
 const CATEGORY_ACCENT = '#B4690E'
 const PROMO_COLOR = '#C0A060'
-const emptyStats: VendorStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
-type SortMode = 'most_used' | 'most_rec'
+const emptyStats: VendorStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false, avgReview: 0 }
+type SortMode = 'most_used' | 'most_rec' | 'top_rated'
 
 const CATEGORY_COLOR: Record<string, string> = {
   'Event Planning': '#6366F1', 'Photography': '#2563EB', 'Videography & Content': '#78716C',
@@ -557,8 +558,9 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
   }, [])
 
   const options: { key: SortMode; label: string }[] = [
-    { key: 'most_rec', label: 'Most Recommended' },
-    { key: 'most_used', label: 'Most Used' },
+    { key: 'most_rec',   label: 'Most Recommended' },
+    { key: 'most_used',  label: 'Most Used' },
+    { key: 'top_rated',  label: 'Top Rated' },
   ]
   const currentLabel = interacted ? (options.find(o => o.key === sortMode)?.label || 'Sort') : 'Sort'
 
@@ -681,23 +683,27 @@ function EventServicesPage() {
     setVendors(rows)
     if (rows.length > 0) {
       const ids = rows.map((v: Vendor) => v.id)
-      const [recsRes, usedRes] = await Promise.all([
+      const [recsRes, usedRes, reviewsRes] = await Promise.all([
         supabase.from('vendor_recommendations').select('vendor_id, clerk_user_id').in('vendor_id', ids),
         supabase.from('vendor_used').select('vendor_id, clerk_user_id').in('vendor_id', ids),
+        supabase.from('vendor_reviews').select('vendor_id, rating_experience').in('vendor_id', ids),
       ])
-      const recRows  = recsRes.data || []
-      const usedRows = usedRes.data || []
+      const recRows     = recsRes.data    || []
+      const usedRows    = usedRes.data    || []
+      const reviewRows  = reviewsRes.data || []
       // Store raw rows so the user-change effect can re-derive hasUsed/hasRec
       rawUsedRowsRef.current = usedRows
       rawRecRowsRef.current  = recRows
       const uid = user?.id
       const newStats: Record<string, VendorStats> = {}
       rows.forEach((v: Vendor) => {
+        const rv = reviewRows.filter((r: {vendor_id: string; rating_experience: number}) => r.vendor_id === v.id)
         newStats[v.id] = {
-          usedCount: usedRows.filter((r: {vendor_id: string}) => r.vendor_id === v.id).length,
-          recCount:  recRows.filter((r: {vendor_id: string}) => r.vendor_id === v.id).length,
+          usedCount:  usedRows.filter((r: {vendor_id: string}) => r.vendor_id === v.id).length,
+          recCount:   recRows.filter((r: {vendor_id: string}) => r.vendor_id === v.id).length,
           hasUsed: uid ? usedRows.some((r: {vendor_id: string; clerk_user_id: string}) => r.vendor_id === v.id && r.clerk_user_id === uid) : false,
           hasRec:  uid ? recRows.some((r: {vendor_id: string; clerk_user_id: string})  => r.vendor_id === v.id && r.clerk_user_id === uid)  : false,
+          avgReview: rv.length ? rv.reduce((acc: number, r: {vendor_id: string; rating_experience: number}) => acc + r.rating_experience, 0) / rv.length : 0,
         }
       })
       setStats(newStats)
@@ -779,6 +785,7 @@ function EventServicesPage() {
   const sortedVendors = [...filteredVendors].sort((a, b) => {
     if (sortMode === 'most_rec') return (stats[b.id]?.recCount || 0) - (stats[a.id]?.recCount || 0)
     if (sortMode === 'most_used') return (stats[b.id]?.usedCount || 0) - (stats[a.id]?.usedCount || 0)
+    if (sortMode === 'top_rated') return (stats[b.id]?.avgReview || 0) - (stats[a.id]?.avgReview || 0)
     return 0
   })
 
@@ -892,7 +899,7 @@ function VendorCard({ vendor, catColour, isSaved, onToggleSave, stats, onToggleU
   const waUrl = vendor.phone ? 'https://wa.me/' + vendor.phone.replace(/\D/g, '') : null
   const bookUrl = vendor.website || null
   const { usedCount, recCount, hasUsed, hasRec } = stats
-  const manrope = "'Manrope', var(--font-jost, sans-serif)"
+  const manrope = "'Outfit', sans-serif"
   const newsreader = "'Newsreader', var(--font-playfair, serif)"
   const btnBase: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', fontFamily: manrope, border: '1px solid var(--border)', letterSpacing: '0.04em' }
   const reviewCats = REVIEW_CATS_BY_CATEGORY[vendor.category] || REVIEW_CATS_BY_CATEGORY['Event Planning']
@@ -907,8 +914,10 @@ function VendorCard({ vendor, catColour, isSaved, onToggleSave, stats, onToggleU
   }
 
   return (
-    <div id={'vendor-' + vendor.id} style={{ background: '#F5EEE6', borderRadius: 14, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid #E5DDD4', position: 'relative', boxShadow: promoActive ? '0 4px 20px rgba(192,160,96,0.12)' : '0 4px 20px rgba(26,22,18,0.08)' }}>
-      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
+    <div id={'vendor-' + vendor.id} style={{ background: '#F5EEE6', borderRadius: 16, border: promoActive ? '1.5px solid ' + PROMO_COLOR : '1px solid #E5DDD4', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 24px rgba(26,22,18,0.08)', display: 'flex', flexDirection: 'column' }}>
+      {/* Category accent bar */}
+      <div style={{ height: 3, background: catColour, flexShrink: 0 }} />
+      <div style={{ position: 'absolute', top: 15, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, zIndex: 1 }}>
         <button onClick={() => { if (!isLoggedIn) { onOpenAuth(); return }; onToggleSave() }} style={{ background: isSaved ? 'var(--accent-light)' : 'rgba(255,255,255,0.08)', border: '1px solid ' + (isSaved ? 'var(--gold)' : 'rgba(245,240,230,0.15)'), borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }}>
           <HeartIcon filled={isSaved} />
         </button>
@@ -921,8 +930,8 @@ function VendorCard({ vendor, catColour, isSaved, onToggleSave, stats, onToggleU
       </div>
 
       <div style={{ padding: '14px 14px 14px' }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: catColour, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4, fontFamily: manrope }}>{vendor.category}</div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', lineHeight: 1.25, marginBottom: 8, paddingRight: 52, fontFamily: newsreader }}>{vendor.name}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, letterSpacing: '0.18em', color: catColour, marginBottom: 3 }}>{vendor.category}</div>
+        <div style={{ fontSize: 18, fontWeight: 600, color: '#1A1612', lineHeight: 1.2, marginBottom: 8, paddingRight: 50, fontFamily: newsreader }}>{vendor.name}</div>
 
         {promoActive && (
           <div style={{ background: PROMO_COLOR + '12', border: '1px solid ' + PROMO_COLOR + '40', borderRadius: 10, padding: '8px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>

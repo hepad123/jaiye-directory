@@ -30,6 +30,7 @@ type ServiceStats = {
   recCount: number
   hasUsed: boolean
   hasRec: boolean
+  avgReview: number
 }
 
 type ServiceReview = {
@@ -96,8 +97,8 @@ const SUB_COLOR: Record<string, string> = {
 
 const CATEGORY_ACCENT = '#B4690E'
 const PROMO_COLOR = '#C0A060'
-const emptyStats: ServiceStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false }
-type SortMode = 'most_used' | 'most_rec'
+const emptyStats: ServiceStats = { usedCount: 0, recCount: 0, hasUsed: false, hasRec: false, avgReview: 0 }
+type SortMode = 'most_used' | 'most_rec' | 'top_rated'
 
 function isPromoActive(service: Service): boolean {
   if (!service.discount_code) return false
@@ -525,6 +526,7 @@ function SortDropdown({ sortMode, setSortMode, manrope }: { sortMode: SortMode; 
   const options: { key: SortMode; label: string }[] = [
     { key: 'most_rec',  label: 'Most Recommended' },
     { key: 'most_used', label: 'Most Used' },
+    { key: 'top_rated', label: 'Top Rated' },
   ]
   const currentLabel = interacted ? (options.find(o => o.key === sortMode)?.label || 'Sort') : 'Sort'
 
@@ -718,23 +720,27 @@ useEffect(() => {
     setServices(rows)
     if (rows.length > 0) {
       const ids = rows.map((s: Service) => s.id)
-      const [usedRes, recRes] = await Promise.all([
+      const [usedRes, recRes, reviewsRes] = await Promise.all([
         supabase.from('service_used').select('service_id, clerk_user_id').in('service_id', ids),
         supabase.from('service_recommendations').select('service_id, clerk_user_id').in('service_id', ids),
+        supabase.from('vendor_reviews').select('vendor_id, rating_experience').in('vendor_id', ids),
       ])
-      const usedRows = usedRes.data || []
-      const recRows  = recRes.data  || []
+      const usedRows   = usedRes.data    || []
+      const recRows    = recRes.data     || []
+      const reviewRows = reviewsRes.data || []
       // Store raw rows so the user-change effect can re-derive hasUsed/hasRec
       rawUsedRowsRef.current = usedRows
       rawRecRowsRef.current  = recRows
       const uid = user?.id
       const newStats: Record<string, ServiceStats> = {}
       rows.forEach((s: Service) => {
+        const rv = reviewRows.filter((r: {vendor_id: string; rating_experience: number}) => r.vendor_id === s.id)
         newStats[s.id] = {
           usedCount: usedRows.filter((r: {service_id: string}) => r.service_id === s.id).length,
           recCount:  recRows.filter((r: {service_id: string}) => r.service_id === s.id).length,
           hasUsed: uid ? usedRows.some((r: {service_id: string; clerk_user_id: string}) => r.service_id === s.id && r.clerk_user_id === uid) : false,
           hasRec:  uid ? recRows.some((r: {service_id: string; clerk_user_id: string})  => r.service_id === s.id && r.clerk_user_id === uid) : false,
+          avgReview: rv.length ? rv.reduce((acc: number, r: {vendor_id: string; rating_experience: number}) => acc + r.rating_experience, 0) / rv.length : 0,
         }
       })
       setStats(newStats)
@@ -818,6 +824,7 @@ useEffect(() => {
   const sortedServices = [...filteredServices].sort((a, b) => {
     if (sortMode === 'most_rec') return (stats[b.id]?.recCount || 0) - (stats[a.id]?.recCount || 0)
     if (sortMode === 'most_used') return (stats[b.id]?.usedCount || 0) - (stats[a.id]?.usedCount || 0)
+    if (sortMode === 'top_rated') return (stats[b.id]?.avgReview || 0) - (stats[a.id]?.avgReview || 0)
     return 0
   })
 

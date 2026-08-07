@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { verifyToken } from '@clerk/backend'
 import { createClient } from '@supabase/supabase-js'
 
